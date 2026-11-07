@@ -1,20 +1,31 @@
 {
   "repo_name": "brickForge",
   "repo_path": "C:\\Dev\\brickForge",
-  "scanned_at": "2026-11-07 15:56:09",
+  "scanned_at": "2026-11-07 21:02:11",
   "purpose_summary": "> **Sovereign AST Code Intelligence & Composable Component Registry for AI Agents and Engineers.**",
-  "architecture_summary": "**Stack:** Pytest, Python, SQLite3 | **Topology:** Automated Pytest & UAT Verification Suite (`tests/*`)",
+  "architecture_summary": "**Stack:** AsyncIO / HTTPX, FastAPI, Pytest, Python, SQLite3 | **Topology:** Automated Pytest & UAT Verification Suite (`tests/*`)",
   "tech_stack": [
+    "AsyncIO / HTTPX",
+    "FastAPI",
     "Pytest",
     "Python",
     "SQLite3"
   ],
-  "total_files": 28,
-  "total_loc": 844,
+  "total_files": 111,
+  "total_loc": 11576,
   "modules": [
     {
+      "path": "src/brickforge/cli.py",
+      "loc": 44,
+      "classes": [],
+      "functions": [
+        "main"
+      ],
+      "docstring": "BrickForge Command Line Interface."
+    },
+    {
       "path": "src/brickforge/config.py",
-      "loc": 174,
+      "loc": 193,
       "classes": [
         "BrickForgeConfig"
       ],
@@ -32,6 +43,43 @@
       "docstring": "Configuration management for BrickForge."
     },
     {
+      "path": "src/brickforge/contracts.py",
+      "loc": 309,
+      "classes": [
+        "SourceLocation",
+        "PackageRequirement",
+        "DependencySummary",
+        "BrickContract"
+      ],
+      "functions": [
+        "to_dict",
+        "to_json",
+        "from_dict",
+        "from_extracted_symbol",
+        "from_database_records"
+      ],
+      "docstring": "Brick contract representation exposing interface metadata without full source body."
+    },
+    {
+      "path": "src/brickforge/identity.py",
+      "loc": 144,
+      "classes": [
+        "BrickIdentity"
+      ],
+      "functions": [
+        "normalize_code_for_semantic_hash",
+        "compute_semantic_hash",
+        "compute_brick_id",
+        "is_same_provenance",
+        "are_exact_duplicates",
+        "are_semantic_duplicates",
+        "group_duplicate_bricks",
+        "detect_renamed_bricks",
+        "from_symbol_and_provenance"
+      ],
+      "docstring": "Deterministic identity, provenance tracking, and deduplication rules for code bricks."
+    },
+    {
       "path": "src/brickforge/__init__.py",
       "loc": 24,
       "classes": [],
@@ -39,8 +87,263 @@
       "docstring": "BrickForge Core package."
     },
     {
+      "path": "src/brickforge/__main__.py",
+      "loc": 8,
+      "classes": [],
+      "functions": [],
+      "docstring": "BrickForge package main entrypoint."
+    },
+    {
+      "path": "src/brickforge/analysis/dependencies.py",
+      "loc": 255,
+      "classes": [
+        "ExtractedDependency",
+        "_AstDependencyVisitor",
+        "PythonDependencyExtractor"
+      ],
+      "functions": [
+        "visit_ClassDef",
+        "visit_FunctionDef",
+        "visit_Call",
+        "extract_from_source",
+        "extract_from_symbol",
+        "resolve_dependencies"
+      ],
+      "docstring": "Static dependency, call, and inheritance relationship extraction for Python ASTs."
+    },
+    {
+      "path": "src/brickforge/analysis/graph.py",
+      "loc": 263,
+      "classes": [
+        "GraphNode",
+        "GraphEdge",
+        "TraversalResult",
+        "DependencyGraphTraverser"
+      ],
+      "functions": [
+        "total_nodes",
+        "total_edges",
+        "unresolved_count",
+        "external_count",
+        "traverse",
+        "dfs"
+      ],
+      "docstring": "Dependency graph traversal, cycle detection, and bounded budget traversal for code bricks."
+    },
+    {
+      "path": "src/brickforge/analysis/imports.py",
+      "loc": 142,
+      "classes": [
+        "ImportStatement",
+        "PythonImportAnalyzer"
+      ],
+      "functions": [
+        "extract_imports",
+        "get_external_packages"
+      ],
+      "docstring": "Import and external package reference extraction for Python source code."
+    },
+    {
+      "path": "src/brickforge/analysis/symbol_index.py",
+      "loc": 172,
+      "classes": [
+        "SymbolLocation",
+        "RepositorySymbolIndex"
+      ],
+      "functions": [
+        "path_to_module_name",
+        "register_file_symbols",
+        "lookup_symbol_in_module",
+        "resolve_relative_module",
+        "resolve_import_targets"
+      ],
+      "docstring": "Static repository symbol index and import resolution for Python codebases."
+    },
+    {
+      "path": "src/brickforge/analysis/__init__.py",
+      "loc": 2,
+      "classes": [],
+      "functions": [],
+      "docstring": "BrickForge static analysis and dependency graph package."
+    },
+    {
+      "path": "src/brickforge/composition/adaptation.py",
+      "loc": 95,
+      "classes": [
+        "AdaptationResult",
+        "BaseLanguageAdapterExtension",
+        "MockCrossLanguageAdapter",
+        "CrossLanguageAdaptationRegistry"
+      ],
+      "functions": [
+        "source_language",
+        "target_language",
+        "adapt",
+        "source_language",
+        "target_language",
+        "adapt",
+        "register",
+        "get_adapter",
+        "is_supported"
+      ],
+      "docstring": "Explicit extension point and boundary for cross-language code adaptation."
+    },
+    {
+      "path": "src/brickforge/composition/approval.py",
+      "loc": 109,
+      "classes": [
+        "ProposalApprovalWorkflow"
+      ],
+      "functions": [
+        "accept",
+        "reject",
+        "export"
+      ],
+      "docstring": "Proposal approval, rejection, and destination-allowlisted export workflow."
+    },
+    {
+      "path": "src/brickforge/composition/context.py",
+      "loc": 201,
+      "classes": [
+        "CompositionContext",
+        "CompositionContextBuilder"
+      ],
+      "functions": [
+        "to_dict",
+        "to_json",
+        "to_prompt_context",
+        "build_context"
+      ],
+      "docstring": "Deterministic composition context builder assembling contracts, bundles, and constraints."
+    },
+    {
+      "path": "src/brickforge/composition/models.py",
+      "loc": 168,
+      "classes": [
+        "TargetEnvironment",
+        "CompositionConstraints",
+        "CompositionRequest",
+        "ProposalArtifact",
+        "CompositionProposal"
+      ],
+      "functions": [
+        "to_dict",
+        "to_json",
+        "from_dict",
+        "create",
+        "to_dict",
+        "to_json",
+        "from_dict"
+      ],
+      "docstring": "Domain models for code composition requests and generated code proposals."
+    },
+    {
+      "path": "src/brickforge/composition/provider.py",
+      "loc": 104,
+      "classes": [
+        "ProviderMetadata",
+        "BaseCompositionProvider",
+        "MockCompositionProvider"
+      ],
+      "functions": [
+        "provider_name",
+        "model_id",
+        "generate_proposal",
+        "provider_name",
+        "model_id",
+        "generate_proposal"
+      ],
+      "docstring": "Composition provider interface and mock implementations for proposing code adaptations."
+    },
+    {
+      "path": "src/brickforge/composition/reports.py",
+      "loc": 201,
+      "classes": [
+        "PackageLicenseInfo",
+        "SourceOriginInfo",
+        "CompositionDependencyReport",
+        "CompositionReportGenerator"
+      ],
+      "functions": [
+        "to_dict",
+        "to_json",
+        "generate_report"
+      ],
+      "docstring": "Dependency and license compatibility report generator for composed bricks."
+    },
+    {
+      "path": "src/brickforge/composition/service.py",
+      "loc": 94,
+      "classes": [
+        "ProposalResult",
+        "CompositionService"
+      ],
+      "functions": [
+        "to_dict",
+        "create_proposal"
+      ],
+      "docstring": "Composition and adaptation proposal orchestration service."
+    },
+    {
+      "path": "src/brickforge/extraction/bundler.py",
+      "loc": 136,
+      "classes": [
+        "ExtractionBundle",
+        "SourceBundler"
+      ],
+      "functions": [
+        "bundle_brick"
+      ],
+      "docstring": "Dependency-aware source code bundling and extraction for code bricks."
+    },
+    {
+      "path": "src/brickforge/extraction/import_rewriter.py",
+      "loc": 174,
+      "classes": [
+        "ImportRewriteRecord",
+        "RewriteResult",
+        "ImportRewriter"
+      ],
+      "functions": [
+        "has_changes",
+        "rewrite"
+      ],
+      "docstring": "Optional repository import normalization and rewriting for extracted code bundles."
+    },
+    {
+      "path": "src/brickforge/extraction/manifest.py",
+      "loc": 146,
+      "classes": [
+        "ManifestBrickItem",
+        "ExtractionManifest",
+        "ManifestGenerator"
+      ],
+      "functions": [
+        "to_dict",
+        "to_json",
+        "from_dict",
+        "generate"
+      ],
+      "docstring": "Extraction manifest and provenance report generator for code brick bundles."
+    },
+    {
+      "path": "src/brickforge/extraction/output.py",
+      "loc": 112,
+      "classes": [
+        "ExtractionOutputMode",
+        "ExtractionResponse",
+        "ExtractionFormatter"
+      ],
+      "functions": [
+        "as_text",
+        "as_dict",
+        "format"
+      ],
+      "docstring": "Extraction output mode formatting supporting source bundle, contract-only, and JSON metadata."
+    },
+    {
       "path": "src/brickforge/ingestion/discovery.py",
-      "loc": 58,
+      "loc": 78,
       "classes": [],
       "functions": [
         "walk_registered_roots",
@@ -49,8 +352,25 @@
       "docstring": ""
     },
     {
+      "path": "src/brickforge/ingestion/fingerprints.py",
+      "loc": 114,
+      "classes": [
+        "FileFingerprint"
+      ],
+      "functions": [
+        "normalize_relative_path",
+        "compute_file_id",
+        "compute_content_hash",
+        "compute_bytes_hash",
+        "generate_fingerprint",
+        "has_content_changed",
+        "quick_stat_matches"
+      ],
+      "docstring": "Content hashing and file fingerprinting for BrickForge."
+    },
+    {
       "path": "src/brickforge/ingestion/ignore_rules.py",
-      "loc": 24,
+      "loc": 63,
       "classes": [
         "IgnoreRules"
       ],
@@ -70,8 +390,43 @@
       "docstring": ""
     },
     {
+      "path": "src/brickforge/ingestion/pipeline.py",
+      "loc": 280,
+      "classes": [
+        "RecoverablePythonParser",
+        "IngestionPipeline"
+      ],
+      "functions": [
+        "parse_source",
+        "process_file_content",
+        "process_file_on_disk"
+      ],
+      "docstring": "Ingestion pipeline orchestrating file reading, parsing, error recovery, and persistence."
+    },
+    {
+      "path": "src/brickforge/ingestion/planner.py",
+      "loc": 257,
+      "classes": [
+        "PlannedFileAction",
+        "ScanPlan",
+        "ScanPlanner"
+      ],
+      "functions": [
+        "files_seen",
+        "files_changed",
+        "files_skipped",
+        "files_deleted",
+        "get_stored_files",
+        "plan_repository_scan",
+        "record_scan_start",
+        "finalize_scan_run",
+        "reconcile_deleted_files"
+      ],
+      "docstring": "Incremental scan planner for BrickForge."
+    },
+    {
       "path": "src/brickforge/models/repository.py",
-      "loc": 8,
+      "loc": 19,
       "classes": [
         "Repository"
       ],
@@ -80,7 +435,7 @@
     },
     {
       "path": "src/brickforge/models/scan.py",
-      "loc": 34,
+      "loc": 53,
       "classes": [
         "ScanRun",
         "ScanStatus",
@@ -92,8 +447,93 @@
       "docstring": ""
     },
     {
+      "path": "src/brickforge/parsers/base.py",
+      "loc": 107,
+      "classes": [
+        "ParseDiagnostic",
+        "ExtractedSymbol",
+        "ParsedFileResult",
+        "BaseLanguageAdapter"
+      ],
+      "functions": [
+        "language_name",
+        "file_extensions",
+        "can_handle",
+        "parse"
+      ],
+      "docstring": "Base abstractions and data contracts for language AST adapters."
+    },
+    {
+      "path": "src/brickforge/parsers/diagnostics.py",
+      "loc": 97,
+      "classes": [
+        "DiagnosticReport",
+        "DiagnosticCollector"
+      ],
+      "functions": [
+        "has_errors",
+        "error_count",
+        "to_json",
+        "from_json",
+        "add_error",
+        "add_warning",
+        "add_info",
+        "create_report"
+      ],
+      "docstring": "Parser diagnostics and error report modeling for source code parsing."
+    },
+    {
+      "path": "src/brickforge/parsers/python.py",
+      "loc": 248,
+      "classes": [
+        "PythonAdapter"
+      ],
+      "functions": [
+        "language_name",
+        "file_extensions",
+        "parse"
+      ],
+      "docstring": "Python language AST adapter for BrickForge."
+    },
+    {
+      "path": "src/brickforge/parsers/python_symbols.py",
+      "loc": 224,
+      "classes": [
+        "PythonSymbolExtractor"
+      ],
+      "functions": [
+        "extract_all",
+        "extract_functions_only",
+        "extract_classes_only"
+      ],
+      "docstring": "Dedicated extractor for Python functions, methods, and classes."
+    },
+    {
+      "path": "src/brickforge/parsers/tree_sitter_runtime.py",
+      "loc": 83,
+      "classes": [
+        "TreeSitterRuntime"
+      ],
+      "functions": [
+        "register_language",
+        "get_language",
+        "is_language_available",
+        "create_parser",
+        "parse",
+        "collect_error_nodes"
+      ],
+      "docstring": "Tree-sitter runtime and grammar loading for BrickForge."
+    },
+    {
+      "path": "src/brickforge/parsers/__init__.py",
+      "loc": 2,
+      "classes": [],
+      "functions": [],
+      "docstring": "BrickForge language AST parsers package."
+    },
+    {
       "path": "src/brickforge/repositories/registry.py",
-      "loc": 87,
+      "loc": 108,
       "classes": [
         "RepositoryRegistry"
       ],
@@ -105,6 +545,410 @@
         "deactivate_repository"
       ],
       "docstring": ""
+    },
+    {
+      "path": "src/brickforge/search/fts.py",
+      "loc": 198,
+      "classes": [
+        "FtsSearchResult",
+        "FtsSearchEngine"
+      ],
+      "functions": [
+        "sanitize_fts_query",
+        "search",
+        "search_exact_symbol",
+        "rebuild_index",
+        "optimize_index"
+      ],
+      "docstring": "SQLite FTS5 lexical and exact search engine for code bricks."
+    },
+    {
+      "path": "src/brickforge/search/service.py",
+      "loc": 170,
+      "classes": [
+        "CatalogQuery",
+        "CatalogSearchHit",
+        "CatalogSearchService"
+      ],
+      "functions": [
+        "search"
+      ],
+      "docstring": "Filtered catalog search API for finding reusable bricks across repositories."
+    },
+    {
+      "path": "src/brickforge/storage/brick_repository.py",
+      "loc": 377,
+      "classes": [
+        "BrickRepository"
+      ],
+      "functions": [
+        "upsert_source_file",
+        "get_source_file_by_path",
+        "upsert_brick",
+        "get_brick_by_id",
+        "get_brick_by_row_id",
+        "list_bricks_for_file",
+        "insert_dependency",
+        "list_dependencies_for_brick",
+        "insert_external_package",
+        "list_external_packages_for_brick"
+      ],
+      "docstring": "Persistence repository for source files, code bricks, and their dependency edges."
+    },
+    {
+      "path": "src/brickforge/storage/database.py",
+      "loc": 171,
+      "classes": [
+        "DatabaseManager"
+      ],
+      "functions": [
+        "create_connection",
+        "connection",
+        "init_migration_table",
+        "get_applied_migrations",
+        "get_available_migrations",
+        "get_pending_migrations",
+        "apply_migrations",
+        "load_vector_extension"
+      ],
+      "docstring": "SQLite connection and migration manager for BrickForge."
+    },
+    {
+      "path": "src/brickforge/storage/repositories.py",
+      "loc": 8,
+      "classes": [],
+      "functions": [],
+      "docstring": "Storage repository entry point and interfaces for BrickForge."
+    },
+    {
+      "path": "src/brickforge/storage/__init__.py",
+      "loc": 2,
+      "classes": [],
+      "functions": [],
+      "docstring": "BrickForge storage and persistence package."
+    },
+    {
+      "path": "src/brickforge/validation/dependencies.py",
+      "loc": 247,
+      "classes": [
+        "DependencyCheckItem",
+        "DependencyAvailabilityReport",
+        "DependencyAvailabilityChecker"
+      ],
+      "functions": [
+        "parse_semver_tuple",
+        "check_version_satisfaction",
+        "is_satisfied",
+        "is_all_satisfied",
+        "missing",
+        "incompatible",
+        "unknown",
+        "from_lockfile_text",
+        "check_requirements"
+      ],
+      "docstring": "Dependency availability checks comparing package requirements against environments or lockfiles."
+    },
+    {
+      "path": "src/brickforge/validation/python_checks.py",
+      "loc": 98,
+      "classes": [
+        "PythonDiagnostic",
+        "PythonValidationReport",
+        "PythonBundleValidator"
+      ],
+      "functions": [
+        "error_count",
+        "validate_code_string",
+        "validate_files"
+      ],
+      "docstring": "Python compile and syntax validation runner using compileall and py_compile."
+    },
+    {
+      "path": "src/brickforge/validation/report.py",
+      "loc": 122,
+      "classes": [
+        "ValidationCheckEntry",
+        "ValidationReport"
+      ],
+      "functions": [
+        "passed",
+        "total_checks",
+        "passed_checks",
+        "failed_checks",
+        "to_dict",
+        "to_json",
+        "from_dict",
+        "create"
+      ],
+      "docstring": "Structured validation report model capturing verification checks, diagnostics, and environment metadata."
+    },
+    {
+      "path": "src/brickforge/validation/runner.py",
+      "loc": 144,
+      "classes": [
+        "CheckResult",
+        "BaseValidationCheck",
+        "PythonCompileCheck",
+        "IsolatedValidationRunner"
+      ],
+      "functions": [
+        "passed",
+        "name",
+        "execute",
+        "name",
+        "execute",
+        "run_checks"
+      ],
+      "docstring": "Isolated validation runner for executing safety, compile, and syntax checks in sandbox workspaces."
+    },
+    {
+      "path": "src/brickforge/validation/tests.py",
+      "loc": 110,
+      "classes": [
+        "BundleTestExecutionResult",
+        "BundleTestHarness"
+      ],
+      "functions": [
+        "execute_tests"
+      ],
+      "docstring": "Isolated unit-test harness for executing tests on extracted code bundles."
+    },
+    {
+      "path": "tests/e2e/test_incremental_indexing.py",
+      "loc": 141,
+      "classes": [],
+      "functions": [
+        "repo_env",
+        "test_incremental_scan_lifecycle"
+      ],
+      "docstring": "End-to-end tests for incremental re-indexing, modification updates, and deletion reconciliation."
+    },
+    {
+      "path": "tests/e2e/test_python_vertical_slice.py",
+      "loc": 178,
+      "classes": [],
+      "functions": [
+        "vertical_slice_repo",
+        "test_full_python_vertical_slice"
+      ],
+      "docstring": "End-to-end Python vertical-slice test."
+    },
+    {
+      "path": "tests/integration/test_brick_persistence.py",
+      "loc": 174,
+      "classes": [],
+      "functions": [
+        "test_repo_and_db",
+        "test_source_file_persistence",
+        "test_code_brick_persistence_and_fts",
+        "test_dependency_and_package_persistence"
+      ],
+      "docstring": "Integration tests for brick, source file, and dependency persistence."
+    },
+    {
+      "path": "tests/integration/test_bundle_tests.py",
+      "loc": 62,
+      "classes": [],
+      "functions": [
+        "test_execution_requires_explicit_opt_in",
+        "test_bundle_tests_passing_execution",
+        "test_bundle_tests_failing_execution"
+      ],
+      "docstring": "Integration tests for bundle unit-test harness execution."
+    },
+    {
+      "path": "tests/integration/test_core_schema.py",
+      "loc": 241,
+      "classes": [
+        "TestCoreSchema"
+      ],
+      "functions": [
+        "db_manager",
+        "test_core_tables_created",
+        "test_repository_lifecycle_and_constraints",
+        "test_source_file_and_scan_run_foreign_keys",
+        "test_fts5_triggers_insert_search_delete",
+        "test_brick_dependencies_check_constraints",
+        "test_cascading_deletions"
+      ],
+      "docstring": "Integration tests for BrickForge core relational schema and FTS5 triggers."
+    },
+    {
+      "path": "tests/integration/test_database_migrations.py",
+      "loc": 144,
+      "classes": [
+        "TestDatabaseManager"
+      ],
+      "functions": [
+        "test_connection_pragmas",
+        "test_foreign_key_enforcement",
+        "test_migration_discovery_and_ordering",
+        "test_apply_migrations_idempotency",
+        "test_migration_rollback_on_failure",
+        "test_vector_extension_graceful_failure"
+      ],
+      "docstring": "Integration tests for SQLite connection and migration manager."
+    },
+    {
+      "path": "tests/integration/test_extraction_bundle.py",
+      "loc": 116,
+      "classes": [],
+      "functions": [
+        "bundle_fixture",
+        "test_bundle_target_with_helpers_and_imports",
+        "test_bundle_standalone_without_helpers"
+      ],
+      "docstring": "Integration tests for dependency-aware source code bundling and extraction."
+    },
+    {
+      "path": "tests/integration/test_fts_search.py",
+      "loc": 118,
+      "classes": [],
+      "functions": [
+        "fts_db",
+        "test_sanitize_query",
+        "test_fts_insert_search_and_snippet",
+        "test_fts_update_and_delete_synchronization",
+        "test_exact_symbol_lookup"
+      ],
+      "docstring": "Integration tests for SQLite FTS5 search indexing, synchronization, and safe query handling."
+    },
+    {
+      "path": "tests/integration/test_parser_errors.py",
+      "loc": 139,
+      "classes": [],
+      "functions": [
+        "pipeline_env",
+        "test_clean_file_parsing",
+        "test_partially_malformed_file_recovery",
+        "test_completely_malformed_file_fails_cleanly",
+        "test_unsupported_file_extension"
+      ],
+      "docstring": "Integration tests for parser error handling, partial-file recovery, and diagnostics."
+    },
+    {
+      "path": "tests/integration/test_python_validation.py",
+      "loc": 55,
+      "classes": [],
+      "functions": [
+        "test_validate_clean_bundle",
+        "test_validate_bundle_syntax_error",
+        "test_validate_multi_file_bundle"
+      ],
+      "docstring": "Integration tests for Python syntax and compileall validation."
+    },
+    {
+      "path": "tests/performance/test_ingestion_baseline.py",
+      "loc": 198,
+      "classes": [
+        "IngestionBenchmarkReport"
+      ],
+      "functions": [
+        "generate_benchmark_corpus",
+        "benchmark_env",
+        "test_ingestion_and_search_baseline",
+        "test_incremental_scan_performance_is_sublinear"
+      ],
+      "docstring": "Performance baseline and scan metrics test suite."
+    },
+    {
+      "path": "tests/security/test_filesystem_boundaries.py",
+      "loc": 295,
+      "classes": [],
+      "functions": [
+        "test_safe_path_canonicalization_blocks_parent_traversal",
+        "test_safe_path_canonicalization_allows_legitimate_subpaths",
+        "test_symlink_escape_rejected_by_canonicalization",
+        "test_walk_registered_roots_does_not_follow_symlink_dirs",
+        "test_ignore_rules_blocks_sensitive_and_ephemeral_paths",
+        "test_ignore_rules_permits_standard_source_code",
+        "test_streaming_hash_chunks_large_file",
+        "test_pipeline_handles_malformed_syntax_gracefully",
+        "test_export_rejects_destination_outside_allowlist",
+        "test_export_rejects_artifact_directory_traversal"
+      ],
+      "docstring": "Security and filesystem boundary tests for BrickForge."
+    },
+    {
+      "path": "tests/unit/test_adaptation_boundary.py",
+      "loc": 46,
+      "classes": [],
+      "functions": [
+        "test_cross_language_adapter_enforces_review_gate",
+        "test_adaptation_registry"
+      ],
+      "docstring": "Unit tests for optional language adaptation boundary and experimental transpilation gates."
+    },
+    {
+      "path": "tests/unit/test_brick_identity.py",
+      "loc": 116,
+      "classes": [],
+      "functions": [
+        "test_compute_brick_id_determinism",
+        "test_provenance_preservation",
+        "test_semantic_hash_and_duplicates",
+        "test_group_duplicate_bricks_across_repositories",
+        "test_detect_renamed_bricks"
+      ],
+      "docstring": "Unit tests for deterministic brick identity, provenance tracking, and deduplication rules."
+    },
+    {
+      "path": "tests/unit/test_composition_context.py",
+      "loc": 112,
+      "classes": [],
+      "functions": [
+        "context_db_fixture",
+        "test_build_composition_context",
+        "test_context_budget_truncation"
+      ],
+      "docstring": "Unit tests for deterministic composition context builder."
+    },
+    {
+      "path": "tests/unit/test_composition_models.py",
+      "loc": 96,
+      "classes": [],
+      "functions": [
+        "test_composition_request_roundtrip",
+        "test_proposal_artifact_creation",
+        "test_composition_proposal_lifecycle_and_serialization"
+      ],
+      "docstring": "Unit tests for composition request and proposal domain models."
+    },
+    {
+      "path": "tests/unit/test_composition_provider.py",
+      "loc": 56,
+      "classes": [],
+      "functions": [
+        "sample_context",
+        "test_mock_provider_default_generation",
+        "test_mock_provider_custom_generator",
+        "test_mock_provider_records_truncation_warning",
+        "custom_gen"
+      ],
+      "docstring": "Unit tests for composition provider interface and mock implementation."
+    },
+    {
+      "path": "tests/unit/test_composition_reports.py",
+      "loc": 110,
+      "classes": [],
+      "functions": [
+        "report_env",
+        "test_dependency_and_license_report_generation",
+        "test_license_compatibility_enforcement",
+        "test_report_json_serialization"
+      ],
+      "docstring": "Unit tests for composition dependency and license compatibility reports."
+    },
+    {
+      "path": "tests/unit/test_composition_service.py",
+      "loc": 102,
+      "classes": [],
+      "functions": [
+        "service_env",
+        "test_create_adaptation_proposal",
+        "test_custom_provider_override"
+      ],
+      "docstring": "Unit tests for composition service adaptation proposal workflow and diffing."
     },
     {
       "path": "tests/unit/test_config.py",
@@ -128,15 +972,107 @@
       "docstring": "Unit tests for BrickForge configuration module."
     },
     {
+      "path": "tests/unit/test_contracts.py",
+      "loc": 184,
+      "classes": [],
+      "functions": [
+        "test_contract_serialization_roundtrip",
+        "test_contract_from_extracted_symbol",
+        "test_contract_from_database_records"
+      ],
+      "docstring": "Unit tests for brick contract representation and metadata serialization."
+    },
+    {
+      "path": "tests/unit/test_dependency_extraction.py",
+      "loc": 170,
+      "classes": [],
+      "functions": [
+        "test_dependency_dataclass_validation",
+        "test_extract_inheritance_and_decorators",
+        "test_extract_function_calls",
+        "test_resolve_dependencies_external_and_local"
+      ],
+      "docstring": "Unit tests for AST dependency, call, and inheritance relationship extraction."
+    },
+    {
+      "path": "tests/unit/test_dependency_graph.py",
+      "loc": 143,
+      "classes": [],
+      "functions": [
+        "graph_db",
+        "test_outgoing_traversal_depth",
+        "test_incoming_traversal",
+        "test_unresolved_and_external_edges",
+        "test_cycle_detection",
+        "test_budget_limits"
+      ],
+      "docstring": "Unit tests for dependency graph traversal, cycle detection, and budget limits."
+    },
+    {
+      "path": "tests/unit/test_dependency_validation.py",
+      "loc": 64,
+      "classes": [],
+      "functions": [
+        "test_version_satisfaction_logic",
+        "test_dependency_checker_distinguishes_statuses",
+        "test_checker_from_lockfile"
+      ],
+      "docstring": "Unit tests for dependency availability and version compatibility checks."
+    },
+    {
       "path": "tests/unit/test_discovery.py",
-      "loc": 20,
+      "loc": 34,
       "classes": [
         "TestDiscovery"
       ],
       "functions": [
-        "test_walk_registered_roots"
+        "test_walk_registered_roots",
+        "test_get_language_hint"
       ],
       "docstring": ""
+    },
+    {
+      "path": "tests/unit/test_extraction_manifest.py",
+      "loc": 96,
+      "classes": [],
+      "functions": [
+        "test_manifest_generation",
+        "test_manifest_serialization_roundtrip"
+      ],
+      "docstring": "Unit tests for extraction manifest and provenance report generation."
+    },
+    {
+      "path": "tests/unit/test_extraction_output.py",
+      "loc": 100,
+      "classes": [],
+      "functions": [
+        "mock_bundle_and_contract",
+        "test_contract_only_mode_is_body_free",
+        "test_source_bundle_mode",
+        "test_json_metadata_mode_source_inclusion",
+        "test_unsupported_mode_raises"
+      ],
+      "docstring": "Unit tests for extraction output modes (source bundle, contract-only, JSON metadata)."
+    },
+    {
+      "path": "tests/unit/test_fingerprints.py",
+      "loc": 114,
+      "classes": [
+        "TestFingerprints"
+      ],
+      "functions": [
+        "test_normalize_relative_path",
+        "test_compute_file_id_deterministic",
+        "test_compute_bytes_hash",
+        "test_compute_content_hash",
+        "test_compute_content_hash_empty_file",
+        "test_generate_fingerprint",
+        "test_generate_fingerprint_auto_relative_path",
+        "test_has_content_changed",
+        "test_quick_stat_matches",
+        "test_nonexistent_file_raises"
+      ],
+      "docstring": "Unit tests for content hashing and file fingerprinting."
     },
     {
       "path": "tests/unit/test_ignore_rules.py",
@@ -149,6 +1085,33 @@
         "test_is_ignored"
       ],
       "docstring": ""
+    },
+    {
+      "path": "tests/unit/test_import_analysis.py",
+      "loc": 92,
+      "classes": [
+        "TestImportAnalysis"
+      ],
+      "functions": [
+        "test_extract_and_classify_stdlib",
+        "test_extract_and_classify_relative_local",
+        "test_extract_and_classify_third_party",
+        "test_known_local_modules_override",
+        "test_syntax_error_returns_empty"
+      ],
+      "docstring": "Unit tests for Python import and package analysis."
+    },
+    {
+      "path": "tests/unit/test_import_rewriter.py",
+      "loc": 75,
+      "classes": [],
+      "functions": [
+        "test_prefix_remapping",
+        "test_bundled_symbol_elimination",
+        "test_flatten_relative_imports",
+        "test_unmodified_when_no_rules_match"
+      ],
+      "docstring": "Unit tests for repository-specific import normalization and rewriting."
     },
     {
       "path": "tests/unit/test_models.py",
@@ -181,6 +1144,62 @@
       "docstring": ""
     },
     {
+      "path": "tests/unit/test_proposal_approval.py",
+      "loc": 85,
+      "classes": [],
+      "functions": [
+        "sample_proposal",
+        "test_proposal_accept_and_reject",
+        "test_export_allowlisting",
+        "test_export_prevents_path_traversal"
+      ],
+      "docstring": "Unit tests for proposal approval, rejection, and secure allowlisted export."
+    },
+    {
+      "path": "tests/unit/test_python_adapter.py",
+      "loc": 135,
+      "classes": [
+        "TestPythonAdapter"
+      ],
+      "functions": [
+        "adapter",
+        "test_can_handle",
+        "test_parse_functions",
+        "test_parse_class_and_methods",
+        "test_nested_functions",
+        "test_syntax_error_diagnostics",
+        "test_empty_source",
+        "test_bytes_source"
+      ],
+      "docstring": "Unit tests for the Python AST language adapter."
+    },
+    {
+      "path": "tests/unit/test_python_classes.py",
+      "loc": 103,
+      "classes": [
+        "TestPythonClassExtraction"
+      ],
+      "functions": [
+        "test_extract_classes_and_bases",
+        "test_extract_methods_linked_to_class",
+        "test_nested_classes"
+      ],
+      "docstring": "Unit tests for Python class and method definition extraction."
+    },
+    {
+      "path": "tests/unit/test_python_functions.py",
+      "loc": 90,
+      "classes": [
+        "TestPythonFunctionExtraction"
+      ],
+      "functions": [
+        "test_extract_top_level_functions",
+        "test_extract_nested_functions",
+        "test_extract_signature_variations"
+      ],
+      "docstring": "Unit tests for Python function definition extraction."
+    },
+    {
       "path": "tests/unit/test_repository_registry.py",
       "loc": 129,
       "classes": [
@@ -199,99 +1218,272 @@
         "test_lookup_repository_not_found"
       ],
       "docstring": ""
+    },
+    {
+      "path": "tests/unit/test_scan_planner.py",
+      "loc": 224,
+      "classes": [
+        "TestScanPlanner"
+      ],
+      "functions": [
+        "db_manager",
+        "test_plan_fresh_repository_all_added",
+        "test_plan_incremental_scan_unchanged",
+        "test_plan_incremental_scan_modified_file",
+        "test_plan_force_full_scan",
+        "test_plan_deleted_file_detection_and_reconciliation",
+        "test_dry_run_does_not_mutate_scan_runs",
+        "test_finalize_scan_run",
+        "test_ignore_rules_filtering"
+      ],
+      "docstring": "Unit tests for the incremental scan planner."
+    },
+    {
+      "path": "tests/unit/test_search_service.py",
+      "loc": 143,
+      "classes": [],
+      "functions": [
+        "search_service_fixture",
+        "test_filter_by_repository",
+        "test_filter_by_kind_and_portability",
+        "test_filter_by_package_dependency",
+        "test_combined_fts_and_filters"
+      ],
+      "docstring": "Unit tests for filtered catalog search service."
+    },
+    {
+      "path": "tests/unit/test_symbol_index.py",
+      "loc": 129,
+      "classes": [],
+      "functions": [
+        "test_path_to_module_name",
+        "test_register_and_lookup_symbols",
+        "test_resolve_relative_module",
+        "test_resolve_import_targets"
+      ],
+      "docstring": "Unit tests for static repository symbol indexing and import resolution."
+    },
+    {
+      "path": "tests/unit/test_tree_sitter_runtime.py",
+      "loc": 51,
+      "classes": [
+        "TestTreeSitterRuntime"
+      ],
+      "functions": [
+        "runtime",
+        "test_python_grammar_loaded",
+        "test_unregistered_language_raises",
+        "test_create_parser_and_parse",
+        "test_collect_error_nodes_on_syntax_error",
+        "test_no_errors_on_clean_code"
+      ],
+      "docstring": "Unit tests for Tree-sitter runtime and Python grammar loader."
+    },
+    {
+      "path": "tests/unit/test_validation_report.py",
+      "loc": 84,
+      "classes": [],
+      "functions": [
+        "test_validation_report_all_passed",
+        "test_validation_report_with_failure",
+        "test_validation_report_serialization_roundtrip"
+      ],
+      "docstring": "Unit tests for validation report model and environment metadata serialization."
+    },
+    {
+      "path": "tests/unit/test_validation_runner.py",
+      "loc": 70,
+      "classes": [
+        "FileSizeCheck"
+      ],
+      "functions": [
+        "test_python_compile_check_success",
+        "test_python_compile_check_syntax_error",
+        "test_multi_file_workspace_validation",
+        "test_custom_validation_check",
+        "name",
+        "execute"
+      ],
+      "docstring": "Unit tests for isolated validation runner and Python compile checks."
     }
   ],
   "symbols": [
+    "AdaptationResult",
+    "BaseCompositionProvider",
+    "BaseLanguageAdapter",
+    "BaseLanguageAdapterExtension",
+    "BaseValidationCheck",
+    "BrickContract",
     "BrickForgeConfig",
+    "BrickIdentity",
+    "BrickRepository",
+    "BundleTestExecutionResult",
+    "BundleTestHarness",
+    "CatalogQuery",
+    "CatalogSearchHit",
+    "CatalogSearchService",
+    "CheckResult",
+    "CompositionConstraints",
+    "CompositionContext",
+    "CompositionContextBuilder",
+    "CompositionDependencyReport",
+    "CompositionProposal",
+    "CompositionReportGenerator",
+    "CompositionRequest",
+    "CompositionService",
+    "CrossLanguageAdaptationRegistry",
+    "DatabaseManager",
+    "DependencyAvailabilityChecker",
+    "DependencyAvailabilityReport",
+    "DependencyCheckItem",
+    "DependencyGraphTraverser",
+    "DependencySummary",
+    "DiagnosticCollector",
+    "DiagnosticReport",
     "Exclusion",
+    "ExtractedDependency",
+    "ExtractedSymbol",
+    "ExtractionBundle",
+    "ExtractionFormatter",
+    "ExtractionManifest",
+    "ExtractionOutputMode",
+    "ExtractionResponse",
+    "FileFingerprint",
+    "FileSizeCheck",
+    "FtsSearchEngine",
+    "FtsSearchResult",
+    "GraphEdge",
+    "GraphNode",
     "IgnoreRules",
+    "ImportRewriteRecord",
+    "ImportRewriter",
+    "ImportStatement",
+    "IngestionBenchmarkReport",
+    "IngestionPipeline",
+    "IsolatedValidationRunner",
+    "ManifestBrickItem",
+    "ManifestGenerator",
+    "MockCompositionProvider",
+    "MockCrossLanguageAdapter",
+    "PackageLicenseInfo",
+    "PackageRequirement",
+    "ParseDiagnostic",
+    "ParsedFileResult",
+    "PlannedFileAction",
+    "ProposalApprovalWorkflow",
+    "ProposalArtifact",
+    "ProposalResult",
+    "ProviderMetadata",
+    "PythonAdapter",
+    "PythonBundleValidator",
+    "PythonCompileCheck",
+    "PythonDependencyExtractor",
+    "PythonDiagnostic",
+    "PythonImportAnalyzer",
+    "PythonSymbolExtractor",
+    "PythonValidationReport",
+    "RecoverablePythonParser",
     "Repository",
     "RepositoryRegistry",
+    "RepositorySymbolIndex",
+    "RewriteResult",
     "ScanError",
+    "ScanPlan",
+    "ScanPlanner",
     "ScanRun",
     "ScanStatus",
+    "SourceBundler",
     "SourceFileMetadata",
+    "SourceLocation",
+    "SourceOriginInfo",
+    "SymbolLocation",
+    "TargetEnvironment",
     "TestBrickForgeConfig",
+    "TestCoreSchema",
+    "TestDatabaseManager",
     "TestDiscovery",
+    "TestFingerprints",
     "TestGetConfig",
     "TestIgnoreRules",
+    "TestImportAnalysis",
+    "TestPythonAdapter",
+    "TestPythonClassExtraction",
+    "TestPythonFunctionExtraction",
     "TestRepositoryRegistry",
     "TestSafePathCanonicalization",
+    "TestScanPlanner",
+    "TestTreeSitterRuntime",
+    "TraversalResult",
+    "TreeSitterRuntime",
+    "ValidationCheckEntry",
+    "ValidationReport",
+    "_AstDependencyVisitor",
+    "accept",
+    "adapt",
+    "adapter",
+    "add_error",
+    "add_info",
+    "add_warning",
+    "apply_migrations",
+    "are_exact_duplicates",
+    "are_semantic_duplicates",
+    "as_dict",
+    "as_text",
+    "benchmark_env",
+    "build_context",
+    "bundle_brick",
+    "bundle_fixture",
+    "can_handle",
+    "check_requirements",
+    "check_version_satisfaction",
+    "collect_error_nodes",
+    "compute_brick_id",
+    "compute_bytes_hash",
+    "compute_content_hash",
+    "compute_file_id",
+    "compute_semantic_hash",
+    "connection",
+    "context_db_fixture",
+    "create",
+    "create_connection",
+    "create_parser",
+    "create_proposal",
+    "create_report",
+    "custom_gen",
+    "db_manager",
     "db_path_resolved",
     "deactivate_repository",
+    "detect_renamed_bricks",
+    "dfs",
     "ensure_directories",
-    "get_config",
-    "get_language_hint",
-    "ingestion_dir_resolved",
-    "is_ignored",
-    "list_repositories",
-    "load_ignore_patterns",
-    "lookup_repository",
-    "processed_dir_resolved",
-    "register_repository",
-    "reload_config",
-    "safe_path_canonicalization",
-    "search_index_dir_resolved",
-    "setUp",
-    "tearDown",
-    "test_config_from_environment",
-    "test_deactivate_repository",
-    "test_default_values",
-    "test_ensure_directories",
-    "test_exclusion_model",
-    "test_exclusion_model_missing_required_fields",
-    "test_extension_validation",
-    "test_get_config_returns_singleton",
-    "test_init_db_creates_table",
-    "test_is_ignored",
-    "test_list_repositories_empty",
-    "test_list_repositories_with_data",
-    "test_load_ignore_patterns",
-    "test_log_level_normalization",
-    "test_log_level_validation",
-    "test_lookup_repository_not_found",
-    "test_lookup_repository_success",
-    "test_register_repository_duplicate",
-    "test_register_repository_invalid_path",
-    "test_register_repository_success",
-    "test_reload_config_clears_cache",
-    "test_repository_model",
-    "test_repository_model_missing_required_fields",
-    "test_resolved_paths",
-    "test_safe_path_canonicalization",
-    "test_safe_path_canonicalization_unsafe_root",
-    "test_scan_error_model",
-    "test_scan_error_model_missing_required_fields",
-    "test_scan_run_model",
-    "test_scan_run_model_missing_required_fields",
-    "test_scan_status_model",
-    "test_scan_status_model_missing_required_fields",
-    "test_source_file_metadata_model",
-    "test_source_file_metadata_model_missing_required_fields",
-    "test_update_repository_is_active",
-    "test_update_repository_no_updates",
-    "test_update_repository_root_path",
-    "test_valid_extensions",
-    "test_walk_registered_roots",
-    "update_repository",
-    "validate_extensions",
-    "validate_log_level",
-    "walk_registered_roots"
+    "error_count",
+    "execute"
   ],
   "weaknesses": [
-    "**Test Coverage Gap**: 2 module(s) lack dedicated unit test suites (e.g. `src/brickforge/__init__.py, src/brickforge/models/scan.py`)."
+    "**Test Coverage Gap**: 16 module(s) lack dedicated unit test suites (e.g. `src/brickforge/cli.py, src/brickforge/__init__.py, src/brickforge/__main__.py`).",
+    "**Silent Exception Swallowing**: Broad `except Exception:` blocks found in `src/brickforge/ingestion/pipeline.py, src/brickforge/parsers/diagnostics.py, src/brickforge/parsers/python.py`."
   ],
   "suggestions": [
     {
       "id": "IMP-TESTS",
-      "label": "\ud83e\uddea Add Unit Tests for __init__.py",
+      "label": "\ud83e\uddea Add Unit Tests for cli.py",
       "category": "Testing",
-      "rationale": "Module `src/brickforge/__init__.py` has no matching test file.",
+      "rationale": "Module `src/brickforge/cli.py` has no matching test file.",
       "target_files": [
-        "src/brickforge/__init__.py",
-        "tests/test___init__.py"
+        "src/brickforge/cli.py",
+        "tests/test_cli.py"
       ],
-      "prompt_payload": "Create a comprehensive pytest unit test suite for `src/brickforge/__init__.py` in `tests/test___init__.py` covering happy paths, edge cases, and error handling."
+      "prompt_payload": "Create a comprehensive pytest unit test suite for `src/brickforge/cli.py` in `tests/test_cli.py` covering happy paths, edge cases, and error handling."
+    },
+    {
+      "id": "IMP-EXCEPT",
+      "label": "\ud83d\udee1\ufe0f Harden Error Handling in pipeline.py",
+      "category": "Reliability",
+      "rationale": "Replace generic exception catches with structured logging and typed error recovery.",
+      "target_files": [
+        "src/brickforge/ingestion/pipeline.py"
+      ],
+      "prompt_payload": "Refactor broad `except Exception` blocks in `src/brickforge/ingestion/pipeline.py` to use specific exception types, structured error logging, and deterministic fallback states while preserving public signatures."
     },
     {
       "id": "IMP-SEC",

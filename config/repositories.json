@@ -1,0 +1,107 @@
+{
+  "version": "1.0",
+  "catalog_db": "data/brickforge.db",
+  "repositories": [
+    {
+      "id": "dev-c",
+      "name": "Dev Root",
+      "root_path": "C:\\Dev",
+      "enabled": true,
+      "exclude_globs": [
+        "**/node_modules/**",
+        "**/.codbot/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/__pycache__/**",
+        "**/.git/**",
+        "**/.pytest_cache/**",
+        "**/data/**",
+        "*.db",
+        "*.sqlite"
+      ]
+    },
+    {
+      "id": "gdrive-work-code",
+      "name": "Work Code (Google Drive)",
+      "root_path": "L:\\My Drive\\Work\\Code",
+      "enabled": true,
+      "exclude_globs": ["**/.git/**", "**/node_modules/**", "**/.venv/**"]
+    },
+    {
+      "id": "gdrive-legalstudio",
+      "name": "LegalStudio (Google Drive)",
+      "root_path": "G:\\My Drive\\LegalStudio",
+      "enabled": true,
+      "exclude_globs": ["**/.git/**", "**/node_modules/**", "**/.venv/**"]
+    },
+    {
+      "id": "onedrive-vscode",
+      "name": "VS Code Workspace (OneDrive)",
+      "root_path": "C:\\Users\\titwa\\OneDrive\\Dokumente\\Documents\\VS Code",
+      "enabled": true,
+      "exclude_globs": ["**/.git/**", "**/node_modules/**", "**/.venv/**"]
+    },
+    {
+      "id": "vs-2010",
+      "name": "Visual Studio 2010 Projects",
+      "root_path": "C:\\Users\\titwa\\OneDrive\\Dokumente\\Documents\\Visual Studio 2010\\Projects",
+      "enabled": true,
+      "exclude_globs": [
+        "**/bin/**",
+        "**/obj/**",
+        "**/.vs/**",
+        "**/Debug/**",
+        "**/Release/**",
+        "**/ipch/**",
+        "*.sdf",
+        "*.suo"
+      ]
+    },
+    {
+      "id": "vs-2012",
+      "name": "Visual Studio 2012 Projects",
+      "root_path": "C:\\Users\\titwa\\OneDrive\\Dokumente\\Documents\\Visual Studio 2012\\Projects",
+      "enabled": true,
+      "exclude_globs": [
+        "**/bin/**",
+        "**/obj/**",
+        "**/.vs/**",
+        "**/Debug/**",
+        "**/Release/**",
+        "**/ipch/**",
+        "*.sdf",
+        "*.suo"
+      ]
+    },
+    {
+      "id": "vs-2015",
+      "name": "Visual Studio 2015 Projects",
+      "root_path": "C:\\Users\\titwa\\OneDrive\\Dokumente\\Documents\\Visual Studio 2015\\Projects",
+      "enabled": true,
+      "exclude_globs": [
+        "**/bin/**",
+        "**/obj/**",
+        "**/.vs/**",
+        "**/packages/**",
+        "**/Debug/**",
+        "**/Release/**",
+        "*.suo"
+      ]
+    },
+    {
+      "id": "vs-2019",
+      "name": "Visual Studio 2019 Code",
+      "root_path": "C:\\Users\\titwa\\OneDrive\\Dokumente\\Documents\\Visual Studio 2019\\Code",
+      "enabled": true,
+      "exclude_globs": [
+        "**/bin/**",
+        "**/obj/**",
+        "**/.vs/**",
+        "**/packages/**",
+        "**/node_modules/**",
+        "**/Debug/**",
+        "**/Release/**"
+      ]
+    }
+  ]
+}

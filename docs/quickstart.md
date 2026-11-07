@@ -180,3 +180,113 @@ with db_mgr.connection() as conn:
 3. **Complex Type Inference**: Parameter and return types are extracted from AST type annotations and docstrings. Deep cross-module symbolic type inference is planned for v2.
 4. **Environment Isolation**: The validation runner validates syntax, imports, and self-contained tests. Isolated container/virtualenv sandbox creation is supported via subprocess boundaries.
 
+---
+
+Analyzed repositories.json:L1-103
+Analyzed sync_repositories.py:L1-83
+Analyzed planner.py:L95-160
+Analyzed ignore_rules.py:L25-50
+Analyzed database.py:L15-50
+Edited sync_repositories.py
+Edited repositories.json
+Ran test sync_repositories with --no-scan
+Ran test sync_repositories help
+Analyzed pushtoGit.bat:L1-15
+Ran run unit tests
+Checked task Run unit tests
+
+### Review of `config/repositories.json` & `scripts/sync_repositories.py`
+
+Both files have been reviewed and refined to work seamlessly together.
+
+---
+
+### 1. Review of `config/repositories.json`
+
+**Status**: **Valid & Production Ready**
+
+- **Structure**: Clean, valid JSON structure with 8 repository roots across `C:`, `L:`, `G:`, OneDrive, and Visual Studio versions.
+- **Path Escaping**: All Windows backslashes (`\\`) are correctly escaped.
+- **Exclusion Rules**: 
+  - Standard development artifacts are excluded (`.git`, `.venv`, `node_modules`).
+  - Visual Studio build directories (`bin/`, `obj/`, `.vs/`, `Debug/`, `Release/`, `ipch/`) and compiler metadata (`*.sdf`, `*.suo`) are filtered out.
+  - Added protections for `dev-c`: excludes database binaries (`*.db`, `*.sqlite`, `**/data/**`) and pytest cache (`**/.pytest_cache/**`), preventing internal database files from being indexed as code.
+
+---
+
+### 2. Review of `scripts/sync_repositories.py`
+
+**Status**: **Enhanced & Tested**
+
+The script has been updated with several key improvements:
+1. **Automatic Path Resolution**: Automatically checks `config/repositories.json` by default (as well as `repositories.json` in the root).
+2. **Custom Ignore Enforcement**: Directly injects the `exclude_globs` configured for each repository into `IgnoreRules` during scan planning.
+3. **Database Migration & Auto-Creation**: Applies migrations and creates `data/brickforge.db` if it doesn't already exist.
+4. **CLI Argument Parser (`argparse`)**:
+   - `--config PATH`: Specify a custom config file.
+   - `--repo ID`: Scan only a single repository (e.g. `--repo dev-c` or `--repo vs-2019`).
+   - `--no-scan`: Sync and register the repositories in the database without immediately triggering a full scan.
+   - `--force`: Force re-indexing of unchanged files.
+5. **Safe Inaccessible Path Handling**: If a cloud drive (`L:\My Drive` or `G:\My Drive`) or disconnected drive is not accessible, it logs a clear `[WARN]` and proceeds with the other repositories rather than crashing.
+
+---
+
+### 3. How to Use
+
+Open your terminal in `c:\Dev\brickForge`:
+
+#### Option A: Register Repositories Without Scanning Immediately
+Quickly syncs your 8 repository definitions into the SQLite catalog:
+```powershell
+python scripts/sync_repositories.py --no-scan
+```
+*Output:*
+```text
+[BrickForge] Loading repository configuration: C:\Dev\brickForge\config\repositories.json
+[BrickForge] Synced 8 repositories into catalog: C:\Dev\brickForge\data\brickforge.db
+[BrickForge] Scan skipped (--no-scan). Repositories are registered.
+```
+
+#### Option B: Scan a Single Repository
+If you want to test indexing on a specific repository first (e.g. `dev-c`):
+```powershell
+python scripts/sync_repositories.py --repo dev-c
+```
+
+#### Option C: Full Sync and Scan of All Enabled Repositories
+Scans all 8 repositories, discovers AST symbols, and indexes them into the catalog:
+```powershell
+python scripts/sync_repositories.py
+```
+
+#### Option D: Force a Complete Re-index
+Bypasses the SHA-256 cache and forces all files to be re-parsed:
+```powershell
+python scripts/sync_repositories.py --force
+```
+
+---
+
+### 4. Searching Your Indexed Repositories
+
+Once scanned, you can query your newly built code catalog:
+
+```powershell
+# Search using the BrickForge CLI
+python -m brickforge search "your_function_or_class_name"
+```
+
+Or query via Python:
+```python
+from pathlib import Path
+from brickforge.storage.database import DatabaseManager
+from brickforge.search.service import CatalogSearchService, CatalogQuery
+
+db_mgr = DatabaseManager(db_path=Path("data/brickforge.db"))
+search = CatalogSearchService(db_mgr)
+
+# Search across all 8 repositories
+hits = search.search(CatalogQuery(query="UserService", limit=10))
+for hit in hits:
+    print(f"{hit.symbol_name} ({hit.kind}) in [{hit.repository_id}] {hit.relative_path}")
+```
