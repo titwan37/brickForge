@@ -1,0 +1,1805 @@
+{
+  "project": "BrickForge",
+  "backlog": "MVP first phases",
+  "version": "0.1.0",
+  "lifecycle": [
+    "Discover",
+    "Understand",
+    "Extract",
+    "Compose",
+    "Validate"
+  ],
+  "scope": "Python-first vertical slice; local-first catalog; SQLite + FTS5 core; optional vector extension; MCP exposure can be implemented as a subsequent integration milestone.",
+  "task_count": 45,
+  "status_values": [
+    "pending",
+    "in_progress",
+    "completed",
+    "blocked",
+    "failed"
+  ],
+  "notes": [
+    "All tasks are proposed and start with status pending; no implementation is claimed.",
+    "The initial MVP supports Python only. Other language adapters are intentionally deferred.",
+    "Indexing must never execute repository source code.",
+    "Composition produces proposals; applying changes requires explicit approval.",
+    "Vector storage is optional and must not block the SQLite + FTS5 baseline.",
+    "Dependencies are expressed as task IDs and should be respected by an executor."
+  ],
+  "tasks": [
+    {
+      "task_id": "BRICKFORGE-MVP-001",
+      "title": "Define project skeleton, configuration and package boundaries",
+      "description": "Create the Python package layout for BrickForge Core, ingestion, storage, search, MCP and validation. Add pyproject.toml, development dependencies, entry points and typed configuration loading. Keep Core independent from MCP and agent orchestration.\n\nCRITICAL FIX REQUIREMENT FROM PREVIOUS FAILED ATTEMPT:\n- The test file 'tests/unit/test_config.py' does not exist, which is causing the pytest command to fail with 'file or directory not found'.\n- Create the missing test file 'tests/unit/test_config.py' with at least one test function to verify the configuration loading functionality.\n- You MUST define the exact function/variable names at the top-level or inside the exact scope requested by the verification command.\n\n[SELF-HEALING RESOLUTION - CYCLE 2]\n- Previous Failure Root Cause: Task failed verification with traceback.\n- Resolution Strategy: Resetting task with traceback context injected into instructions.\n- Actionable Fix Instructions: Resolve the following verification error:\n============================= test session starts =============================\nplatform win32 -- Python 3.14.0, pytest-9.2.0, pluggy-1.6.0\nrootdir: C:\\Dev\\brickForge\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, Faker-40.18.0, langsmith-0.3.45, asyncio-1.4.0, mock-3.17.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 0 items / 1 error\n\n... [TRUNCATED 22 LINES OF TRACEBACK] ...\n\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n========================= 1 warning, 1 error in 0.26s =========================\n\nC:\\Users\\titwa\\AppData\\Roaming\\Python\\Python314\\site-packages\\pytest_asyncio\\plugin.py:299: PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\" is unset.\nThe event loop scope for asynchronous fixtures will default to the \"fixture\" caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to \"function\" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: \"function\", \"class\", \"module\", \"package\", \"session\"\n\n  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/__init__.py",
+        "pyproject.toml",
+        "src/brickforge/config.py",
+        "tests/unit/test_config.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_config.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local",
+      "last_error": null,
+      "completed_at": "2026-11-06T22:53:43.298787",
+      "handoff_warning": "Self-healed (cycle 2/2): Resetting task with traceback context injected into instructions.",
+      "failure_history": [
+        {
+          "type": "self_heal",
+          "cycle": 1,
+          "timestamp": "2026-11-06T22:47:57.614565",
+          "previous_error": "============================= test session starts =============================\nplatform win32 -- Python 3.14.0, pytest-9.2.0, pluggy-1.6.0\nrootdir: C:\\Dev\\brickForge\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, Faker-40.18.0, langsmith-0.3.45, asyncio-1.4.0, mock-3.17.0\n\n... [TRUNCATED 14 LINES OF TRACEBACK] ...\n\nC:\\Users\\titwa\\AppData\\Roaming\\Python\\Python314\\site-packages\\pytest_asyncio\\plugin.py:299: PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\" is unset.\nThe event loop scope for asynchronous fixtures will default to the \"fixture\" caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to \"function\" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: \"function\", \"class\", \"module\", \"package\", \"session\"\n\n  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))\nERROR: file or directory not found: tests/unit/test_config.py",
+          "root_cause": "Verification command requires file(s) ['tests/unit/test_config.py'] which were missing from allowed_paths and disk.",
+          "resolution_strategy": "Added ['tests/unit/test_config.py'] to allowed_paths and instructed generator to implement them.",
+          "added_allowed_paths": [
+            "tests/unit/test_config.py"
+          ],
+          "updated_verification_command": null
+        },
+        {
+          "type": "self_heal",
+          "cycle": 2,
+          "timestamp": "2026-11-06T22:52:24.247393",
+          "previous_error": "============================= test session starts =============================\nplatform win32 -- Python 3.14.0, pytest-9.2.0, pluggy-1.6.0\nrootdir: C:\\Dev\\brickForge\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, Faker-40.18.0, langsmith-0.3.45, asyncio-1.4.0, mock-3.17.0\n\n... [TRUNCATED 27 LINES OF TRACEBACK] ...\n\n\nC:\\Users\\titwa\\AppData\\Roaming\\Python\\Python314\\site-packages\\pytest_asyncio\\plugin.py:299: PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\" is unset.\nThe event loop scope for asynchronous fixtures will default to the \"fixture\" caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to \"function\" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: \"function\", \"class\", \"module\", \"package\", \"session\"\n\n  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))",
+          "root_cause": "Task failed verification with traceback.",
+          "resolution_strategy": "Resetting task with traceback context injected into instructions.",
+          "added_allowed_paths": [],
+          "updated_verification_command": null
+        }
+      ],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-001",
+      "test_command": "pytest -q tests/unit/test_config.py",
+      "context_files": [],
+      "dependencies": []
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-002",
+      "title": "Define repository and scan domain models",
+      "description": "Add typed models for registered repositories, scan runs, scan status, source-file metadata, exclusions and scan errors. Use stable IDs and explicit lifecycle states.\n\nCRITICAL FIX REQUIREMENT FROM PREVIOUS FAILED ATTEMPT:\n- The verification command `pytest -q tests/unit/test_models.py` failed because the file `tests/unit/test_models.py` does not exist. The generator has not created any test cases for the models defined in `src/brickforge/models/repository.py` and `src/brickforge/models/scan.py`.\n- Create a new file `tests/unit/test_models.py` and add test cases for the models defined in `src/brickforge/models/repository.py` and `src/brickforge/models/scan.py`. Ensure that the test cases cover the initialization of each model with valid data and the validation of required fields.\n- You MUST define the exact function/variable names at the top-level or inside the exact scope requested by the verification command.\n\n[SELF-HEALING RESOLUTION - CYCLE 1]\n- Previous Failure Root Cause: The verification command expects a test file 'tests/unit/test_models.py' that does not exist and is not in the allowed paths.\n- Resolution Strategy: Add 'tests/unit/test_models.py' to the allowed paths and instruct the generator to create and implement unit tests for the models defined in 'src/brickforge/models/repository.py' and 'src/brickforge/models/scan.py'.\n- Newly unlocked allowed_paths that you MUST create/update to satisfy verification: tests/unit/test_models.py\n- Actionable Fix Instructions: Create a new file 'tests/unit/test_models.py' and add test cases for the models defined in 'src/brickforge/models/repository.py' and 'src/brickforge/models/scan.py'. Ensure that the test cases cover the initialization of each model with valid data and the validation of required fields. Use the following structure for the test cases:\n\n```python\nfrom src.brickforge.models.repository import Repository\nfrom src.brickforge.models.scan import ScanRun, ScanStatus, SourceFileMetadata, Exclusion, ScanError\nimport pytest\n\ndef test_repository_model():\n    repo = Repository(id='1', name='test_repo', url='http://test.com', last_scan_id='None')\n    assert repo.id == '1'\n    assert repo.name == 'test_repo'\n    assert repo.url == 'http://test.com'\n    assert repo.last_scan_id is None\n\n# Add similar test cases for other models\n```",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/models/repository.py",
+        "src/brickforge/models/scan.py",
+        "tests/unit/test_models.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_models.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-001"
+      ],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local",
+      "last_error": null,
+      "completed_at": "2026-11-06T23:02:02.794556",
+      "handoff_warning": "Self-healed (cycle 1/2): Add 'tests/unit/test_models.py' to the allowed paths and instruct the generator to create and implement unit tests for the models defined in 'src/brickforge/models/repository.py' and 'src/brickforge/models/scan.py'.",
+      "failure_history": [
+        {
+          "type": "self_heal",
+          "cycle": 1,
+          "timestamp": "2026-11-06T22:59:38.481841",
+          "previous_error": "Local API failure: Model reasoner PC1-Local returned HTTP 404: {\"error\":\"model 'qwen2.5-coder:14b' not found\"}",
+          "root_cause": "The verification command expects a test file 'tests/unit/test_models.py' that does not exist and is not in the allowed paths.",
+          "resolution_strategy": "Add 'tests/unit/test_models.py' to the allowed paths and instruct the generator to create and implement unit tests for the models defined in 'src/brickforge/models/repository.py' and 'src/brickforge/models/scan.py'.",
+          "added_allowed_paths": [
+            "tests/unit/test_models.py"
+          ],
+          "updated_verification_command": null
+        }
+      ],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-002",
+      "test_command": "pytest -q tests/unit/test_models.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-001"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-003",
+      "title": "Implement repository registry",
+      "description": "Implement registration, listing, lookup, update and deactivation of repository roots. Assign stable repository IDs and store canonical root paths.\n\n[SELF-HEALING RESOLUTION - CYCLE 2]\n- Previous Failure Root Cause: The debug trace indicates a Local API failure due to a model 'qwen3.8:27b' not being found. This suggests an issue with the model configuration or availability.\n- Resolution Strategy: Verify that the model 'qwen3.8:27b' is correctly configured and available. Check the model repository or contact the model provider for assistance.\n- Actionable Fix Instructions: 1. Verify the model configuration in the application settings or environment variables.\n2. Check if the model 'qwen3.8:27b' is available in the model repository.\n3. If the model is not available, contact the model provider for assistance in obtaining the model or using an alternative model.\n4. Once the model is confirmed to be available, retry the task to see if the issue is resolved.\n\nCRITICAL FIX REQUIREMENT FROM PREVIOUS FAILED ATTEMPT:\n- The test failures are due to the `tearDown` method attempting to remove a non-empty directory. This is likely because the database connection is not properly closed, leaving the database file open and preventing the directory from being deleted.\n- Ensure that all database connections are properly closed in the `tearDown` method. Modify the `tearDown` method to explicitly close the database connection before attempting to remove the directory.\n- You MUST define the exact function/variable names at the top-level or inside the exact scope requested by the verification command.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/repositories/registry.py",
+        "tests/unit/test_repository_registry.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_repository_registry.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-002"
+      ],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local",
+      "last_error": null,
+      "completed_at": "2026-11-07T00:39:20",
+      "handoff_warning": "Self-healed (cycle 2/2): Verify that the model 'qwen3.8:27b' is correctly configured and available. Check the model repository or contact the model provider for assistance.",
+      "failure_history": [
+        {
+          "type": "self_heal",
+          "cycle": 1,
+          "timestamp": "2026-11-07T00:00:24.616499",
+          "previous_error": "Local API failure: Model reasoner PC1-Local returned HTTP 404: {\"error\":\"model 'qwen2.5-coder:14b' not found\"}",
+          "root_cause": "The task is blocked due to a PermissionError when trying to delete the database file in the tearDown method. This is likely because the database connection is not being properly closed before the file is deleted.",
+          "resolution_strategy": "Ensure that the database connection is explicitly closed before attempting to delete the database file in the tearDown method. Modify the tearDown method to close the connection and then delete the file.",
+          "added_allowed_paths": [],
+          "updated_verification_command": null
+        },
+        {
+          "type": "self_heal",
+          "cycle": 2,
+          "timestamp": "2026-11-07T00:05:37.086157",
+          "previous_error": "Local API failure: Model reasoner PC1-Local returned HTTP 404: {\"error\":\"model 'qwen3.8:27b' not found\"}",
+          "root_cause": "The debug trace indicates a Local API failure due to a model 'qwen3.8:27b' not being found. This suggests an issue with the model configuration or availability.",
+          "resolution_strategy": "Verify that the model 'qwen3.8:27b' is correctly configured and available. Check the model repository or contact the model provider for assistance.",
+          "added_allowed_paths": [],
+          "updated_verification_command": null
+        }
+      ],
+      "complexity": "heavy",
+      "id": "BRICKFORGE-MVP-003",
+      "test_command": "pytest -q tests/unit/test_repository_registry.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-002"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-004",
+      "title": "Implement safe path canonicalization and root containment",
+      "description": "Resolve symlinks and normalize paths before scanning. Ensure every candidate file remains inside a registered root; reject traversal and unsafe roots.\n\n[SELF-HEALING RESOLUTION - CYCLE 1]\n- Previous Failure Root Cause: Verification command requires file(s) ['tests/unit/test_paths.py'] which do not exist on disk and were missing from allowed_paths.\n- Resolution Strategy: Added ['tests/unit/test_paths.py'] to allowed_paths and instructed code generator to create and implement tests.\n- Newly unlocked allowed_paths that you MUST create/update to satisfy verification: tests/unit/test_paths.py\n- Actionable Fix Instructions: You MUST create and implement the test file(s) tests/unit/test_paths.py in addition to src/brickforge/ingestion/paths.py so that `pytest -q tests/unit/test_paths.py` passes.\n\nCRITICAL FIX REQUIREMENT FROM PREVIOUS FAILED ATTEMPT:\n- The test file is missing the import for the `Path` class from the `pathlib` module.\n- Add the import statement `from pathlib import Path` at the beginning of the `tests/unit/test_paths.py` file.\n- You MUST define the exact function/variable names at the top-level or inside the exact scope requested by the verification command.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/ingestion/paths.py",
+        "tests/unit/test_paths.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_paths.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-003"
+      ],
+      "status": "completed",
+      "attempts": 2,
+      "last_worker": "PC1-Local+PC1-Local",
+      "last_error": "Execution paused/stopped from Mission Control UI.",
+      "completed_at": "2026-11-07T04:36:39.025500",
+      "handoff_warning": "Self-healed (cycle 1/2): Added ['tests/unit/test_paths.py'] to allowed_paths and instructed code generator to create and implement tests.",
+      "failure_history": [
+        {
+          "type": "self_heal",
+          "cycle": 1,
+          "timestamp": "2026-11-07T04:34:38.305579",
+          "previous_error": "============================= test session starts =============================\nplatform win32 -- Python 3.14.0, pytest-9.2.0, pluggy-1.6.0\nrootdir: C:\\Dev\\brickForge\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, Faker-40.18.0, langsmith-0.3.45, asyncio-1.4.0, mock-3.17.0\n\n... [TRUNCATED 14 LINES OF TRACEBACK] ...\n\nC:\\Users\\titwa\\AppData\\Roaming\\Python\\Python314\\site-packages\\pytest_asyncio\\plugin.py:299: PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\" is unset.\nThe event loop scope for asynchronous fixtures will default to the \"fixture\" caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to \"function\" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: \"function\", \"class\", \"module\", \"package\", \"session\"\n\n  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))\nERROR: file or directory not found: tests/unit/test_paths.py",
+          "root_cause": "Verification command requires file(s) ['tests/unit/test_paths.py'] which do not exist on disk and were missing from allowed_paths.",
+          "resolution_strategy": "Added ['tests/unit/test_paths.py'] to allowed_paths and instructed code generator to create and implement tests.",
+          "added_allowed_paths": [
+            "tests/unit/test_paths.py"
+          ],
+          "updated_verification_command": null
+        }
+      ],
+      "complexity": "heavy",
+      "id": "BRICKFORGE-MVP-004",
+      "test_command": "pytest -q tests/unit/test_paths.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-003"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-005",
+      "title": "Implement configurable ignore and inclusion rules",
+      "description": "Support built-in exclusions for VCS metadata, virtual environments, build outputs, caches, binaries and configurable glob patterns. Allow repository-level overrides.\n\n[SELF-HEALING RESOLUTION - CYCLE 2]\n- Previous Failure Root Cause: Task failed verification with traceback.\n- Resolution Strategy: Resetting task with traceback context injected into instructions.\n- Actionable Fix Instructions: Resolve the following verification error:\n============================= test session starts =============================\nplatform win32 -- Python 3.14.0, pytest-9.2.0, pluggy-1.6.0\nrootdir: C:\\Dev\\brickForge\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, Faker-40.18.0, langsmith-0.3.45, asyncio-1.4.0, mock-3.17.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 2 items\n\n... [TRUNCATED 21 LINES OF TRACEBACK] ...\n\nFAILED tests/unit/test_ignore_rules.py::TestIgnoreRules::test_is_ignored - At...\n=================== 1 failed, 1 passed, 1 warning in 0.39s ====================\n\nC:\\Users\\titwa\\AppData\\Roaming\\Python\\Python314\\site-packages\\pytest_asyncio\\plugin.py:299: PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\" is unset.\nThe event loop scope for asynchronous fixtures will default to the \"fixture\" caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to \"function\" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: \"function\", \"class\", \"module\", \"package\", \"session\"\n\n  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))\n\nCRITICAL FIX REQUIREMENT FROM PREVIOUS FAILED ATTEMPT:\n- The code is using `os.path.fnmatch.fnmatch` which is not available in the `ntpath` module. The correct module to use is `fnmatch`.\n- Replace `os.path.fnmatch.fnmatch` with `fnmatch.fnmatch` in the `is_ignored` method of the `IgnoreRules` class.\n- You MUST define the exact function/variable names at the top-level or inside the exact scope requested by the verification command.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/ingestion/ignore_rules.py",
+        "tests/unit/test_ignore_rules.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_ignore_rules.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-004"
+      ],
+      "status": "completed",
+      "attempts": 2,
+      "last_worker": "PC1-Local+PC1-Local",
+      "last_error": null,
+      "completed_at": "2026-11-07T04:54:24.044235",
+      "handoff_warning": "Self-healed (cycle 2/2): Resetting task with traceback context injected into instructions.",
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICKFORGE-MVP-005",
+      "test_command": "pytest -q tests/unit/test_ignore_rules.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-004"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-006",
+      "title": "Implement source file discovery",
+      "description": "Walk registered roots and yield eligible source files with normalized relative paths, language hints, file size and modification time. Do not follow symlink directories by default.\n\n[SELF-HEALING RESOLUTION - CYCLE 2]\n- Previous Failure Root Cause: The mock_os_walk patch is not correctly simulating the directory structure and file contents. The os.walk return value should include the full file paths, not just the filenames.\n- Resolution Strategy: Update the mock_os_walk patch to include the full file paths in the return value. The return value should be [('root', ['subdir'], ['root/subdir/file1.py', 'root/subdir/file2.txt']), ('root/subdir', [], [])].\n- Actionable Fix Instructions: 1. Update the mock_os_walk patch in tests/unit/test_discovery.py to include the full file paths in the return value. The return value should be [('root', ['subdir'], ['root/subdir/file1.py', 'root/subdir/file2.txt']), ('root/subdir', [], [])].\n2. Run the verification command pytest -q tests/unit/test_discovery.py to ensure the task is resolved.\n\nCRITICAL FIX REQUIREMENT FROM PREVIOUS FAILED ATTEMPT:\n- The mock_os_walk patch is not correctly simulating the directory structure and file contents. The os.walk return value should include the full file paths, not just the filenames.\n- 1. Update the mock_os_walk patch in tests/unit/test_discovery.py to include the full file paths in the return value. The return value should be [('root', ['subdir'], ['root/subdir/file1.py', 'root/subdir/file2.txt']), ('root/subdir', [], [])].\n2. Run the verification command pytest -q tests/unit/test_discovery.py to ensure the task is resolved.\n- You MUST define the exact function/variable names at the top-level or inside the exact scope requested by the verification command.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/ingestion/discovery.py",
+        "tests/unit/test_discovery.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_discovery.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-005"
+      ],
+      "status": "running",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": "Self-healed (cycle 2/2): Update the mock_os_walk patch to include the full file paths in the return value. The return value should be [('root', ['subdir'], ['root/subdir/file1.py', 'root/subdir/file2.txt']), ('root/subdir', [], [])].",
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICKFORGE-MVP-006",
+      "test_command": "pytest -q tests/unit/test_discovery.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-005"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-007",
+      "title": "Implement content hashing and file fingerprinting",
+      "description": "Compute SHA-256 content hashes and stable file identities. Capture size and mtime as optimization hints, but use content hash as the authoritative change signal.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/ingestion/fingerprints.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_fingerprints.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-006"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-007",
+      "test_command": "pytest -q tests/unit/test_fingerprints.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-006"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-008",
+      "title": "Implement SQLite connection and migration manager",
+      "description": "Create database initialization, schema version tracking, transactional migrations, foreign-key enforcement, busy timeout and WAL configuration. Keep vector extension optional.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/storage/database.py",
+        "src/brickforge/storage/migrations/"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/integration/test_database_migrations.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-007"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-008",
+      "test_command": "pytest -q tests/integration/test_database_migrations.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-007"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-009",
+      "title": "Create core relational schema",
+      "description": "Implement repositories, scan_runs, source_files, code_bricks, brick_dependencies and external_packages tables with indexes, constraints and provenance fields. Use surrogate primary keys where SQLite requires them.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/storage/migrations/0001_core.sql"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/integration/test_core_schema.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-008"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-009",
+      "test_command": "pytest -q tests/integration/test_core_schema.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-008"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-010",
+      "title": "Implement incremental scan planner",
+      "description": "Compare discovered files and fingerprints with stored state to classify added, changed, unchanged and deleted files. Persist scan-run counters and support dry-run planning.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/ingestion/planner.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_scan_planner.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-009"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-010",
+      "test_command": "pytest -q tests/unit/test_scan_planner.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-009"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-011",
+      "title": "Define language adapter interface and Python adapter",
+      "description": "Create a language adapter contract for detection, parsing, symbol extraction and parser diagnostics. Implement Python as the first supported language.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/parsers/base.py",
+        "src/brickforge/parsers/python.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_python_adapter.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-002",
+        "BRICKFORGE-MVP-008",
+        "BRICKFORGE-MVP-009"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-011",
+      "test_command": "pytest -q tests/unit/test_python_adapter.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-002",
+        "BRICKFORGE-MVP-008",
+        "BRICKFORGE-MVP-009"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-012",
+      "title": "Integrate Tree-sitter runtime and Python grammar",
+      "description": "Add pinned Tree-sitter runtime and Python grammar dependencies. Build parser initialization with deterministic grammar loading and clear startup errors.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/parsers/tree_sitter_runtime.py",
+        "pyproject.toml"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_tree_sitter_runtime.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-011"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-012",
+      "test_command": "pytest -q tests/unit/test_tree_sitter_runtime.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-011"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-013",
+      "title": "Extract Python function definitions",
+      "description": "Extract top-level and nested functions with qualified names, signatures, decorators, docstrings, source spans and content hashes. Preserve exact source offsets.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/parsers/python_symbols.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_python_functions.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-012"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-013",
+      "test_command": "pytest -q tests/unit/test_python_functions.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-012"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-014",
+      "title": "Extract Python class and method definitions",
+      "description": "Extract classes, bases, class docstrings, methods and qualified names. Represent methods as bricks linked to their containing class where appropriate.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/parsers/python_symbols.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_python_classes.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-013"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-014",
+      "test_command": "pytest -q tests/unit/test_python_classes.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-013"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-015",
+      "title": "Extract imports and external package references",
+      "description": "Parse import and from-import statements, normalize module names and distinguish standard library, local modules and third-party dependencies where resolvable.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/analysis/imports.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_import_analysis.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-014"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-015",
+      "test_command": "pytest -q tests/unit/test_import_analysis.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-014"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-016",
+      "title": "Build local symbol index for a repository",
+      "description": "Resolve module paths and qualified symbols across indexed Python files. Support absolute and relative imports without executing source code.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/analysis/symbol_index.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_symbol_index.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-015"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-016",
+      "test_command": "pytest -q tests/unit/test_symbol_index.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-015"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-017",
+      "title": "Extract function-call and inheritance relationships",
+      "description": "Use AST nodes to identify statically visible calls, class bases and method references. Record confidence and resolution status rather than guessing dynamic dispatch.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/analysis/dependencies.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_dependency_extraction.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-016"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-017",
+      "test_command": "pytest -q tests/unit/test_dependency_extraction.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-016"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-018",
+      "title": "Persist brick and dependency provenance",
+      "description": "Persist extracted symbols with repository, file, qualified name, source span, parser version and content hash. Persist dependency edges with edge type and resolution confidence.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/storage/repositories.py",
+        "src/brickforge/storage/brick_repository.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/integration/test_brick_persistence.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-017"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-018",
+      "test_command": "pytest -q tests/integration/test_brick_persistence.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-017"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-019",
+      "title": "Implement parser error and partial-file handling",
+      "description": "Store parser diagnostics and allow valid symbols from partially malformed files to be indexed when the parser provides recoverable nodes. Never execute scanned code.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/parsers/diagnostics.py",
+        "src/brickforge/ingestion/pipeline.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/integration/test_parser_errors.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-018"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-019",
+      "test_command": "pytest -q tests/integration/test_parser_errors.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-018"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-020",
+      "title": "Implement symbol identity and deduplication rules",
+      "description": "Define stable brick identity using repository/file identity, qualified symbol name and content version. Handle renames and duplicate code across repositories without conflating provenance.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/identity.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_brick_identity.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-019"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-020",
+      "test_command": "pytest -q tests/unit/test_brick_identity.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-019"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-021",
+      "title": "Implement brick contract representation",
+      "description": "Expose a contract containing symbol kind, signature, docstring, decorators, source location, language, imports, package requirements and dependency summary without requiring full source body.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/contracts.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_contracts.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-013",
+        "BRICKFORGE-MVP-018"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-021",
+      "test_command": "pytest -q tests/unit/test_contracts.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-013",
+        "BRICKFORGE-MVP-018"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-022",
+      "title": "Implement exact and lexical brick search",
+      "description": "Implement SQLite FTS5 indexing for symbol names, signatures, docstrings, tags and summaries. Add insert/update/delete synchronization and safe query handling.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/search/fts.py",
+        "src/brickforge/storage/migrations/0002_fts.sql"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/integration/test_fts_search.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-021"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-022",
+      "test_command": "pytest -q tests/integration/test_fts_search.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-021"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-023",
+      "title": "Implement filtered catalog search API",
+      "description": "Add search filters for repository, language, symbol kind, path, package dependency and minimum portability. Return stable IDs and concise result metadata.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/search/service.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_search_service.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-022"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-023",
+      "test_command": "pytest -q tests/unit/test_search_service.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-022"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-024",
+      "title": "Implement dependency graph traversal",
+      "description": "Retrieve incoming/outgoing dependencies to a configurable depth, detect cycles and mark unresolved edges. Apply a maximum node/edge budget.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/analysis/graph.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_dependency_graph.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-023"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-024",
+      "test_command": "pytest -q tests/unit/test_dependency_graph.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-023"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-025",
+      "title": "Implement dependency-aware source extraction",
+      "description": "Extract a selected brick with required internal helpers and import headers. Preserve source order where possible and report omitted/unresolved dependencies.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/extraction/bundler.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/integration/test_extraction_bundle.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-024"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-025",
+      "test_command": "pytest -q tests/integration/test_extraction_bundle.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-024"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-026",
+      "title": "Implement repository-specific import normalization",
+      "description": "Offer optional normalization of internal imports for extracted bundles. Keep original source unchanged and record every rewrite in the extraction manifest.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/extraction/import_rewriter.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_import_rewriter.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-025"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-026",
+      "test_command": "pytest -q tests/unit/test_import_rewriter.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-025"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-027",
+      "title": "Generate extraction manifest and provenance report",
+      "description": "Emit a manifest listing selected bricks, included dependencies, source files, source hashes, imports, transformations and unresolved dependencies.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/extraction/manifest.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_extraction_manifest.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-026"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-027",
+      "test_command": "pytest -q tests/unit/test_extraction_manifest.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-026"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-028",
+      "title": "Add extraction output modes",
+      "description": "Support source bundle, contract-only and JSON metadata outputs. Make source inclusion explicit and default contract responses to body-free.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/extraction/output.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_extraction_output.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-027"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-028",
+      "test_command": "pytest -q tests/unit/test_extraction_output.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-027"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-029",
+      "title": "Define composition request and proposal models",
+      "description": "Define target language/version, interface contract, selected brick IDs, adaptation instructions, constraints and output artifact metadata. Treat generated code as a proposal.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/composition/models.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_composition_models.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-021",
+        "BRICKFORGE-MVP-025",
+        "BRICKFORGE-MVP-027"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-029",
+      "test_command": "pytest -q tests/unit/test_composition_models.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-021",
+        "BRICKFORGE-MVP-025",
+        "BRICKFORGE-MVP-027"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-030",
+      "title": "Implement deterministic composition context builder",
+      "description": "Assemble contracts, source bundles, dependency manifests and target constraints into bounded context for an external model or agent. Do not call an LLM from Core.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/composition/context.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_composition_context.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-029"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-030",
+      "test_command": "pytest -q tests/unit/test_composition_context.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-029"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-031",
+      "title": "Implement composition provider interface",
+      "description": "Define a provider protocol for proposing code changes, with a mock provider for tests. Keep model/vendor configuration outside core indexing and storage.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/composition/provider.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_composition_provider.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-030"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-031",
+      "test_command": "pytest -q tests/unit/test_composition_provider.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-030"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-032",
+      "title": "Implement adaptation proposal workflow",
+      "description": "Create a workflow that takes selected bricks and an integration spec, returns proposed files/diffs and a rationale, and records model/provider metadata when used.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/composition/service.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_composition_service.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-031"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-032",
+      "test_command": "pytest -q tests/unit/test_composition_service.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-031"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-033",
+      "title": "Implement composition dependency and license report",
+      "description": "Aggregate external packages, detected license metadata where available, source origins and unresolved dependency warnings for selected bricks.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/composition/reports.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_composition_reports.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-032"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-033",
+      "test_command": "pytest -q tests/unit/test_composition_reports.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-032"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-034",
+      "title": "Implement optional language adaptation boundary",
+      "description": "Define an explicit extension point for cross-language adaptation. Mark transpilation as experimental and require human review and validation.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/composition/adaptation.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_adaptation_boundary.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-033"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-034",
+      "test_command": "pytest -q tests/unit/test_adaptation_boundary.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-033"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-035",
+      "title": "Add proposal approval and export workflow",
+      "description": "Allow a proposal to be accepted, rejected or exported to a separate destination. Require explicit destination allowlisting and preserve the original source catalog.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/composition/approval.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_proposal_approval.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-034"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-035",
+      "test_command": "pytest -q tests/unit/test_proposal_approval.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-034"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-036",
+      "title": "Implement isolated validation runner interface",
+      "description": "Define a runner that executes configured checks in a temporary workspace with timeouts, resource limits and no implicit network access. Start with Python compile checks.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/validation/runner.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_validation_runner.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-025",
+        "BRICKFORGE-MVP-027"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-036",
+      "test_command": "pytest -q tests/unit/test_validation_runner.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-025",
+        "BRICKFORGE-MVP-027"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-037",
+      "title": "Implement syntax and compile validation for extracted Python",
+      "description": "Run compileall or py_compile against generated bundles in an isolated temporary workspace and capture diagnostics.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/validation/python_checks.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/integration/test_python_validation.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-036"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-037",
+      "test_command": "pytest -q tests/integration/test_python_validation.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-036"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-038",
+      "title": "Implement dependency availability checks",
+      "description": "Check declared Python packages against a supplied environment or lockfile without installing packages automatically. Distinguish missing, unknown and incompatible requirements.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/validation/dependencies.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_dependency_validation.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-037"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-038",
+      "test_command": "pytest -q tests/unit/test_dependency_validation.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-037"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-039",
+      "title": "Implement unit-test harness for extracted bundles",
+      "description": "Allow a caller-supplied test command or test package to run in the isolated workspace. Require explicit opt-in for execution.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/validation/tests.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/integration/test_bundle_tests.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-038"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-039",
+      "test_command": "pytest -q tests/integration/test_bundle_tests.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-038"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-040",
+      "title": "Implement validation report model",
+      "description": "Create structured validation reports with checks, statuses, diagnostics, timestamps, bundle hash and environment metadata.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/validation/report.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/unit/test_validation_report.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-039"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-040",
+      "test_command": "pytest -q tests/unit/test_validation_report.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-039"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-041",
+      "title": "Add end-to-end Python vertical-slice test",
+      "description": "Create a fixture repository containing functions, classes, imports and dependencies. Test registration, scan, AST extraction, persistence, search, contract inspection, bundling and validation.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "tests/e2e/test_python_vertical_slice.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/e2e/test_python_vertical_slice.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-010",
+        "BRICKFORGE-MVP-019",
+        "BRICKFORGE-MVP-028",
+        "BRICKFORGE-MVP-035",
+        "BRICKFORGE-MVP-040"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-041",
+      "test_command": "pytest -q tests/e2e/test_python_vertical_slice.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-010",
+        "BRICKFORGE-MVP-019",
+        "BRICKFORGE-MVP-028",
+        "BRICKFORGE-MVP-035",
+        "BRICKFORGE-MVP-040"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-042",
+      "title": "Add incremental re-indexing and deletion regression tests",
+      "description": "Verify unchanged files are skipped, changed files update their bricks and dependencies, deleted files are marked removed, and repeated scans remain idempotent.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "tests/e2e/test_incremental_indexing.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/e2e/test_incremental_indexing.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-010",
+        "BRICKFORGE-MVP-019"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-042",
+      "test_command": "pytest -q tests/e2e/test_incremental_indexing.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-010",
+        "BRICKFORGE-MVP-019"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-043",
+      "title": "Add security and filesystem boundary tests",
+      "description": "Test path traversal, symlink escape, oversized files, ignored directories, malformed source, unsafe export paths and attempts to execute source during indexing.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "tests/security/test_filesystem_boundaries.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/security/test_filesystem_boundaries.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-004",
+        "BRICKFORGE-MVP-005",
+        "BRICKFORGE-MVP-040"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-043",
+      "test_command": "pytest -q tests/security/test_filesystem_boundaries.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-004",
+        "BRICKFORGE-MVP-005",
+        "BRICKFORGE-MVP-040"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-044",
+      "title": "Add performance baseline and scan metrics",
+      "description": "Measure files per second, parse time, database write time, search latency and memory use on a documented fixture corpus. Record baseline without premature optimization.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "tests/performance/test_ingestion_baseline.py"
+      ],
+      "context_paths": [],
+      "verification_command": "pytest -q tests/performance/test_ingestion_baseline.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-043"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-044",
+      "test_command": "pytest -q tests/performance/test_ingestion_baseline.py",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-043"
+      ]
+    },
+    {
+      "task_id": "BRICKFORGE-MVP-045",
+      "title": "Document MVP setup, operations and limitations",
+      "description": "Document installation, repository registration, scanning, search, contract inspection, extraction, validation, database backup and known limitations.",
+      "task_type": "test_and_validation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "README.md",
+        "docs/quickstart.md",
+        "docs/security.md"
+      ],
+      "context_paths": [],
+      "verification_command": "python -m brickforge --help",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICKFORGE-MVP-044"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICKFORGE-MVP-045",
+      "test_command": "python -m brickforge --help",
+      "context_files": [],
+      "dependencies": [
+        "BRICKFORGE-MVP-044"
+      ]
+    }
+  ]
+}

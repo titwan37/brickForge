@@ -1,0 +1,157 @@
+{
+    "tools": [
+        {
+            "name": "search_code_bricks",
+            "description": "Hybrid semantic (vector) and lexical (BM25 + AST filter) search across all indexed repositories to discover reusable classes, functions, and modules.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Natural language intent or exact symbol/signature query (e.g., 'thread-safe ring buffer' or 'fn parse_hl7')."
+                    },
+                    "languages": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "rust",
+                                "python",
+                                "typescript",
+                                "cpp",
+                                "csharp",
+                                "go"
+                            ]
+                        },
+                        "description": "Filter by programming languages."
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "function",
+                                "class",
+                                "struct",
+                                "trait",
+                                "interface"
+                            ]
+                        }
+                    },
+                    "min_portability": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0,
+                        "default": 0.5,
+                        "description": "Filter out tightly coupled legacy code below this portability threshold."
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "default": 10,
+                        "maximum": 50
+                    }
+                },
+                "required": [
+                    "query"
+                ]
+            }
+        },
+        {
+            "name": "inspect_brick_contract",
+            "description": "Retrieve the AST signature, docstring, external package requirements, and internal dependency tree of a specific brick without loading its full implementation body (saves context window).",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "brick_id": {
+                        "type": "string",
+                        "description": "Unique hash ID of the code brick."
+                    },
+                    "dependency_depth": {
+                        "type": "integer",
+                        "default": 2,
+                        "maximum": 5
+                    }
+                },
+                "required": [
+                    "brick_id"
+                ]
+            }
+        },
+        {
+            "name": "extract_composable_bundle",
+            "description": "Extract a code brick along with its transitive internal helper functions/types and required import headers as a self-contained, ready-to-compile code block.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "brick_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "One or more brick IDs to bundle together."
+                    },
+                    "include_internal_deps": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Automatically resolve and inline sibling helper functions/structs referenced in the AST."
+                    },
+                    "strip_repo_specifics": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Rewrite internal module paths to flat/local scope imports."
+                    }
+                },
+                "required": [
+                    "brick_ids"
+                ]
+            }
+        },
+        {
+            "name": "compose_and_adapt_bricks",
+            "description": "Synthesize or refactor one or more catalog bricks to fit a target architecture, language version, or interface contract.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "brick_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "target_language": {
+                        "type": "string",
+                        "description": "Target language (allows cross-language transpilation of logic bricks, e.g., Python to Rust)."
+                    },
+                    "integration_spec": {
+                        "type": "string",
+                        "description": "Instructions on how the bricks should be wired together or adapted (e.g., 'Expose as an async FastAPI router' or 'Adapt struct to implement serde::Serialize')."
+                    }
+                },
+                "required": [
+                    "brick_ids",
+                    "integration_spec"
+                ]
+            }
+        },
+        {
+            "name": "trigger_repo_sync",
+            "description": "Trigger an incremental Tree-sitter AST crawl and index update on a specific local path or registered repository.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Absolute local or network path to scan."
+                    },
+                    "compute_embeddings": {
+                        "type": "boolean",
+                        "default": true
+                    }
+                },
+                "required": [
+                    "path"
+                ]
+            }
+        }
+    ]
+}

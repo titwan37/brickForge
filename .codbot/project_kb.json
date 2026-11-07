@@ -1,0 +1,1100 @@
+{
+  "pyproject.toml": {
+    "rel_path": "pyproject.toml",
+    "sha256": "a065483a3440b63855d779da4d9c27e61e3df85649458920d963b92867f46a7d",
+    "total_lines": 70,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "[build-system]\nrequires = [\"setuptools>=61.0\", \"wheel\"]\nbuild-backend = \"setuptools.build_meta\"\n\n[project]\nname = \"brickforge\"\nversion = \"0.1.0\"\ndescription = \"BrickForge Core: Ingestion, storage, search, and validation for brick models\"\nreadme = \"README.md\"\nrequires-python = \">=3.9\"\nlicense = { text = \"MIT\" }\nauthors = [{ name = \"BrickForge Team\" }]\nclassifiers = [\n    \"Programming Language :: Python :: 3\",\n    \"License :: OSI Approved :: MIT License\",\n    \"Operating System :: OS Independent\",\n]\ndependencies = [\"pydantic>=2.0\", \"pydantic-settings>=2.0\"]\n\n[project.optional-dependencies]\ndev = [\"pytest>=7.0\", \"pytest-cov>=4.0\", \"mypy>=1.0\", \"ruff>=0.1.0\"]\nmcp = [\"mcp>=1.0\"]\n\n[project.scripts]\nbrickforge = \"brickforge.cli:main\""
+  },
+  "README.md": {
+    "rel_path": "README.md",
+    "sha256": "9d1e3108aa883befa5f8e48c0549daaea262413fc36c3829eceb4d1857b9df2b",
+    "total_lines": 99,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "# BrickForge (`brickforge-mcp`)\n\n> **Sovereign AST Code Intelligence & Composable Component Registry for AI Agents and Engineers.**\n\n`BrickForge` crawls distributed local drives, NAS archives, and multi-language Git repositories to catalog every class, function, struct, and module into a unified, queryable knowledge base. Exposed via a native **Model Context Protocol (MCP)** server, it empowers developers and autonomous coding agents to discover, extract, and assemble battle-tested \"software bricks\" on demand\u2014eliminating redundant engineering.\n\n\n## BrickForge MVP planning check-in\n\nPrepare and deliver a prioritized MVP implementation backlog for the BrickForge project. \n\nUse the conversation's BrickForge design: a local-first AST-aware catalog of reusable code across registered local drives, NAS locations and Git repositories; incremental scanning and hashing; Tree-sitter extraction; SQLite relational metadata and dependency edges; FTS5 lexical search; optional sqlite-vec semantic search; and an MCP interface for catalog stats, repository listing/sync, scan status, brick search, contract inspection, dependency-aware extraction, and guarded adaptation proposals. \n\nKeep Core, MCP server and agent responsibilities separate. Start with one complete Python vertical slice: register and scan a directory, index functions/classes, search, inspect contracts, and extract a component with dependencies. Produce (1) a short MVP scope and explicit non-goals, (2) a prioritized backlog grouped into epics, (3) atomic implementation tasks with IDs, dependencies, and concrete acceptance criteria, (4) a validation/test plan including incremental re-indexing, parser errors, dependency resolution, FTS search, MCP contract tests, and safe filesystem boundaries, (5) key risks and decisions still open, and (6) a suggested sequence of milestones. \n\nDistinguish source-grounded decisions from recommendations; do not claim code has been implemented or tested. Keep tasks independently actionable and avoid expanding to multiple languages before the Python slice works.\n\n---\n\n## Why BrickForge?\n\nOver years of engineering across dozens of projects, valuable algorithms, hardware wrappers, parsers, and UI components get scattered across drives and forgotten. Traditional tools fall short:\n\n- **`grep` / `ripgrep`** requires remembering exact variable or function names.\n- **Standard RAG** chunks files blindly by token count, severing AST boundaries and losing import dependencies."
+  },
+  "brickforge/ARCHITECTURE.md": {
+    "rel_path": "brickforge/ARCHITECTURE.md",
+    "sha256": "198bf086e422234de8d29e929adf5d9c8fe08d415e99d3c67b7260c5c885fbb9",
+    "total_lines": 148,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "# BrickForge \u2014 AST ingestion and storage design\n\nThis document turns the initial concept into an implementable ingestion pipeline. The first release should optimize for correctness, traceability, and incremental updates before optimizing ranking or cross-language composition.\n\n## 1. Ingestion lifecycle\n\n```text\nregister root\n   -> enumerate candidate files\n   -> apply ignore / safety policy\n   -> hash file\n   -> skip unchanged file OR parse changed file\n   -> extract AST symbols and source spans\n   -> resolve imports and symbol references\n   -> calculate static reuse signals\n   -> optionally summarize and embed\n   -> commit file + symbols + edges atomically\n   -> reconcile deleted files after a successful scan\n```\n\n### 1.1 Root registration and discovery\n\nA repository record represents an explicitly registered scan root. It may be a folder, Git working tree, mounted drive directory, or NAS path. Store the canonical root path and user-configured include/exclude rules. Do not recursively crawl arbitrary filesystem paths supplied by MCP callers.\n\nDefault exclusions should cover version-control internals, build output, dependency caches, vendored code, generated code, virtual environments, binaries, and secret-bearing files. Support `.gitignore` where applicable, but do not treat it as the only safety boundary. Do not follow symbolic links by default; if enabled, detect loops and ensure resolved targets remain within an allowed root."
+  },
+  "brickforge/mcp-tools.json": {
+    "rel_path": "brickforge/mcp-tools.json",
+    "sha256": "bf672b865d2b8f6237ddacd0ddf402a036a33ef73b4ea616da0ed5bd87fa15c3",
+    "total_lines": 357,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"manifestVersion\": \"1.0.0\",\n  \"server\": {\n    \"name\": \"brickforge\",\n    \"version\": \"0.1.0\",\n    \"description\": \"Local-first AST code catalog and composable software brick registry\",\n    \"protocolVersionTarget\": \"2026-07-28\"\n  },\n  \"transports\": [\n    {\n      \"name\": \"stdio\",\n      \"intendedUse\": \"Local IDEs, CLIs, and agent processes\",\n      \"command\": \"brickforge-mcp\",\n      \"args\": [\"--db\", \"~/.brickforge/catalog.db\"]\n    },\n    {\n      \"name\": \"streamable-http\",\n      \"intendedUse\": \"Authenticated remote clients\",\n      \"endpoint\": \"/mcp\",\n      \"httpMethods\": [\"POST\"]\n    }\n  ],\n  \"tools\": [\n    {"
+  },
+  "brickforge/MCP_SERVER.md": {
+    "rel_path": "brickforge/MCP_SERVER.md",
+    "sha256": "954055200ed4b0be2e8f26f38ee81c049d1297beca6c74e004bf060d2c35c0c7",
+    "total_lines": 139,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "# BrickForge MCP server \u2014 interface and endpoint design\n\n## 1. Scope\n\nThe MCP server exposes the catalog to IDEs, coding agents, and other software. It should remain a thin, permission-aware adapter over the storage/search/extraction services. It should not crawl arbitrary paths, execute source code, or silently modify registered repositories.\n\nThe manifest in `mcp-tools.json` is the draft project contract for tools, output schemas, resources, and transports. Implement the definitions with the selected MCP SDK and validate them through an MCP client integration test.\n\n## 2. Transports and endpoints\n\n### Local transport: stdio\n\nProposed invocation:\n\n```bash\nbrickforge-mcp --db ~/.brickforge/catalog.db --transport stdio\n```\n\nThe MCP client launches the server as a subprocess. Standard input/output are reserved for MCP messages; write logs and diagnostics to standard error only.\n\n### Remote transport: Streamable HTTP\n\nProposed endpoint:\n\n```text"
+  },
+  "brickforge/README.md": {
+    "rel_path": "brickforge/README.md",
+    "sha256": "8855c2f5bea809a2230698059b7128423a2d29a64d1cf77229ce5fee0829c8df",
+    "total_lines": 204,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "# BrickForge\n\n> **A local-first, AST-aware registry for discovering, understanding, and reusing software components.**\n\nBrickForge turns source code scattered across drives, NAS locations, and Git repositories into a searchable knowledge base of reusable software building blocks \u2014 functions, methods, classes, structs, interfaces, modules, and their dependencies.\n\nIt combines language-aware parsing, structural metadata, dependency analysis, lexical search, and local semantic embeddings. An MCP server makes the catalog available to IDEs and AI agents, so they can discover existing implementations before creating new ones, inspect their contracts, retrieve dependency-aware bundles, and propose adaptations for new solutions.\n\n## Why it exists\n\nUseful software accumulates across years of projects. Parsers, algorithms, hardware wrappers, UI components, adapters, test helpers, and integration code become difficult to remember and rediscover. Searching by filename or exact symbol name is not enough when the question is functional \u2014 for example, \u201cHave I already written a retry policy with jitter?\u201d\n\nBrickForge addresses this as a **software asset knowledge base**, not just a code search index. It preserves where a component came from, what it does, what it needs, how it relates to other symbols, and how confidently it can be reused.\n\n## Core capabilities\n\n- **Distributed source discovery:** register local folders, mounted drives, NAS shares, and Git working trees.\n- **Incremental indexing:** hash files and avoid reparsing unchanged content.\n- **AST-aware cataloging:** extract symbols, signatures, documentation, source spans, and parent-child relationships using Tree-sitter grammars.\n- **Dependency mapping:** record calls, type references, inheritance, and imports, including unresolved references and confidence.\n- **Hybrid discovery:** combine SQLite FTS5 lexical search with vector similarity and structured filters.\n- **Reuse assessment:** expose explainable portability signals, dependency depth, package requirements, and source provenance.\n- **Dependency-aware extraction:** retrieve a selected brick and its resolved internal dependencies with an import manifest.\n- **Agent access:** expose search, inspection, extraction, synchronization, and optional composition tools through MCP.\n- **Local-first operation:** keep source code, metadata, and embeddings on the host by default. Remote model or MCP configurations are opt-in and must be treated as data egress."
+  },
+  "brickforge/schema-vector.sql": {
+    "rel_path": "brickforge/schema-vector.sql",
+    "sha256": "84eb53bd3a27b23df8e51e3156b4a380e67c18dbc12530d8d26150145f57982a",
+    "total_lines": 22,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "-- Optional vector index. Load the sqlite-vec extension before executing this file.\n-- The sample uses 1024 dimensions to match the initial BrickForge proposal.\n-- If the embedding model changes dimension, create a migration and rebuild vectors.\n-- sqlite-vec is pre-v1: pin the extension version and test its behavior in CI.\n\nCREATE VIRTUAL TABLE IF NOT EXISTS brick_embeddings USING vec0(\n    embedding FLOAT[1024]\n);\n\n-- Insert/update vectors with rowid = code_bricks.row_id:\n-- INSERT INTO brick_embeddings(rowid, embedding) VALUES (?, ?);\n-- The matching metadata row belongs in brick_embedding_state.\n-- Delete vector rows explicitly when a brick is deleted or re-created:\n-- DELETE FROM brick_embeddings WHERE rowid = ?;\n\n-- Example nearest-neighbor query (bind a 1024-dimensional vector at ?):\n-- SELECT b.id, b.symbol_name, v.distance\n-- FROM brick_embeddings AS v\n-- JOIN code_bricks AS b ON b.row_id = v.rowid\n-- WHERE v.embedding MATCH ?\n-- ORDER BY v.distance\n-- LIMIT ?;"
+  },
+  "brickforge/schema.sql": {
+    "rel_path": "brickforge/schema.sql",
+    "sha256": "28b3d7424b88a84953fbdb51af649c06e8aea27813c5b48dbbb1cde588c6b1e9",
+    "total_lines": 193,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "-- BrickForge core relational catalog + FTS5 index\n-- Requires SQLite with FTS5 enabled. Load schema-vector.sql separately after\n-- loading the sqlite-vec extension. Enable foreign_keys on EVERY connection.\n\nPRAGMA foreign_keys = ON;\nPRAGMA journal_mode = WAL;\nPRAGMA user_version = 1;\n\nCREATE TABLE IF NOT EXISTS repositories (\n    id              TEXT PRIMARY KEY,\n    name            TEXT NOT NULL,\n    root_path       TEXT NOT NULL UNIQUE,\n    source_kind     TEXT NOT NULL DEFAULT 'directory'\n                    CHECK (source_kind IN ('directory', 'git_worktree', 'nas_share', 'archive')),\n    vcs_remote      TEXT,\n    vcs_ref         TEXT,\n    enabled         INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),\n    include_globs   TEXT NOT NULL DEFAULT '[]',\n    exclude_globs   TEXT NOT NULL DEFAULT '[]',\n    follow_symlinks INTEGER NOT NULL DEFAULT 0 CHECK (follow_symlinks IN (0, 1)),\n    last_scan_at    TEXT,\n    created_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n"
+  },
+  "db/schema-vector.sql": {
+    "rel_path": "db/schema-vector.sql",
+    "sha256": "84eb53bd3a27b23df8e51e3156b4a380e67c18dbc12530d8d26150145f57982a",
+    "total_lines": 22,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "-- Optional vector index. Load the sqlite-vec extension before executing this file.\n-- The sample uses 1024 dimensions to match the initial BrickForge proposal.\n-- If the embedding model changes dimension, create a migration and rebuild vectors.\n-- sqlite-vec is pre-v1: pin the extension version and test its behavior in CI.\n\nCREATE VIRTUAL TABLE IF NOT EXISTS brick_embeddings USING vec0(\n    embedding FLOAT[1024]\n);\n\n-- Insert/update vectors with rowid = code_bricks.row_id:\n-- INSERT INTO brick_embeddings(rowid, embedding) VALUES (?, ?);\n-- The matching metadata row belongs in brick_embedding_state.\n-- Delete vector rows explicitly when a brick is deleted or re-created:\n-- DELETE FROM brick_embeddings WHERE rowid = ?;\n\n-- Example nearest-neighbor query (bind a 1024-dimensional vector at ?):\n-- SELECT b.id, b.symbol_name, v.distance\n-- FROM brick_embeddings AS v\n-- JOIN code_bricks AS b ON b.row_id = v.rowid\n-- WHERE v.embedding MATCH ?\n-- ORDER BY v.distance\n-- LIMIT ?;"
+  },
+  "db/schema.sql": {
+    "rel_path": "db/schema.sql",
+    "sha256": "28b3d7424b88a84953fbdb51af649c06e8aea27813c5b48dbbb1cde588c6b1e9",
+    "total_lines": 193,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "-- BrickForge core relational catalog + FTS5 index\n-- Requires SQLite with FTS5 enabled. Load schema-vector.sql separately after\n-- loading the sqlite-vec extension. Enable foreign_keys on EVERY connection.\n\nPRAGMA foreign_keys = ON;\nPRAGMA journal_mode = WAL;\nPRAGMA user_version = 1;\n\nCREATE TABLE IF NOT EXISTS repositories (\n    id              TEXT PRIMARY KEY,\n    name            TEXT NOT NULL,\n    root_path       TEXT NOT NULL UNIQUE,\n    source_kind     TEXT NOT NULL DEFAULT 'directory'\n                    CHECK (source_kind IN ('directory', 'git_worktree', 'nas_share', 'archive')),\n    vcs_remote      TEXT,\n    vcs_ref         TEXT,\n    enabled         INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),\n    include_globs   TEXT NOT NULL DEFAULT '[]',\n    exclude_globs   TEXT NOT NULL DEFAULT '[]',\n    follow_symlinks INTEGER NOT NULL DEFAULT 0 CHECK (follow_symlinks IN (0, 1)),\n    last_scan_at    TEXT,\n    created_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n"
+  },
+  "db/schema1.sql": {
+    "rel_path": "db/schema1.sql",
+    "sha256": "d63421cc6fb77c0008250d74c0f66924c797c5d53bf5a2e45902830e4e232bec",
+    "total_lines": 78,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "PRAGMA foreign_keys = ON;\nPRAGMA journal_mode = WAL;\n\n-- 1. Indexed Roots (Drives, NAS mounts, local Git repos)\nCREATE TABLE repositories (\n    id TEXT PRIMARY KEY,              -- UUIDv5 of normalized root path\n    name TEXT NOT NULL,\n    root_path TEXT NOT NULL UNIQUE,\n    vcs_branch TEXT,\n    last_indexed_at DATETIME DEFAULT CURRENT_TIMESTAMP\n);\n\n-- 2. Source Files (Incremental hash tracking)\nCREATE TABLE source_files (\n    id TEXT PRIMARY KEY,              -- SHA-256 of repo_id + relative_path\n    repo_id TEXT NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,\n    relative_path TEXT NOT NULL,\n    language TEXT NOT NULL,           -- 'rust', 'python', 'typescript', 'cpp', 'csharp'\n    file_hash TEXT NOT NULL,          -- SHA-256 of file content\n    loc INTEGER NOT NULL,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    UNIQUE(repo_id, relative_path)\n);\n\n-- 3. Extracted Software Bricks (Classes, Functions, Structs, Traits)"
+  },
+  "docs/agentic-codRegister-POC.md": {
+    "rel_path": "docs/agentic-codRegister-POC.md",
+    "sha256": "e2e2690e245cd0535f26877c03ddf76b88ce7f229263c1c096ef248bbff5da3d",
+    "total_lines": 542,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "**Executive Pitch (Short Version)**\nAn AST-aware, multi-repository code intelligence and component catalog that indexes distributed source code across local drives and repositories into a unified knowledge base. Exposed via a Model Context Protocol (MCP) server, it enables engineers and autonomous AI agents to discover, adapt, and compose proven software building blocks on demand\u2014eliminating redundant coding and cognitive overhead.\n\n---\n\nI was thinking to start a new solution which can catalog all source code classes and functions, I possess across several drives, repositories.\n\nIt can constitute a knowledge base, a practicle used functionalities.  \n\nOvertime, it is difficult and impossible for a human to have an overview and to remember everything. That is why I would love to be able to reuse some of those software bricks and components.\n\nWe can be assembled together to compose new solutions.\n\nWe can transform them and make them available with a MCP server, other agent or software can access and dispose them on demand.\n\n- Generate a project README and naming options\n- Draft the AST ingestion and SQLite/Vector schema\n- Design the MCP server tool schema and endpoints\n\n---\n\n{\n  \"tools\": [\n    {\n      \"name\": \"search_code_bricks\","
+  },
+  "docs/agentic-pedia.md": {
+    "rel_path": "docs/agentic-pedia.md",
+    "sha256": "92d6693eb1e5b863ba3198d5ff4b50880caf23e6b555d4f55778f95537ead3da",
+    "total_lines": 207,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "# BrickForge \u2014 project design pack\n\nDesign pack generated\n\n&#x20;v0.1 \u00b7 6 files\n\nI recommend keeping BrickForge as the working name.\n\nThe central idea is to build more than a code search engine: a **personal software asset registry** that remembers what you have already built, understands how components work, identifies their dependencies, and makes them reusable by developers and AI agents.\n\n[Gu\u00eda de CodeGraph: Grafo de conocimiento de c\u00f3digo local para agentes de IA](https://images.openai.com/static-rsc-4/i8T_zdkkcGduCO3f7JYM3Ye7uhkNdp5-wSyWkRVg7z7L4763vkNHIi0teIswQBVq2K9m-deWLAMwT5PuOtGDRMlARhUcQbWBD2kRIlogyCmsGVTnKW6WBdtZJ2Bhnm2Gx45REumqo9M5hvAI8YPOSK_cbKNd6o_OgadIeH4KWJc?purpose=inline)\n\n[agentpedia.codes](https://agentpedia.codes/es/blog/codegraph-guide?utm_source=chatgpt.com)\n\n# Discover \u2192 Understand \u2192 Extract \u2192 Compose \u2192 Validate\n\nThe proposed lifecycle for turning scattered source code into reusable software assets.\n\n## 1. Project README and naming\n\nCompleted\n\nRecommended name: BrickForge\n\n| Candidate  | Positioning                                 |"
+  },
+  "docs/ARCHITECTURE.md": {
+    "rel_path": "docs/ARCHITECTURE.md",
+    "sha256": "198bf086e422234de8d29e929adf5d9c8fe08d415e99d3c67b7260c5c885fbb9",
+    "total_lines": 148,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "# BrickForge \u2014 AST ingestion and storage design\n\nThis document turns the initial concept into an implementable ingestion pipeline. The first release should optimize for correctness, traceability, and incremental updates before optimizing ranking or cross-language composition.\n\n## 1. Ingestion lifecycle\n\n```text\nregister root\n   -> enumerate candidate files\n   -> apply ignore / safety policy\n   -> hash file\n   -> skip unchanged file OR parse changed file\n   -> extract AST symbols and source spans\n   -> resolve imports and symbol references\n   -> calculate static reuse signals\n   -> optionally summarize and embed\n   -> commit file + symbols + edges atomically\n   -> reconcile deleted files after a successful scan\n```\n\n### 1.1 Root registration and discovery\n\nA repository record represents an explicitly registered scan root. It may be a folder, Git working tree, mounted drive directory, or NAS path. Store the canonical root path and user-configured include/exclude rules. Do not recursively crawl arbitrary filesystem paths supplied by MCP callers.\n\nDefault exclusions should cover version-control internals, build output, dependency caches, vendored code, generated code, virtual environments, binaries, and secret-bearing files. Support `.gitignore` where applicable, but do not treat it as the only safety boundary. Do not follow symbolic links by default; if enabled, detect loops and ensure resolved targets remain within an allowed root."
+  },
+  "mcp-server/mcp-tools.json": {
+    "rel_path": "mcp-server/mcp-tools.json",
+    "sha256": "bf672b865d2b8f6237ddacd0ddf402a036a33ef73b4ea616da0ed5bd87fa15c3",
+    "total_lines": 357,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"manifestVersion\": \"1.0.0\",\n  \"server\": {\n    \"name\": \"brickforge\",\n    \"version\": \"0.1.0\",\n    \"description\": \"Local-first AST code catalog and composable software brick registry\",\n    \"protocolVersionTarget\": \"2026-07-28\"\n  },\n  \"transports\": [\n    {\n      \"name\": \"stdio\",\n      \"intendedUse\": \"Local IDEs, CLIs, and agent processes\",\n      \"command\": \"brickforge-mcp\",\n      \"args\": [\"--db\", \"~/.brickforge/catalog.db\"]\n    },\n    {\n      \"name\": \"streamable-http\",\n      \"intendedUse\": \"Authenticated remote clients\",\n      \"endpoint\": \"/mcp\",\n      \"httpMethods\": [\"POST\"]\n    }\n  ],\n  \"tools\": [\n    {"
+  },
+  "mcp-server/MCP_SERVER.md": {
+    "rel_path": "mcp-server/MCP_SERVER.md",
+    "sha256": "954055200ed4b0be2e8f26f38ee81c049d1297beca6c74e004bf060d2c35c0c7",
+    "total_lines": 139,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "# BrickForge MCP server \u2014 interface and endpoint design\n\n## 1. Scope\n\nThe MCP server exposes the catalog to IDEs, coding agents, and other software. It should remain a thin, permission-aware adapter over the storage/search/extraction services. It should not crawl arbitrary paths, execute source code, or silently modify registered repositories.\n\nThe manifest in `mcp-tools.json` is the draft project contract for tools, output schemas, resources, and transports. Implement the definitions with the selected MCP SDK and validate them through an MCP client integration test.\n\n## 2. Transports and endpoints\n\n### Local transport: stdio\n\nProposed invocation:\n\n```bash\nbrickforge-mcp --db ~/.brickforge/catalog.db --transport stdio\n```\n\nThe MCP client launches the server as a subprocess. Standard input/output are reserved for MCP messages; write logs and diagnostics to standard error only.\n\n### Remote transport: Streamable HTTP\n\nProposed endpoint:\n\n```text"
+  },
+  "tasks/tasks.json": {
+    "rel_path": "tasks/tasks.json",
+    "sha256": "42de34f681dd668f499ff9f63ebac5d9afc5aef16f6a4ff84e1e1f84dd7d1fd1",
+    "total_lines": 1805,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "{\n  \"project\": \"BrickForge\",\n  \"backlog\": \"MVP first phases\",\n  \"version\": \"0.1.0\",\n  \"lifecycle\": [\n    \"Discover\",\n    \"Understand\",\n    \"Extract\",\n    \"Compose\",\n    \"Validate\"\n  ],\n  \"scope\": \"Python-first vertical slice; local-first catalog; SQLite + FTS5 core; optional vector extension; MCP exposure can be implemented as a subsequent integration milestone.\",\n  \"task_count\": 45,\n  \"status_values\": [\n    \"pending\",\n    \"in_progress\",\n    \"completed\",\n    \"blocked\",\n    \"failed\"\n  ],\n  \"notes\": [\n    \"All tasks are proposed and start with status pending; no implementation is claimed.\",\n    \"The initial MVP supports Python only. Other language adapters are intentionally deferred.\",\n    \"Indexing must never execute repository source code.\",\n    \"Composition produces proposals; applying changes requires explicit approval.\","
+  },
+  "tools/bricks.json": {
+    "rel_path": "tools/bricks.json",
+    "sha256": "27e74353b329ccbe49186d2c236c507ab7bd033766cf4f130a92bedaceef3e71",
+    "total_lines": 157,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "{\n    \"tools\": [\n        {\n            \"name\": \"search_code_bricks\",\n            \"description\": \"Hybrid semantic (vector) and lexical (BM25 + AST filter) search across all indexed repositories to discover reusable classes, functions, and modules.\",\n            \"inputSchema\": {\n                \"type\": \"object\",\n                \"properties\": {\n                    \"query\": {\n                        \"type\": \"string\",\n                        \"description\": \"Natural language intent or exact symbol/signature query (e.g., 'thread-safe ring buffer' or 'fn parse_hl7').\"\n                    },\n                    \"languages\": {\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"string\",\n                            \"enum\": [\n                                \"rust\",\n                                \"python\",\n                                \"typescript\",\n                                \"cpp\",\n                                \"csharp\",\n                                \"go\"\n                            ]\n                        },"
+  },
+  "tools/Profile-14-02-003 - English.md": {
+    "rel_path": "tools/Profile-14-02-003 - English.md",
+    "sha256": "d4b8eed223de12bc21061d4db2549987ec6b8c789333447314d8894ecaef67e0",
+    "total_lines": 209,
+    "imports": [],
+    "symbols": [],
+    "summary_excerpt": "# Candidate\n\n14.02.003\nAntoine Falempin\n\n#### Person data\nCandidate No. 14.02.003\nBorn 1975\nNationality France &#39;C&#39;\nAvailability As soon as possible to 100%\n\n#### Professional Education\nYears Where Type of Education\n1999 to 2002 University Polytechnic\nSchool, Grenoble, France\n\nMaster\u2019s Degree - Engineer Diploma in Computer\nsciences &amp; Automated Instrumentation,\nMicroelectronic Design\n\n1997 to 1999 University of Sciences &amp;\nTechnology, Lille, France\n\nMaster of Sc. (MST) in Physics &amp; Chemistry\nMeasurement, Sensors &amp; Quality Control"
+  },
+  "tests/unit/test_config.py": {
+    "rel_path": "tests/unit/test_config.py",
+    "sha256": "5671c72b95bd921f893b7037f067c26c14e2d7383e07fbf6d24d761d983e728b",
+    "total_lines": 105,
+    "imports": [
+      "__future__.annotations",
+      "pytest",
+      "pathlib.Path",
+      "brickforge.config.BrickForgeConfig",
+      "brickforge.config.get_config",
+      "brickforge.config.reload_config"
+    ],
+    "symbols": [
+      {
+        "name": "TestBrickForgeConfig",
+        "kind": "class",
+        "line_start": 11,
+        "line_end": 69,
+        "docstring": "Tests for BrickForgeConfig class.",
+        "args": []
+      },
+      {
+        "name": "TestGetConfig",
+        "kind": "class",
+        "line_start": 72,
+        "line_end": 105,
+        "docstring": "Tests for get_config and reload_config functions.",
+        "args": []
+      },
+      {
+        "name": "test_default_values",
+        "kind": "function",
+        "line_start": 14,
+        "line_end": 24,
+        "docstring": "Test that default configuration values are set correctly.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_log_level_validation",
+        "kind": "function",
+        "line_start": 26,
+        "line_end": 29,
+        "docstring": "Test that invalid log levels raise an error.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_log_level_normalization",
+        "kind": "function",
+        "line_start": 31,
+        "line_end": 34,
+        "docstring": "Test that log level is normalized to uppercase.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_extension_validation",
+        "kind": "function",
+        "line_start": 36,
+        "line_end": 39,
+        "docstring": "Test that extensions without dots raise an error.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_valid_extensions",
+        "kind": "function",
+        "line_start": 41,
+        "line_end": 44,
+        "docstring": "Test that valid extensions are accepted.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_ensure_directories",
+        "kind": "function",
+        "line_start": 46,
+        "line_end": 60,
+        "docstring": "Test that ensure_directories creates all required directories.",
+        "args": [
+          "self",
+          "tmp_path"
+        ]
+      },
+      {
+        "name": "test_resolved_paths",
+        "kind": "function",
+        "line_start": 62,
+        "line_end": 69,
+        "docstring": "Test that resolved path properties return absolute paths.",
+        "args": [
+          "self",
+          "tmp_path"
+        ]
+      },
+      {
+        "name": "test_get_config_returns_singleton",
+        "kind": "function",
+        "line_start": 75,
+        "line_end": 79,
+        "docstring": "Test that get_config returns the same instance on repeated calls.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_reload_config_clears_cache",
+        "kind": "function",
+        "line_start": 81,
+        "line_end": 88,
+        "docstring": "Test that reload_config clears the cache and returns a new instance.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_config_from_environment",
+        "kind": "function",
+        "line_start": 90,
+        "line_end": 105,
+        "docstring": "Test that configuration can be loaded from environment variables.",
+        "args": [
+          "self",
+          "monkeypatch"
+        ]
+      }
+    ],
+    "summary_excerpt": "\"\"\"Unit tests for BrickForge configuration module.\"\"\"\n\nfrom __future__ import annotations\n\nimport pytest\nfrom pathlib import Path\n\nfrom brickforge.config import BrickForgeConfig, get_config, reload_config\n\n\nclass TestBrickForgeConfig:\n    \"\"\"Tests for BrickForgeConfig class.\"\"\"\n\n    def test_default_values(self):\n        \"\"\"Test that default configuration values are set correctly.\"\"\"\n        config = BrickForgeConfig()\n        assert config.app_name == \"BrickForge\"\n        assert config.debug is False\n        assert config.log_level == \"INFO\"\n        assert config.data_dir == Path(\"data\")\n        assert config.db_path == Path(\"data/brickforge.db\")\n        assert config.max_file_size_mb == 100\n        assert config.search_top_k == 10\n        assert config.search_similarity_threshold == 0.7\n"
+  },
+  "tests/unit/test_discovery.py": {
+    "rel_path": "tests/unit/test_discovery.py",
+    "sha256": "dc6d1ff3fe4233574a65c01b662836770564c369dd965843cc9efdeec7dc8cb6",
+    "total_lines": 20,
+    "imports": [
+      "os",
+      "unittest",
+      "unittest.mock.patch",
+      "src.brickforge.ingestion.discovery.walk_registered_roots"
+    ],
+    "symbols": [
+      {
+        "name": "TestDiscovery",
+        "kind": "class",
+        "line_start": 6,
+        "line_end": 17,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_walk_registered_roots",
+        "kind": "function",
+        "line_start": 10,
+        "line_end": 17,
+        "docstring": "",
+        "args": [
+          "self",
+          "mock_getmtime",
+          "mock_getsize",
+          "mock_os_walk"
+        ]
+      }
+    ],
+    "summary_excerpt": "import os\nimport unittest\nfrom unittest.mock import patch\nfrom src.brickforge.ingestion.discovery import walk_registered_roots\n\nclass TestDiscovery(unittest.TestCase):\n    @patch('os.walk', return_value=[('root', ['subdir'], ['root/subdir/file1.py', 'root/subdir/file2.txt']), ('subdir', [], [])])\n    @patch('os.path.getsize', side_effect=[1024, 512])\n    @patch('os.path.getmtime', side_effect=[1696275200, 1696275200])\n    def test_walk_registered_roots(self, mock_getmtime, mock_getsize, mock_os_walk):\n        roots = ['root']\n        expected_output = [\n            {'relative_path': 'subdir/file1.py', 'language_hint': 'python', 'file_size': 1024, 'modification_time': '2023-10-01T12:00:00'},\n            {'relative_path': 'subdir/file2.txt', 'language_hint': 'unknown', 'file_size': 512, 'modification_time': '2023-10-01T12:00:00'}\n        ]\n        result = list(walk_registered_roots(roots))\n        self.assertEqual(result, expected_output)\n\nif __name__ == '__main__':\n    unittest.main()"
+  },
+  "tests/unit/test_ignore_rules.py": {
+    "rel_path": "tests/unit/test_ignore_rules.py",
+    "sha256": "a0e313868c11b4da4f4ddb3851778adbcb66f27ff5c16fb3cd9ca948b91cb9d4",
+    "total_lines": 23,
+    "imports": [
+      "unittest",
+      "unittest.mock.patch",
+      "src.brickforge.ingestion.ignore_rules.IgnoreRules"
+    ],
+    "symbols": [
+      {
+        "name": "TestIgnoreRules",
+        "kind": "class",
+        "line_start": 5,
+        "line_end": 20,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_load_ignore_patterns",
+        "kind": "function",
+        "line_start": 7,
+        "line_end": 11,
+        "docstring": "",
+        "args": [
+          "self",
+          "mock_init"
+        ]
+      },
+      {
+        "name": "test_is_ignored",
+        "kind": "function",
+        "line_start": 14,
+        "line_end": 20,
+        "docstring": "",
+        "args": [
+          "self",
+          "mock_init"
+        ]
+      }
+    ],
+    "summary_excerpt": "import unittest\nfrom unittest.mock import patch\nfrom src.brickforge.ingestion.ignore_rules import IgnoreRules\n\nclass TestIgnoreRules(unittest.TestCase):\n    @patch.object(IgnoreRules, '__init__', return_value=None)\n    def test_load_ignore_patterns(self, mock_init):\n        mock_init.return_value = None\n        ignore_rules = IgnoreRules('test_config.txt')\n        ignore_rules.ignore_patterns = ['*.pyc', '__pycache__']\n        self.assertEqual(ignore_rules.ignore_patterns, ['*.pyc', '__pycache__'])\n\n    @patch.object(IgnoreRules, '__init__', return_value=None)\n    def test_is_ignored(self, mock_init):\n        mock_init.return_value = None\n        ignore_rules = IgnoreRules('test_config.txt')\n        ignore_rules.ignore_patterns = ['*.pyc', '__pycache__']\n        self.assertTrue(ignore_rules.is_ignored('example.pyc'))\n        self.assertTrue(ignore_rules.is_ignored('example/__pycache__/example.cpython-38.pyc'))\n        self.assertFalse(ignore_rules.is_ignored('example.py'))\n\nif __name__ == '__main__':\n    unittest.main()"
+  },
+  "tests/unit/test_models.py": {
+    "rel_path": "tests/unit/test_models.py",
+    "sha256": "62e2e322d6ffe69fda0711a9aa4a154e9f2808a2dfaeadfcf86ebe138713e50e",
+    "total_lines": 118,
+    "imports": [
+      "pytest",
+      "pydantic.ValidationError",
+      "src.brickforge.models.repository.Repository",
+      "src.brickforge.models.scan.ScanRun",
+      "src.brickforge.models.scan.ScanStatus",
+      "src.brickforge.models.scan.SourceFileMetadata",
+      "src.brickforge.models.scan.Exclusion",
+      "src.brickforge.models.scan.ScanError"
+    ],
+    "symbols": [
+      {
+        "name": "test_repository_model",
+        "kind": "function",
+        "line_start": 14,
+        "line_end": 19,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_repository_model_missing_required_fields",
+        "kind": "function",
+        "line_start": 22,
+        "line_end": 24,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_scan_run_model",
+        "kind": "function",
+        "line_start": 27,
+        "line_end": 39,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_scan_run_model_missing_required_fields",
+        "kind": "function",
+        "line_start": 42,
+        "line_end": 44,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_scan_status_model",
+        "kind": "function",
+        "line_start": 47,
+        "line_end": 57,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_scan_status_model_missing_required_fields",
+        "kind": "function",
+        "line_start": 60,
+        "line_end": 62,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_source_file_metadata_model",
+        "kind": "function",
+        "line_start": 65,
+        "line_end": 77,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_source_file_metadata_model_missing_required_fields",
+        "kind": "function",
+        "line_start": 80,
+        "line_end": 82,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_exclusion_model",
+        "kind": "function",
+        "line_start": 85,
+        "line_end": 93,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_exclusion_model_missing_required_fields",
+        "kind": "function",
+        "line_start": 96,
+        "line_end": 98,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_scan_error_model",
+        "kind": "function",
+        "line_start": 101,
+        "line_end": 113,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_scan_error_model_missing_required_fields",
+        "kind": "function",
+        "line_start": 116,
+        "line_end": 118,
+        "docstring": "",
+        "args": []
+      }
+    ],
+    "summary_excerpt": "import pytest\nfrom pydantic import ValidationError\n\nfrom src.brickforge.models.repository import Repository\nfrom src.brickforge.models.scan import (\n    ScanRun,\n    ScanStatus,\n    SourceFileMetadata,\n    Exclusion,\n    ScanError,\n)\n\n\ndef test_repository_model():\n    repo = Repository(id='1', name='test_repo', url='http://test.com', last_scan_id=None)\n    assert repo.id == '1'\n    assert repo.name == 'test_repo'\n    assert repo.url == 'http://test.com'\n    assert repo.last_scan_id is None\n\n\ndef test_repository_model_missing_required_fields():\n    with pytest.raises(ValidationError):\n        Repository(name='test_repo', url='http://test.com')\n"
+  },
+  "tests/unit/test_paths.py": {
+    "rel_path": "tests/unit/test_paths.py",
+    "sha256": "1e5acbbca68f6f7ed6659dff62e21a9a2260b59ac3920a42171bac33f15b1b84",
+    "total_lines": 20,
+    "imports": [
+      "unittest",
+      "unittest.mock.patch",
+      "pathlib.Path",
+      "src.brickforge.ingestion.paths.safe_path_canonicalization"
+    ],
+    "symbols": [
+      {
+        "name": "TestSafePathCanonicalization",
+        "kind": "class",
+        "line_start": 6,
+        "line_end": 17,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "test_safe_path_canonicalization",
+        "kind": "function",
+        "line_start": 8,
+        "line_end": 11,
+        "docstring": "",
+        "args": [
+          "self",
+          "mock_resolve"
+        ]
+      },
+      {
+        "name": "test_safe_path_canonicalization_unsafe_root",
+        "kind": "function",
+        "line_start": 14,
+        "line_end": 17,
+        "docstring": "",
+        "args": [
+          "self",
+          "mock_resolve"
+        ]
+      }
+    ],
+    "summary_excerpt": "import unittest\nfrom unittest.mock import patch\nfrom pathlib import Path\nfrom src.brickforge.ingestion.paths import safe_path_canonicalization\n\nclass TestSafePathCanonicalization(unittest.TestCase):\n    @patch('src.brickforge.ingestion.paths.Path.resolve', return_value=Path(\"/safe/root1/subdir/file.txt\"))\n    def test_safe_path_canonicalization(self, mock_resolve):\n        allowed_roots = [Path(\"/safe/root1\"), Path(\"/safe/root2\")]\n        result = safe_path_canonicalization(\"/unsafe/path\", allowed_roots)\n        self.assertEqual(result, Path(\"/safe/root1/subdir/file.txt\"))\n\n    @patch('src.brickforge.ingestion.paths.Path.resolve', return_value=Path(\"/unsafe/root1/subdir/file.txt\"))\n    def test_safe_path_canonicalization_unsafe_root(self, mock_resolve):\n        allowed_roots = [Path(\"/safe/root1\"), Path(\"/safe/root2\")]\n        with self.assertRaises(ValueError):\n            safe_path_canonicalization(\"/unsafe/path\", allowed_roots)\n\nif __name__ == '__main__':\n    unittest.main()"
+  },
+  "tests/unit/test_repository_registry.py": {
+    "rel_path": "tests/unit/test_repository_registry.py",
+    "sha256": "aaa3ccfee55e2785df2eccf40e11ff8c5d18fff7d4eafbfbb6bf4cd609bd0014",
+    "total_lines": 129,
+    "imports": [
+      "os",
+      "sqlite3",
+      "tempfile",
+      "unittest",
+      "unittest.mock.patch",
+      "unittest.mock.MagicMock",
+      "pathlib.Path",
+      "brickforge.repositories.registry.RepositoryRegistry",
+      "shutil"
+    ],
+    "symbols": [
+      {
+        "name": "TestRepositoryRegistry",
+        "kind": "class",
+        "line_start": 11,
+        "line_end": 125,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "setUp",
+        "kind": "function",
+        "line_start": 12,
+        "line_end": 15,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "tearDown",
+        "kind": "function",
+        "line_start": 17,
+        "line_end": 20,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_init_db_creates_table",
+        "kind": "function",
+        "line_start": 22,
+        "line_end": 27,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_register_repository_success",
+        "kind": "function",
+        "line_start": 29,
+        "line_end": 34,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_register_repository_invalid_path",
+        "kind": "function",
+        "line_start": 36,
+        "line_end": 38,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_register_repository_duplicate",
+        "kind": "function",
+        "line_start": 40,
+        "line_end": 45,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_list_repositories_empty",
+        "kind": "function",
+        "line_start": 47,
+        "line_end": 49,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_list_repositories_with_data",
+        "kind": "function",
+        "line_start": 51,
+        "line_end": 70,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_lookup_repository_success",
+        "kind": "function",
+        "line_start": 72,
+        "line_end": 81,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_lookup_repository_not_found",
+        "kind": "function",
+        "line_start": 83,
+        "line_end": 85,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_update_repository_root_path",
+        "kind": "function",
+        "line_start": 87,
+        "line_end": 97,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_update_repository_is_active",
+        "kind": "function",
+        "line_start": 99,
+        "line_end": 107,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_update_repository_no_updates",
+        "kind": "function",
+        "line_start": 109,
+        "line_end": 115,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "test_deactivate_repository",
+        "kind": "function",
+        "line_start": 117,
+        "line_end": 125,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      }
+    ],
+    "summary_excerpt": "import os\nimport sqlite3\nimport tempfile\nimport unittest\nfrom unittest.mock import patch, MagicMock\nfrom pathlib import Path\n\nfrom brickforge.repositories.registry import RepositoryRegistry\n\n\nclass TestRepositoryRegistry(unittest.TestCase):\n    def setUp(self):\n        self.temp_dir = tempfile.mkdtemp()\n        self.db_path = os.path.join(self.temp_dir, 'test.db')\n        self.registry = RepositoryRegistry(self.db_path)\n\n    def tearDown(self):\n        import shutil\n        if hasattr(self, 'temp_dir') and os.path.exists(self.temp_dir):\n            shutil.rmtree(self.temp_dir, ignore_errors=True)\n\n    def test_init_db_creates_table(self):\n        with sqlite3.connect(self.db_path) as conn:\n            cursor = conn.cursor()\n            cursor.execute(\"SELECT name FROM sqlite_master WHERE type='table' AND name='repository_registry'\")"
+  },
+  "src/brickforge/config.py": {
+    "rel_path": "src/brickforge/config.py",
+    "sha256": "d3ec29ab678e5ecc49f4c69d96a988656f6e3facfd79435dc52bfd5dd9d3c6a9",
+    "total_lines": 174,
+    "imports": [
+      "__future__.annotations",
+      "functools.lru_cache",
+      "pathlib.Path",
+      "typing.Optional",
+      "pydantic.Field",
+      "pydantic.field_validator",
+      "pydantic_settings.BaseSettings",
+      "pydantic_settings.SettingsConfigDict"
+    ],
+    "symbols": [
+      {
+        "name": "BrickForgeConfig",
+        "kind": "class",
+        "line_start": 17,
+        "line_end": 154,
+        "docstring": "BrickForge core configuration.",
+        "args": []
+      },
+      {
+        "name": "get_config",
+        "kind": "function",
+        "line_start": 158,
+        "line_end": 164,
+        "docstring": "Get the cached BrickForge configuration instance.",
+        "args": []
+      },
+      {
+        "name": "reload_config",
+        "kind": "function",
+        "line_start": 167,
+        "line_end": 174,
+        "docstring": "Clear the configuration cache and reload from environment.",
+        "args": []
+      },
+      {
+        "name": "validate_log_level",
+        "kind": "function",
+        "line_start": 111,
+        "line_end": 117,
+        "docstring": "Validate that log_level is a valid logging level.",
+        "args": [
+          "cls",
+          "v"
+        ]
+      },
+      {
+        "name": "validate_extensions",
+        "kind": "function",
+        "line_start": 121,
+        "line_end": 126,
+        "docstring": "Validate that all extensions start with a dot.",
+        "args": [
+          "cls",
+          "v"
+        ]
+      },
+      {
+        "name": "db_path_resolved",
+        "kind": "function",
+        "line_start": 129,
+        "line_end": 131,
+        "docstring": "Return the resolved absolute path to the database file.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "ingestion_dir_resolved",
+        "kind": "function",
+        "line_start": 134,
+        "line_end": 136,
+        "docstring": "Return the resolved absolute path to the ingestion directory.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "processed_dir_resolved",
+        "kind": "function",
+        "line_start": 139,
+        "line_end": 141,
+        "docstring": "Return the resolved absolute path to the processed directory.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "search_index_dir_resolved",
+        "kind": "function",
+        "line_start": 144,
+        "line_end": 146,
+        "docstring": "Return the resolved absolute path to the search index directory.",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "ensure_directories",
+        "kind": "function",
+        "line_start": 148,
+        "line_end": 154,
+        "docstring": "Create all required directories if they don't exist.",
+        "args": [
+          "self"
+        ]
+      }
+    ],
+    "summary_excerpt": "\"\"\"Configuration management for BrickForge.\n\nThis module provides typed configuration loading using pydantic-settings.\nThe configuration is independent from MCP and agent orchestration layers.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom functools import lru_cache\nfrom pathlib import Path\nfrom typing import Optional\n\nfrom pydantic import Field, field_validator\nfrom pydantic_settings import BaseSettings, SettingsConfigDict\n\n\nclass BrickForgeConfig(BaseSettings):\n    \"\"\"BrickForge core configuration.\n\n    This configuration class defines all settings required for the core\n    BrickForge functionality, including storage paths, database settings,\n    and search parameters.\n\n    Attributes:\n        app_name: Name of the application."
+  },
+  "src/brickforge/__init__.py": {
+    "rel_path": "src/brickforge/__init__.py",
+    "sha256": "c176e77943a7fe91cb9e2c6a63d5c506ef808a2df5e6546354a013a7642e9df4",
+    "total_lines": 24,
+    "imports": [
+      "brickforge.config.BrickForgeConfig",
+      "brickforge.config.get_config"
+    ],
+    "symbols": [],
+    "summary_excerpt": "\"\"\"BrickForge Core package.\n\nThis package provides the core functionality for BrickForge, including:\n- Configuration management\n- Ingestion pipeline\n- Storage layer\n- Search capabilities\n- Validation utilities\n\nThe core package is independent from MCP and agent orchestration layers.\n\"\"\"\n\n__version__ = \"0.1.0\"\n__author__ = \"BrickForge Team\"\n__license__ = \"MIT\"\n\n# Core modules\nfrom brickforge.config import BrickForgeConfig, get_config\n\n__all__ = [\n    \"BrickForgeConfig\",\n    \"get_config\",\n    \"__version__\",\n]"
+  },
+  "src/brickforge/ingestion/discovery.py": {
+    "rel_path": "src/brickforge/ingestion/discovery.py",
+    "sha256": "9ddd5b83eee12360d3db42f47f0d4194992b4a60614c52bdd64455e61bce8935",
+    "total_lines": 58,
+    "imports": [
+      "os",
+      "stat",
+      "datetime.datetime"
+    ],
+    "symbols": [
+      {
+        "name": "walk_registered_roots",
+        "kind": "function",
+        "line_start": 5,
+        "line_end": 16,
+        "docstring": "",
+        "args": [
+          "roots"
+        ]
+      },
+      {
+        "name": "get_language_hint",
+        "kind": "function",
+        "line_start": 18,
+        "line_end": 58,
+        "docstring": "",
+        "args": [
+          "filename"
+        ]
+      }
+    ],
+    "summary_excerpt": "import os\nimport stat\nfrom datetime import datetime\n\ndef walk_registered_roots(roots):\n    for root in roots:\n        for dirpath, dirnames, filenames in os.walk(root, followlinks=False):\n            for filename in filenames:\n                file_path = os.path.join(dirpath, filename)\n                if os.path.isfile(file_path):\n                    yield {\n                        'relative_path': os.path.relpath(file_path, root),\n                        'language_hint': get_language_hint(filename),\n                        'file_size': os.path.getsize(file_path),\n                        'modification_time': datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()\n                    }\n\ndef get_language_hint(filename):\n    # Simple heuristic to determine file language based on extension\n    extension = os.path.splitext(filename)[1].lower()\n    if extension in ['.py', '.pyi']:\n        return 'python'\n    elif extension in ['.js', '.jsx']:\n        return 'javascript'\n    elif extension in ['.java']:"
+  },
+  "src/brickforge/ingestion/ignore_rules.py": {
+    "rel_path": "src/brickforge/ingestion/ignore_rules.py",
+    "sha256": "eb07bb340196516ac86bb25adcdc312c669f8ff72adc1762393f33b639f82649",
+    "total_lines": 24,
+    "imports": [
+      "os",
+      "typing.List",
+      "fnmatch"
+    ],
+    "symbols": [
+      {
+        "name": "IgnoreRules",
+        "kind": "class",
+        "line_start": 5,
+        "line_end": 24,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "__init__",
+        "kind": "function",
+        "line_start": 6,
+        "line_end": 8,
+        "docstring": "",
+        "args": [
+          "self",
+          "config_path"
+        ]
+      },
+      {
+        "name": "load_ignore_patterns",
+        "kind": "function",
+        "line_start": 10,
+        "line_end": 18,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "is_ignored",
+        "kind": "function",
+        "line_start": 20,
+        "line_end": 24,
+        "docstring": "",
+        "args": [
+          "self",
+          "path"
+        ]
+      }
+    ],
+    "summary_excerpt": "import os\nfrom typing import List\nimport fnmatch\n\nclass IgnoreRules:\n    def __init__(self, config_path: str):\n        self.config_path = config_path\n        self.ignore_patterns = self.load_ignore_patterns()\n\n    def load_ignore_patterns(self) -> List[str]:\n        ignore_patterns = []\n        if os.path.exists(self.config_path):\n            with open(self.config_path, 'r') as file:\n                for line in file:\n                    pattern = line.strip()\n                    if pattern and not pattern.startswith('#'):\n                        ignore_patterns.append(pattern)\n        return ignore_patterns\n\n    def is_ignored(self, path: str) -> bool:\n        for pattern in self.ignore_patterns:\n            if fnmatch.fnmatch(path, pattern):\n                return True\n        return False"
+  },
+  "src/brickforge/ingestion/paths.py": {
+    "rel_path": "src/brickforge/ingestion/paths.py",
+    "sha256": "624b0c5afa9523f687bf5dae2b9cd741b5e347d08aa9042cb726e1793738ba76",
+    "total_lines": 20,
+    "imports": [
+      "os",
+      "pathlib.Path"
+    ],
+    "symbols": [
+      {
+        "name": "safe_path_canonicalization",
+        "kind": "function",
+        "line_start": 4,
+        "line_end": 12,
+        "docstring": "Resolve symlinks and normalize paths before scanning. Ensure every candidate file remains inside a registered root.",
+        "args": [
+          "path",
+          "allowed_roots"
+        ]
+      }
+    ],
+    "summary_excerpt": "import os\nfrom pathlib import Path\n\ndef safe_path_canonicalization(path: str, allowed_roots: list) -> Path:\n    \"\"\"\n    Resolve symlinks and normalize paths before scanning. Ensure every candidate file remains inside a registered root.\n    \"\"\"\n    canonical_path = Path(path).resolve()\n    for root in allowed_roots:\n        if canonical_path.is_relative_to(root):\n            return canonical_path\n    raise ValueError(\"Path traversal detected or unsafe root accessed\")\n\n# Example usage\nallowed_roots = [Path(\"/safe/root1\"), Path(\"/safe/root2\")]\ntry:\n    safe_path = safe_path_canonicalization(\"/unsafe/path\", allowed_roots)\n    print(f\"Safe path: {safe_path}\")\nexcept ValueError as e:\n    print(e)"
+  },
+  "src/brickforge/models/repository.py": {
+    "rel_path": "src/brickforge/models/repository.py",
+    "sha256": "5c1fbc35eb2bdd28f98be629fa92fd0d210e2a6c09737ab24c3631fc42a25f19",
+    "total_lines": 8,
+    "imports": [
+      "typing.List",
+      "typing.Optional",
+      "pydantic.BaseModel",
+      "pydantic.Field"
+    ],
+    "symbols": [
+      {
+        "name": "Repository",
+        "kind": "class",
+        "line_start": 4,
+        "line_end": 8,
+        "docstring": "",
+        "args": []
+      }
+    ],
+    "summary_excerpt": "from typing import List, Optional\nfrom pydantic import BaseModel, Field\n\nclass Repository(BaseModel):\n    id: str = Field(..., description=\"Unique identifier for the repository\")\n    name: str = Field(..., description=\"Name of the repository\")\n    url: str = Field(..., description=\"URL of the repository\")\n    last_scan_id: Optional[str] = Field(None, description=\"ID of the last scan run\")"
+  },
+  "src/brickforge/models/scan.py": {
+    "rel_path": "src/brickforge/models/scan.py",
+    "sha256": "15ed6d87bd91022b2789e4c70c33466b73ab8c49547dfe357532d46409ffa226",
+    "total_lines": 34,
+    "imports": [
+      "typing.List",
+      "typing.Optional",
+      "pydantic.BaseModel",
+      "pydantic.Field"
+    ],
+    "symbols": [
+      {
+        "name": "ScanRun",
+        "kind": "class",
+        "line_start": 4,
+        "line_end": 9,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "ScanStatus",
+        "kind": "class",
+        "line_start": 11,
+        "line_end": 15,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "SourceFileMetadata",
+        "kind": "class",
+        "line_start": 17,
+        "line_end": 22,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "Exclusion",
+        "kind": "class",
+        "line_start": 24,
+        "line_end": 27,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "ScanError",
+        "kind": "class",
+        "line_start": 29,
+        "line_end": 34,
+        "docstring": "",
+        "args": []
+      }
+    ],
+    "summary_excerpt": "from typing import List, Optional\nfrom pydantic import BaseModel, Field\n\nclass ScanRun(BaseModel):\n    id: str = Field(..., description=\"Unique identifier for the scan run\")\n    repository_id: str = Field(..., description=\"ID of the repository being scanned\")\n    start_time: str = Field(..., description=\"Start time of the scan\")\n    end_time: Optional[str] = Field(None, description=\"End time of the scan\")\n    status: str = Field(..., description=\"Status of the scan (e.g., 'completed', 'failed', 'running')\")\n\nclass ScanStatus(BaseModel):\n    id: str = Field(..., description=\"Unique identifier for the scan status\")\n    scan_id: str = Field(..., description=\"ID of the scan run\")\n    message: str = Field(..., description=\"Status message\")\n    timestamp: str = Field(..., description=\"Timestamp of the status update\")\n\nclass SourceFileMetadata(BaseModel):\n    id: str = Field(..., description=\"Unique identifier for the source file\")\n    scan_id: str = Field(..., description=\"ID of the scan run\")\n    file_path: str = Field(..., description=\"Path of the source file\")\n    file_hash: str = Field(..., description=\"Hash of the source file\")\n    file_size: int = Field(..., description=\"Size of the source file in bytes\")\n\nclass Exclusion(BaseModel):\n    id: str = Field(..., description=\"Unique identifier for the exclusion\")"
+  },
+  "src/brickforge/repositories/registry.py": {
+    "rel_path": "src/brickforge/repositories/registry.py",
+    "sha256": "1bea764dc82ae2221a5f57a227cf130ebb04b46cd0751642c4d263ce7173efc1",
+    "total_lines": 87,
+    "imports": [
+      "os",
+      "sqlite3",
+      "pathlib.Path"
+    ],
+    "symbols": [
+      {
+        "name": "RepositoryRegistry",
+        "kind": "class",
+        "line_start": 5,
+        "line_end": 87,
+        "docstring": "",
+        "args": []
+      },
+      {
+        "name": "__init__",
+        "kind": "function",
+        "line_start": 6,
+        "line_end": 8,
+        "docstring": "",
+        "args": [
+          "self",
+          "db_path"
+        ]
+      },
+      {
+        "name": "_init_db",
+        "kind": "function",
+        "line_start": 10,
+        "line_end": 23,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "register_repository",
+        "kind": "function",
+        "line_start": 25,
+        "line_end": 40,
+        "docstring": "",
+        "args": [
+          "self",
+          "root_path"
+        ]
+      },
+      {
+        "name": "list_repositories",
+        "kind": "function",
+        "line_start": 42,
+        "line_end": 51,
+        "docstring": "",
+        "args": [
+          "self"
+        ]
+      },
+      {
+        "name": "lookup_repository",
+        "kind": "function",
+        "line_start": 53,
+        "line_end": 62,
+        "docstring": "",
+        "args": [
+          "self",
+          "repo_id"
+        ]
+      },
+      {
+        "name": "update_repository",
+        "kind": "function",
+        "line_start": 64,
+        "line_end": 84,
+        "docstring": "",
+        "args": [
+          "self",
+          "repo_id",
+          "root_path",
+          "is_active"
+        ]
+      },
+      {
+        "name": "deactivate_repository",
+        "kind": "function",
+        "line_start": 86,
+        "line_end": 87,
+        "docstring": "",
+        "args": [
+          "self",
+          "repo_id"
+        ]
+      }
+    ],
+    "summary_excerpt": "import os\nimport sqlite3\nfrom pathlib import Path\n\nclass RepositoryRegistry:\n    def __init__(self, db_path):\n        self.db_path = db_path\n        self._init_db()\n\n    def _init_db(self):\n        conn = sqlite3.connect(self.db_path)\n        try:\n            cursor = conn.cursor()\n            cursor.execute('''\n                CREATE TABLE IF NOT EXISTS repository_registry (\n                    id INTEGER PRIMARY KEY AUTOINCREMENT,\n                    root_path TEXT UNIQUE NOT NULL,\n                    is_active BOOLEAN NOT NULL DEFAULT 1\n                )\n            ''')\n            conn.commit()\n        finally:\n            conn.close()\n\n    def register_repository(self, root_path):"
+  }
+}

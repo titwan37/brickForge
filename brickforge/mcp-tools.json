@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "manifestVersion": "1.0.0",
+  "server": {
+    "name": "brickforge",
+    "version": "0.1.0",
+    "description": "Local-first AST code catalog and composable software brick registry",
+    "protocolVersionTarget": "2026-07-28"
+  },
+  "transports": [
+    {
+      "name": "stdio",
+      "intendedUse": "Local IDEs, CLIs, and agent processes",
+      "command": "brickforge-mcp",
+      "args": ["--db", "~/.brickforge/catalog.db"]
+    },
+    {
+      "name": "streamable-http",
+      "intendedUse": "Authenticated remote clients",
+      "endpoint": "/mcp",
+      "httpMethods": ["POST"]
+    }
+  ],
+  "tools": [
+    {
+      "name": "get_catalog_stats",
+      "description": "Return catalog totals and index health without exposing source code or absolute root paths.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "repository_count": { "type": "integer", "minimum": 0 },
+          "file_count": { "type": "integer", "minimum": 0 },
+          "brick_count": { "type": "integer", "minimum": 0 },
+          "languages": { "type": "array", "items": { "type": "string" } },
+          "vector_index_available": { "type": "boolean" },
+          "embedding_models": { "type": "array", "items": { "type": "string" } },
+          "last_successful_scan_at": { "type": ["string", "null"] }
+        },
+        "required": ["repository_count", "file_count", "brick_count", "languages", "vector_index_available", "embedding_models", "last_successful_scan_at"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false }
+    },
+    {
+      "name": "list_repositories",
+      "description": "List registered source roots available to this MCP client. Absolute filesystem paths are intentionally omitted.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "enabled_only": { "type": "boolean", "default": true }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "repositories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "repository_id": { "type": "string" },
+                "name": { "type": "string" },
+                "source_kind": { "type": "string", "enum": ["directory", "git_worktree", "nas_share", "archive"] },
+                "enabled": { "type": "boolean" },
+                "last_scan_at": { "type": ["string", "null"] },
+                "last_scan_status": { "type": ["string", "null"] }
+              },
+              "required": ["repository_id", "name", "source_kind", "enabled", "last_scan_at", "last_scan_status"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["repositories"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false }
+    },
+    {
+      "name": "sync_repository",
+      "description": "Queue an incremental AST scan for an already registered repository. Callers cannot supply arbitrary filesystem paths. Returns a scan_run_id for polling.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "repository_id": { "type": "string", "minLength": 1 },
+          "compute_embeddings": { "type": "boolean", "default": true },
+          "force_full_scan": { "type": "boolean", "default": false }
+        },
+        "required": ["repository_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "scan_run_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["queued", "running"] },
+          "message": { "type": "string" }
+        },
+        "required": ["scan_run_id", "status", "message"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false }
+    },
+    {
+      "name": "get_scan_status",
+      "description": "Retrieve status and counters for a scan run returned by sync_repository.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scan_run_id": { "type": "string", "minLength": 1 }
+        },
+        "required": ["scan_run_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "scan_run_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["queued", "running", "completed", "completed_with_errors", "failed", "cancelled"] },
+          "files_seen": { "type": "integer", "minimum": 0 },
+          "files_changed": { "type": "integer", "minimum": 0 },
+          "files_skipped": { "type": "integer", "minimum": 0 },
+          "files_deleted": { "type": "integer", "minimum": 0 },
+          "symbols_indexed": { "type": "integer", "minimum": 0 },
+          "errors_count": { "type": "integer", "minimum": 0 },
+          "error_summary": { "type": ["string", "null"] }
+        },
+        "required": ["scan_run_id", "status", "files_seen", "files_changed", "files_skipped", "files_deleted", "symbols_indexed", "errors_count", "error_summary"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false }
+    },
+    {
+      "name": "search_code_bricks",
+      "description": "Hybrid semantic and lexical search across registered repositories. Returns compact candidates; inspect a brick before extracting implementation source.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "minLength": 1, "description": "Natural-language intent or exact symbol/signature query." },
+          "repository_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "languages": { "type": "array", "items": { "type": "string", "enum": ["python", "rust", "typescript", "javascript", "cpp", "c", "csharp", "go"] }, "uniqueItems": true },
+          "kinds": { "type": "array", "items": { "type": "string", "enum": ["function", "method", "class", "struct", "trait", "interface", "enum", "module", "property", "constant", "type_alias"] }, "uniqueItems": true },
+          "min_portability": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.0 },
+          "include_low_confidence": { "type": "boolean", "default": false },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 }
+        },
+        "required": ["query"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "brick_id": { "type": "string" },
+                "symbol_name": { "type": "string" },
+                "qualified_name": { "type": "string" },
+                "kind": { "type": "string" },
+                "language": { "type": "string" },
+                "signature": { "type": "string" },
+                "summary": { "type": ["string", "null"] },
+                "repository_name": { "type": "string" },
+                "relative_path": { "type": "string" },
+                "start_line": { "type": "integer" },
+                "end_line": { "type": "integer" },
+                "portability_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "lexical_rank": { "type": ["number", "null"] },
+                "vector_distance": { "type": ["number", "null"] },
+                "unresolved_dependency_count": { "type": "integer", "minimum": 0 }
+              },
+              "required": ["brick_id", "symbol_name", "qualified_name", "kind", "language", "signature", "summary", "repository_name", "relative_path", "start_line", "end_line", "portability_score", "lexical_rank", "vector_distance", "unresolved_dependency_count"],
+              "additionalProperties": false
+            }
+          },
+          "search_mode": { "type": "string", "enum": ["hybrid", "lexical_only", "vector_only"] }
+        },
+        "required": ["results", "search_mode"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false }
+    },
+    {
+      "name": "inspect_brick_contract",
+      "description": "Return a lightweight contract: AST signature, documentation, source provenance, external packages, dependency graph summary, and reuse signals. Does not return the full implementation body.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "brick_id": { "type": "string", "minLength": 1 },
+          "dependency_depth": { "type": "integer", "minimum": 0, "maximum": 5, "default": 2 }
+        },
+        "required": ["brick_id"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "brick_id": { "type": "string" },
+          "symbol_name": { "type": "string" },
+          "qualified_name": { "type": "string" },
+          "kind": { "type": "string" },
+          "language": { "type": "string" },
+          "signature": { "type": "string" },
+          "docstring": { "type": ["string", "null"] },
+          "summary": { "type": ["string", "null"] },
+          "origin": {
+            "type": "object",
+            "properties": {
+              "repository_name": { "type": "string" },
+              "relative_path": { "type": "string" },
+              "start_line": { "type": "integer" },
+              "end_line": { "type": "integer" },
+              "source_hash": { "type": "string" }
+            },
+            "required": ["repository_name", "relative_path", "start_line", "end_line", "source_hash"],
+            "additionalProperties": false
+          },
+          "portability": {
+            "type": "object",
+            "properties": {
+              "score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "factors": { "type": "object" }
+            },
+            "required": ["score", "factors"],
+            "additionalProperties": false
+          },
+          "external_packages": { "type": "array", "items": { "type": "object" } },
+          "dependencies": { "type": "array", "items": { "type": "object" } }
+        },
+        "required": ["brick_id", "symbol_name", "qualified_name", "kind", "language", "signature", "docstring", "summary", "origin", "portability", "external_packages", "dependencies"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false }
+    },
+    {
+      "name": "extract_composable_bundle",
+      "description": "Extract selected bricks and their resolved internal dependencies. Returns source, import/package manifest, provenance, cycles, and unresolved references. This is best-effort extraction, not a compile guarantee; it does not rewrite module paths by default.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "brick_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "maxItems": 20, "uniqueItems": true },
+          "include_internal_deps": { "type": "boolean", "default": true },
+          "max_dependency_depth": { "type": "integer", "minimum": 0, "maximum": 8, "default": 4 },
+          "strip_repo_specifics": { "type": "boolean", "default": false, "description": "Reserved for an explicit language-aware adaptation stage; false preserves original module paths." }
+        },
+        "required": ["brick_ids"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "bundle_id": { "type": "string" },
+          "language": { "type": "string" },
+          "source": { "type": "string" },
+          "included_brick_ids": { "type": "array", "items": { "type": "string" } },
+          "external_packages": { "type": "array", "items": { "type": "object" } },
+          "unresolved_dependencies": { "type": "array", "items": { "type": "object" } },
+          "cycles": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } },
+          "provenance": { "type": "array", "items": { "type": "object" } },
+          "validation_status": { "type": "string", "enum": ["not_run"] },
+          "notes": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["bundle_id", "language", "source", "included_brick_ids", "external_packages", "unresolved_dependencies", "cycles", "provenance", "validation_status", "notes"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false }
+    },
+    {
+      "name": "compose_and_adapt_bricks",
+      "description": "Optionally use a configured local generation backend to propose an adaptation or composed implementation from selected bricks. Returns candidate source and a validation plan; it does not edit indexed repositories or claim successful compilation/tests.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "brick_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "maxItems": 20, "uniqueItems": true },
+          "integration_spec": { "type": "string", "minLength": 1, "description": "Target behavior, interfaces, constraints, and how the selected bricks should work together." },
+          "target_language": { "type": "string" },
+          "target_framework": { "type": "string" },
+          "preserve_public_api": { "type": "boolean", "default": true },
+          "include_tests": { "type": "boolean", "default": true },
+          "output_mode": { "type": "string", "enum": ["design_only", "source_bundle", "diff_proposal"], "default": "source_bundle" }
+        },
+        "required": ["brick_ids", "integration_spec"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "proposal_id": { "type": "string" },
+          "selected_brick_ids": { "type": "array", "items": { "type": "string" } },
+          "assumptions": { "type": "array", "items": { "type": "string" } },
+          "generated_artifacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "relative_path": { "type": "string" },
+                "language": { "type": "string" },
+                "content": { "type": "string" },
+                "purpose": { "type": "string" }
+              },
+              "required": ["relative_path", "language", "content", "purpose"],
+              "additionalProperties": false
+            }
+          },
+          "adaptation_notes": { "type": "array", "items": { "type": "string" } },
+          "validation_plan": { "type": "array", "items": { "type": "string" } },
+          "validation_status": { "type": "string", "enum": ["not_run"] },
+          "source_repositories_modified": { "type": "boolean", "const": false }
+        },
+        "required": ["proposal_id", "selected_brick_ids", "assumptions", "generated_artifacts", "adaptation_notes", "validation_plan", "validation_status", "source_repositories_modified"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "brick://catalog/stats",
+      "name": "catalog-stats",
+      "description": "Global catalog counts, language totals, index status, and embedding model metadata.",
+      "mimeType": "application/json"
+    }
+  ],
+  "resourceTemplates": [
+    {
+      "uriTemplate": "brick://repositories/{repository_id}",
+      "name": "repository-metadata",
+      "description": "Metadata for a registered repository. Does not disclose the absolute root path.",
+      "mimeType": "application/json"
+    },
+    {
+      "uriTemplate": "brick://bricks/{brick_id}/contract",
+      "name": "brick-contract",
+      "description": "Lightweight symbol contract, source provenance, dependency summary, and portability factors.",
+      "mimeType": "application/json"
+    },
+    {
+      "uriTemplate": "brick://bricks/{brick_id}/source",
+      "name": "brick-source",
+      "description": "Exact source slice for a selected brick, available only to authorized clients.",
+      "mimeType": "text/plain"
+    },
+    {
+      "uriTemplate": "brick://bricks/{brick_id}/dependencies",
+      "name": "brick-dependencies",
+      "description": "Resolved and unresolved dependency edges for a selected brick.",
+      "mimeType": "application/json"
+    }
+  ]
+}
