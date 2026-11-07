@@ -1,20 +1,20 @@
-import os
 from pathlib import Path
+from typing import Iterable, Union
 
-def safe_path_canonicalization(path: str, allowed_roots: list) -> Path:
-    """
-    Resolve symlinks and normalize paths before scanning. Ensure every candidate file remains inside a registered root.
+
+def safe_path_canonicalization(path: Union[str, Path], allowed_roots: Iterable[Union[str, Path]]) -> Path:
+    """Resolve symlinks and normalize paths before scanning.
+
+    Ensure every candidate file remains inside an allowed registered root.
+    Rejects path traversal or paths outside allowed roots.
     """
     canonical_path = Path(path).resolve()
     for root in allowed_roots:
-        if canonical_path.is_relative_to(root):
-            return canonical_path
+        root_path = Path(root)
+        try:
+            if canonical_path.is_relative_to(root_path):
+                return canonical_path
+        except (ValueError, AttributeError):
+            continue
     raise ValueError("Path traversal detected or unsafe root accessed")
 
-# Example usage
-allowed_roots = [Path("/safe/root1"), Path("/safe/root2")]
-try:
-    safe_path = safe_path_canonicalization("/unsafe/path", allowed_roots)
-    print(f"Safe path: {safe_path}")
-except ValueError as e:
-    print(e)

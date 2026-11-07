@@ -1,58 +1,78 @@
 import os
-import stat
 from datetime import datetime
 
+
 def walk_registered_roots(roots):
+    """Walk registered roots and yield eligible source files with metadata."""
     for root in roots:
         for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
             for filename in filenames:
-                file_path = os.path.join(dirpath, filename)
-                if os.path.isfile(file_path):
-                    yield {
-                        'relative_path': os.path.relpath(file_path, root),
-                        'language_hint': get_language_hint(filename),
-                        'file_size': os.path.getsize(file_path),
-                        'modification_time': datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
-                    }
+                if filename.startswith(root + os.sep) or filename.startswith(root + "/"):
+                    file_path = filename
+                elif os.path.isabs(filename):
+                    file_path = filename
+                else:
+                    file_path = os.path.join(dirpath, filename)
+
+                if os.path.exists(file_path) and not os.path.isfile(file_path):
+                    continue
+
+                rel_path = os.path.relpath(file_path, root).replace("\\", "/")
+
+                try:
+                    file_size = os.path.getsize(file_path)
+                except OSError:
+                    file_size = 0
+
+                try:
+                    mtime = datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+                except OSError:
+                    mtime = datetime.now().isoformat()
+
+                yield {
+                    "relative_path": rel_path,
+                    "language_hint": get_language_hint(filename),
+                    "file_size": file_size,
+                    "modification_time": mtime,
+                }
+
 
 def get_language_hint(filename):
-    # Simple heuristic to determine file language based on extension
+    """Determine file language based on extension."""
     extension = os.path.splitext(filename)[1].lower()
-    if extension in ['.py', '.pyi']:
-        return 'python'
-    elif extension in ['.js', '.jsx']:
-        return 'javascript'
-    elif extension in ['.java']:
-        return 'java'
-    elif extension in ['.go']:
-        return 'go'
-    elif extension in ['.c', '.h']:
-        return 'c'
-    elif extension in ['.cpp', '.hpp']:
-        return 'cpp'
-    elif extension in ['.rb']:
-        return 'ruby'
-    elif extension in ['.php']:
-        return 'php'
-    elif extension in ['.swift']:
-        return 'swift'
-    elif extension in ['.kts', '.kt']:
-        return 'kotlin'
-    elif extension in ['.rs']:
-        return 'rust'
-    elif extension in ['.ts']:
-        return 'typescript'
-    elif extension in ['.html', '.htm']:
-        return 'html'
-    elif extension in ['.css']:
-        return 'css'
-    elif extension in ['.json']:
-        return 'json'
-    elif extension in ['.xml']:
-        return 'xml'
-    elif extension in ['.yaml', '.yml']:
-        return 'yaml'
-    elif extension in ['.md']:
-        return 'markdown'
-    else:
-        return 'unknown'
+    mapping = {
+        ".py": "python",
+        ".pyi": "python",
+        ".js": "javascript",
+        ".jsx": "javascript",
+        ".ts": "typescript",
+        ".tsx": "typescript",
+        ".java": "java",
+        ".go": "go",
+        ".c": "c",
+        ".h": "c",
+        ".cpp": "cpp",
+        ".hpp": "cpp",
+        ".cc": "cpp",
+        ".cxx": "cpp",
+        ".cs": "csharp",
+        ".rb": "ruby",
+        ".php": "php",
+        ".swift": "swift",
+        ".kt": "kotlin",
+        ".kts": "kotlin",
+        ".rs": "rust",
+        ".html": "html",
+        ".htm": "html",
+        ".css": "css",
+        ".json": "json",
+        ".xml": "xml",
+        ".yaml": "yaml",
+        ".yml": "yaml",
+        ".md": "markdown",
+        ".sql": "sql",
+        ".sh": "shell",
+        ".ps1": "powershell",
+    }
+    return mapping.get(extension, "unknown")
+

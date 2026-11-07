@@ -1,10 +1,5 @@
 -- BrickForge core relational catalog + FTS5 index
--- Requires SQLite with FTS5 enabled. Load schema-vector.sql separately after
--- loading the sqlite-vec extension. Enable foreign_keys on EVERY connection.
-
-PRAGMA foreign_keys = ON;
-PRAGMA journal_mode = WAL;
-PRAGMA user_version = 1;
+-- Migration 0001: Core relational schema
 
 CREATE TABLE IF NOT EXISTS repositories (
     id              TEXT PRIMARY KEY,
@@ -106,9 +101,6 @@ CREATE INDEX IF NOT EXISTS idx_bricks_kind_language ON code_bricks(kind, languag
 CREATE INDEX IF NOT EXISTS idx_bricks_portability ON code_bricks(portability_score DESC);
 CREATE INDEX IF NOT EXISTS idx_bricks_parent ON code_bricks(parent_row_id);
 
--- Each dependency row is either resolved to a catalog brick or retains an
--- unresolved symbol. The CHECK and partial unique indexes avoid expression
--- primary keys, which SQLite does not support.
 CREATE TABLE IF NOT EXISTS brick_dependencies (
     dependency_id       INTEGER PRIMARY KEY,
     source_row_id       INTEGER NOT NULL REFERENCES code_bricks(row_id) ON DELETE CASCADE,
@@ -147,8 +139,6 @@ CREATE TABLE IF NOT EXISTS external_packages (
 CREATE INDEX IF NOT EXISTS idx_external_packages_name
     ON external_packages(ecosystem, package_name);
 
--- Tracks which text/model produced the vector currently stored at rowid=brick_row_id.
--- It remains useful even when sqlite-vec is not installed.
 CREATE TABLE IF NOT EXISTS brick_embedding_state (
     brick_row_id       INTEGER PRIMARY KEY REFERENCES code_bricks(row_id) ON DELETE CASCADE,
     model_id           TEXT NOT NULL,
@@ -158,8 +148,6 @@ CREATE TABLE IF NOT EXISTS brick_embedding_state (
     embedded_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- External-content FTS5 table. Its indexed columns are columns on code_bricks;
--- content_rowid maps FTS rows to code_bricks.row_id.
 CREATE VIRTUAL TABLE IF NOT EXISTS bricks_fts USING fts5(
     symbol_name,
     qualified_name,
@@ -189,5 +177,3 @@ CREATE TRIGGER IF NOT EXISTS code_bricks_au AFTER UPDATE ON code_bricks BEGIN
     VALUES (new.row_id, new.symbol_name, new.qualified_name, new.signature, new.docstring, new.ai_summary, new.tags);
 END;
 
--- Required once after importing pre-existing code_bricks rows into an existing DB:
--- INSERT INTO bricks_fts(bricks_fts) VALUES ('rebuild');

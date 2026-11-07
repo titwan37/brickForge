@@ -88,9 +88,28 @@ class BrickForgeConfig(BaseSettings):
         description="Maximum file size in MB for ingestion",
     )
     allowed_extensions: list[str] = Field(
-        default=[".json", ".xml", ".csv", ".brd"],
+        default=[
+            ".json",
+            ".xml",
+            ".csv",
+            ".brd",
+            ".py",
+            ".pyi",
+            ".ts",
+            ".tsx",
+            ".js",
+            ".jsx",
+            ".rs",
+            ".cpp",
+            ".hpp",
+            ".c",
+            ".h",
+            ".cs",
+            ".go",
+        ],
         description="List of allowed file extensions for ingestion",
     )
+
 
     # Search settings
     search_top_k: int = Field(
