@@ -14,6 +14,13 @@ In modern enterprise codebases, components, utility functions, schemas, and conf
 - It captures function/class contracts, imports, dependencies, call signatures, and documentation into a structured SQLite/JSON store.
 - It exposes a unified **MCP (Model Context Protocol)** server allowing AI coding assistants (such as Antigravity, Claude Code, Cursor, Copilot) to discover, inspect, and compose existing code modules with zero guesswork.
 
+The distinction is important:
+- Cursor is strongly associated with AI-assisted editing inside an IDE.
+- Claude Code is strongly associated with agentic coding in a repository and terminal.
+- Copilot spans coding assistance and an increasingly broad agent ecosystem.
+- Antigravity positions itself around agent-driven development workflows.
+CodBot could differentiate itself by making the entire engineering lifecycle its core product: understand, plan, implement, test, review, integrate, and report—with evidence and controlled permissions at every step.
+
 ---
 
 ## 🏛️ System Architecture
