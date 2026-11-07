@@ -1,99 +1,101 @@
+# brickForge
+An AST-aware, multi-repository code intelligence and component catalog that indexes distributed source code across local drives and repositories into a unified knowledge base.
+
 # BrickForge (`brickforge-mcp`)
 
 > **Sovereign AST Code Intelligence & Composable Component Registry for AI Agents and Engineers.**
 
-`BrickForge` crawls distributed local drives, NAS archives, and multi-language Git repositories to catalog every class, function, struct, and module into a unified, queryable knowledge base. Exposed via a native **Model Context Protocol (MCP)** server, it empowers developers and autonomous coding agents to discover, extract, and assemble battle-tested "software bricks" on demand—eliminating redundant engineering.
+---
 
+## 🎯 Vision & Value Proposition
 
-## BrickForge MVP planning check-in
-
-Prepare and deliver a prioritized MVP implementation backlog for the BrickForge project. 
-
-Use the conversation's BrickForge design: a local-first AST-aware catalog of reusable code across registered local drives, NAS locations and Git repositories; incremental scanning and hashing; Tree-sitter extraction; SQLite relational metadata and dependency edges; FTS5 lexical search; optional sqlite-vec semantic search; and an MCP interface for catalog stats, repository listing/sync, scan status, brick search, contract inspection, dependency-aware extraction, and guarded adaptation proposals. 
-
-Keep Core, MCP server and agent responsibilities separate. Start with one complete Python vertical slice: register and scan a directory, index functions/classes, search, inspect contracts, and extract a component with dependencies. Produce (1) a short MVP scope and explicit non-goals, (2) a prioritized backlog grouped into epics, (3) atomic implementation tasks with IDs, dependencies, and concrete acceptance criteria, (4) a validation/test plan including incremental re-indexing, parser errors, dependency resolution, FTS search, MCP contract tests, and safe filesystem boundaries, (5) key risks and decisions still open, and (6) a suggested sequence of milestones. 
-
-Distinguish source-grounded decisions from recommendations; do not claim code has been implemented or tested. Keep tasks independently actionable and avoid expanding to multiple languages before the Python slice works.
+In modern enterprise codebases, components, utility functions, schemas, and configurations are often fragmented across multiple micro-repositories or mono-repo silos. **BrickForge** acts as an autonomous indexing forge:
+- It discovers, parses, analyzes, and registers reusable code modules ("Bricks").
+- It captures function/class contracts, imports, dependencies, call signatures, and documentation into a structured SQLite/JSON store.
+- It exposes a unified **MCP (Model Context Protocol)** server allowing AI coding assistants (such as Antigravity, Claude Code, Cursor, Copilot) to discover, inspect, and compose existing code modules with zero guesswork.
 
 ---
 
-## Why BrickForge?
+## 🏛️ System Architecture
 
-Over years of engineering across dozens of projects, valuable algorithms, hardware wrappers, parsers, and UI components get scattered across drives and forgotten. Traditional tools fall short:
+```mermaid
+flowchart TD
+    subgraph StorageLayer["💾 Storage & Persistence"]
+        DB[("SQLite Vector & Metadata Store<br/>db/schema.sql & db/schema-vector.sql")]
+        Catalog["Catalog Registry & Cache<br/>.codbot/project_kb.json"]
+    end
 
-- **`grep` / `ripgrep`** requires remembering exact variable or function names.
-- **Standard RAG** chunks files blindly by token count, severing AST boundaries and losing import dependencies.
+    subgraph CoreEngine["⚙️ BrickForge Core Engine"]
+        Discovery["Discovery & Walker<br/>src/brickforge/ingestion/discovery.py"]
+        Rules["Ignore & Path Filtering<br/>src/brickforge/ingestion/ignore_rules.py"]
+        Model["Models & Metadata Validation<br/>src/brickforge/models/"]
+        Registry["Repository Registry<br/>src/brickforge/repositories/registry.py"]
+    end
 
-**BrickForge** indexes code at the **Abstract Syntax Tree (AST)** level. It understands exact type signatures, calculates portability scores, maps transitive sibling dependencies, and pairs lexical search with local vector embeddings.
+    subgraph ServiceLayer["🔌 Integration & MCP Plane"]
+        MCPServer["Model Context Protocol Server<br/>mcp-server/mcp-tools.json"]
+        ClientPlane["AI Agents & Coding Assistants<br/>(Antigravity, Claude, Copilot)"]
+    end
 
----
-
-## System Architecture
-
-```
-
-+-------------------------------------------------------------------------+
-|                   DISTRIBUTED SOURCE REPOSITORIES                       |
-|       Local Drives (C:/, D:/)   |   NAS Shares   |   Git Archives       |
-+---------------------------------+---------------------------------------+
-|
-v
-+-------------------------------------------------------------------------+
-|                     AST INGESTION & ANALYSIS ENGINE                     |
-|  1. SHA-256 Delta Scanner (skips unchanged files)                       |
-|  2. Tree-sitter Multi-Language Parser (Rust, Python, TS/JS, C++, C#)    |
-|  3. Call-Graph & Purity Analyzer (Portability Score + Sibling Links)    |
-|  4. Local Semantic Summarizer (Ollama + Arctic-Embed / BGE)             |
-+---------------------------------+---------------------------------------+
-|
-v
-+-------------------------------------------------------------------------+
-|                        HYBRID STORAGE LAYER                             |
-|  +---------------------------+  +------------------+  +--------------+  |
-|  | SQLite Relational & Graph |  |   SQLite FTS5    |  |  sqlite-vec  |  |
-|  | (AST Nodes, Call Edges)   |  | (BM25 Signatures)|  | (Embeddings) |  |
-|  +---------------------------+  +------------------+  +--------------+  |
-+---------------------------------+---------------------------------------+
-|
-v
-+-------------------------------------------------------------------------+
-|                      BRICKFORGE MCP SERVER (STDIO / SSE)                |
-|  Tools: search_code_bricks | inspect_brick_contract                     |
-|         extract_composable_bundle | compose_and_adapt_bricks            |
-+---------------------------------+---------------------------------------+
-|
-v
-+-------------------------------------------------------------------------+
-|                    CONSUMERS & ORCHESTRATORS                            |
-|     IDEs (VS Code / Cursor / Antigravity)  |  Custom Multi-Agent Bots   |
-+-------------------------------------------------------------------------+
-
+    Discovery --> Rules
+    Rules --> Model
+    Model --> Registry
+    Registry --> StorageLayer
+    StorageLayer --> MCPServer
+    MCPServer --> ClientPlane
 ```
 
 ---
 
-## Key Features
+## 📂 Repository Layout
 
-- **Multi-Language Tree-sitter Parsing:** Native AST extraction for Rust, Python, TypeScript/JavaScript, C/C++, C#, and Go.
-- **Dependency-Resolved Extraction:** Requesting a class automatically resolves and bundles private helper functions, custom structs, and required `use`/`import` headers from the same module.
-- **Portability Scoring:** Automatically ranks code bricks by how self-contained they are (penalizing global state mutations and deep monolith coupling).
-- **100% Local & Sovereign:** Runs entirely on local hardware using SQLite (`WAL` mode + `FTS5` + `sqlite-vec`) and local Ollama models. Zero source code ever leaves your LAN.
-- **Token-Efficient MCP Workflow:** Agents inspect lightweight signatures first (`inspect_brick_contract`) and pull full source implementations (`extract_composable_bundle`) only after selecting the right brick.
+```text
+c:\Dev\brickForge
+├── brickforge/            # Core schemas, MCP specs, and architecture documents
+│   ├── ARCHITECTURE.md    # In-depth architectural blueprint
+│   ├── MCP_SERVER.md      # MCP server protocol specification
+│   ├── mcp-tools.json     # MCP tool declaration contracts
+│   └── schema.sql         # Base database relational schema
+├── db/                    # Database DDL & migration scripts
+│   ├── schema.sql         # Relational schema
+│   └── schema-vector.sql  # Vector embeddings schema for semantic search
+├── docs/                  # Documentation & design notes
+├── mcp-server/            # MCP server interfaces and tool definitions
+├── src/brickforge/        # Primary Python source package
+│   ├── config.py          # Configuration and settings loader
+│   ├── ingestion/         # Repository scanning, paths, and ignore filters
+│   ├── models/            # Dataclasses & Pydantic models for scans & repos
+│   └── repositories/      # Repository registry & catalog persistence
+├── tasks/                 # Task manifests & DAG definitions (tasks.json)
+├── tests/unit/            # Pytest automated test suite
+├── tools/                 # Reference screenshots, specifications & tools
+└── pyproject.toml         # Python packaging & test configurations
+```
 
 ---
 
-## Quick Start
+## 🚀 Quickstart & Verification
 
-### 1. Initialize & Index Repositories
+### 1. Prerequisites
+- Python 3.12+ (tested up to 3.14)
+- Git 2.40+
 
-```bash
-### Initialize the local SQLite + Vector catalog
-brickforge init --db ~/.brickforge/catalog.db
+### 2. Environment Setup
+```powershell
+# Clone the repository
+git clone https://github.com/titwan37/brickForge.git
+cd brickForge
 
-### Register and crawl source directories across drives
-brickforge scan "D:/Projects" "Z:/NAS_Archive/Repositories" \
-  --languages rust,python,typescript,cpp \
-  --embed-model snowflake-arctic-embed
-
+# Install editable package & test dependencies
+python -m pip install -e ".[dev]"
 ```
 
+### 3. Run Test Suite
+```powershell
+python -m pytest tests/unit/
+```
+
+---
+
+## 📜 License
+MIT License. Crafted for resilient autonomous software development.
