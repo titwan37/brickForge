@@ -1,22 +1,82 @@
 {
   "repo_name": "brickForge",
   "repo_path": "C:\\Dev\\brickForge",
-  "scanned_at": "2026-11-07 21:02:11",
+  "scanned_at": "2026-11-08 18:52:55",
   "purpose_summary": "> **Sovereign AST Code Intelligence & Composable Component Registry for AI Agents and Engineers.**",
-  "architecture_summary": "**Stack:** AsyncIO / HTTPX, FastAPI, Pytest, Python, SQLite3 | **Topology:** Automated Pytest & UAT Verification Suite (`tests/*`)",
+  "architecture_summary": "**Stack:** AsyncIO / HTTPX, FastAPI, Gradio UI, Pytest, Python, SQLite3 | **Topology:** Automated Pytest & UAT Verification Suite (`tests/*`)",
   "tech_stack": [
     "AsyncIO / HTTPX",
     "FastAPI",
+    "Gradio UI",
     "Pytest",
     "Python",
     "SQLite3"
   ],
-  "total_files": 111,
-  "total_loc": 11576,
+  "total_files": 146,
+  "total_loc": 18296,
   "modules": [
     {
+      "path": "mcp/server.py",
+      "loc": 394,
+      "classes": [],
+      "functions": [
+        "resource_catalog_stats",
+        "resource_brick_contract",
+        "resource_brick_source",
+        "get_catalog_stats",
+        "list_repositories",
+        "search_code_bricks",
+        "inspect_brick_contract",
+        "extract_composable_bundle",
+        "main"
+      ],
+      "docstring": "BrickForge MCP Server \u2014 Exposes AST Code Bricks, Contracts & Initiatives to CodBot and IDEs."
+    },
+    {
+      "path": "scripts/search_repository.py",
+      "loc": 11,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "scripts/serve_catalog.py",
+      "loc": 103,
+      "classes": [],
+      "functions": [
+        "get_db_stats",
+        "main"
+      ],
+      "docstring": "Launch the BrickForge Web Catalog Explorer interface."
+    },
+    {
+      "path": "scripts/summarize_projects.py",
+      "loc": 141,
+      "classes": [],
+      "functions": [
+        "main"
+      ],
+      "docstring": "Script to generate or refresh rich, HTML-free AI project summaries using Ollama."
+    },
+    {
+      "path": "scripts/sync_repositories.py",
+      "loc": 505,
+      "classes": [],
+      "functions": [
+        "find_config_file",
+        "resolve_log_path",
+        "save_execution_log",
+        "print_banner",
+        "render_repository_table",
+        "sync_config",
+        "main",
+        "on_file"
+      ],
+      "docstring": "Synchronize repository catalog from JSON configuration with Rich console logging and execution log recording."
+    },
+    {
       "path": "src/brickforge/cli.py",
-      "loc": 44,
+      "loc": 65,
       "classes": [],
       "functions": [
         "main"
@@ -343,7 +403,7 @@
     },
     {
       "path": "src/brickforge/ingestion/discovery.py",
-      "loc": 78,
+      "loc": 130,
       "classes": [],
       "functions": [
         "walk_registered_roots",
@@ -370,15 +430,16 @@
     },
     {
       "path": "src/brickforge/ingestion/ignore_rules.py",
-      "loc": 63,
+      "loc": 181,
       "classes": [
         "IgnoreRules"
       ],
       "functions": [
         "load_ignore_patterns",
-        "is_ignored"
+        "is_ignored",
+        "is_dir_ignored"
       ],
-      "docstring": ""
+      "docstring": "Configurable ignore and inclusion rules for file ingestion."
     },
     {
       "path": "src/brickforge/ingestion/paths.py",
@@ -391,7 +452,7 @@
     },
     {
       "path": "src/brickforge/ingestion/pipeline.py",
-      "loc": 280,
+      "loc": 306,
       "classes": [
         "RecoverablePythonParser",
         "IngestionPipeline"
@@ -405,7 +466,7 @@
     },
     {
       "path": "src/brickforge/ingestion/planner.py",
-      "loc": 257,
+      "loc": 313,
       "classes": [
         "PlannedFileAction",
         "ScanPlan",
@@ -483,6 +544,18 @@
       "docstring": "Parser diagnostics and error report modeling for source code parsing."
     },
     {
+      "path": "src/brickforge/parsers/multilang_symbols.py",
+      "loc": 405,
+      "classes": [
+        "MultiLanguageSymbolExtractor"
+      ],
+      "functions": [
+        "can_extract",
+        "extract_symbols"
+      ],
+      "docstring": "Multi-language symbol extractor using Tree-sitter grammars."
+    },
+    {
       "path": "src/brickforge/parsers/python.py",
       "loc": 248,
       "classes": [
@@ -510,7 +583,7 @@
     },
     {
       "path": "src/brickforge/parsers/tree_sitter_runtime.py",
-      "loc": 83,
+      "loc": 147,
       "classes": [
         "TreeSitterRuntime"
       ],
@@ -714,6 +787,82 @@
       "docstring": "Isolated unit-test harness for executing tests on extracted code bundles."
     },
     {
+      "path": "src/brickforge/web/app.py",
+      "loc": 976,
+      "classes": [
+        "ChatRequest"
+      ],
+      "functions": [
+        "get_db_connection",
+        "create_app",
+        "index",
+        "service_worker",
+        "get_stats",
+        "get_categories",
+        "get_initiatives",
+        "get_initiative_detail",
+        "search_bricks",
+        "export_bricks"
+      ],
+      "docstring": "FastAPI application powering the BrickForge Catalog Explorer web interface."
+    },
+    {
+      "path": "src/brickforge/web/chat.py",
+      "loc": 744,
+      "classes": [
+        "BrickForgeChatEngine"
+      ],
+      "functions": [
+        "detect_language_intent",
+        "is_vendor_path",
+        "is_test_path",
+        "get_db_connection",
+        "get_available_models",
+        "search_catalog_for_query",
+        "build_system_prompt",
+        "generate_fallback_report",
+        "chat",
+        "chat_stream"
+      ],
+      "docstring": "Knowledgeable Conversational Chat Engine grounded on BrickForge Code Catalog."
+    },
+    {
+      "path": "src/brickforge/web/initiatives.py",
+      "loc": 357,
+      "classes": [],
+      "functions": [
+        "ensure_initiatives_schema",
+        "classify_project_initiative",
+        "get_all_initiatives_with_rollups"
+      ],
+      "docstring": "Initiative aggregation, persistence, and taxonomy classification for BrickForge."
+    },
+    {
+      "path": "src/brickforge/web/projects.py",
+      "loc": 1192,
+      "classes": [],
+      "functions": [
+        "is_valid_project_candidate",
+        "get_summaries_cache_path",
+        "load_persisted_summaries",
+        "save_persisted_summary",
+        "flush_summaries_cache",
+        "detect_file_language",
+        "normalize_language_badge",
+        "strip_html_and_badges",
+        "split_identifier_tokens",
+        "extract_heavy_source_telemetry"
+      ],
+      "docstring": "Project-level aggregation and AI intent synthesis for BrickForge Catalog."
+    },
+    {
+      "path": "src/brickforge/web/__init__.py",
+      "loc": 2,
+      "classes": [],
+      "functions": [],
+      "docstring": "BrickForge Web Frontend & Catalog Explorer API."
+    },
+    {
       "path": "tests/e2e/test_incremental_indexing.py",
       "loc": 141,
       "classes": [],
@@ -838,6 +987,62 @@
       "docstring": "Integration tests for Python syntax and compileall validation."
     },
     {
+      "path": "tests/performance/check_file_langs.py",
+      "loc": 31,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/check_file_languages.py",
+      "loc": 21,
+      "classes": [],
+      "functions": [],
+      "docstring": "[('c', 267), ('cpp', 2), ('csharp', 15657), ('javascript', 26154), ('python', 70971), ('rust', 16026), ('typescript', 27829), ('typescript-react', 3318)]"
+    },
+    {
+      "path": "tests/performance/check_other_repos.py",
+      "loc": 22,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/check_projects.py",
+      "loc": 32,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/check_unsupported.py",
+      "loc": 26,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/inspect_tokens.py",
+      "loc": 28,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/test_api_extensions.py",
+      "loc": 37,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/test_db_bricks.py",
+      "loc": 20,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
       "path": "tests/performance/test_ingestion_baseline.py",
       "loc": 198,
       "classes": [
@@ -850,6 +1055,77 @@
         "test_incremental_scan_performance_is_sublinear"
       ],
       "docstring": "Performance baseline and scan metrics test suite."
+    },
+    {
+      "path": "tests/performance/test_intent.py",
+      "loc": 33,
+      "classes": [],
+      "functions": [
+        "extract_project_intent"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/test_pair_search.py",
+      "loc": 23,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/test_projects_runner.py",
+      "loc": 12,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/test_project_agg.py",
+      "loc": 33,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/test_robust_search.py",
+      "loc": 196,
+      "classes": [],
+      "functions": [
+        "is_vendor_path",
+        "is_test_path",
+        "detect_language_intent",
+        "robust_search",
+        "add_rows"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/test_search.py",
+      "loc": 114,
+      "classes": [],
+      "functions": [
+        "extract_core_keywords"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/test_smart_search.py",
+      "loc": 185,
+      "classes": [],
+      "functions": [
+        "detect_language",
+        "is_vendor_file",
+        "smart_search",
+        "add_rows"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "tests/performance/test_tts_snippet.py",
+      "loc": 11,
+      "classes": [],
+      "functions": [],
+      "docstring": ""
     },
     {
       "path": "tests/security/test_filesystem_boundaries.py",
@@ -891,6 +1167,21 @@
         "test_detect_renamed_bricks"
       ],
       "docstring": "Unit tests for deterministic brick identity, provenance tracking, and deduplication rules."
+    },
+    {
+      "path": "tests/unit/test_chat_engine.py",
+      "loc": 198,
+      "classes": [],
+      "functions": [
+        "chat_fixture",
+        "test_search_catalog_for_tts",
+        "test_search_catalog_for_markdown_pdf",
+        "test_build_system_prompt",
+        "test_generate_fallback_report",
+        "test_chat_execution",
+        "test_chat_api_endpoints"
+      ],
+      "docstring": "Unit tests for BrickForge Conversational Chat Engine and Ollama Grounding."
     },
     {
       "path": "tests/unit/test_composition_context.py",
@@ -1021,7 +1312,7 @@
     },
     {
       "path": "tests/unit/test_discovery.py",
-      "loc": 34,
+      "loc": 37,
       "classes": [
         "TestDiscovery"
       ],
@@ -1115,7 +1406,7 @@
     },
     {
       "path": "tests/unit/test_models.py",
-      "loc": 118,
+      "loc": 128,
       "classes": [],
       "functions": [
         "test_repository_model",
@@ -1132,8 +1423,19 @@
       "docstring": ""
     },
     {
+      "path": "tests/unit/test_multilang_symbols.py",
+      "loc": 139,
+      "classes": [],
+      "functions": [
+        "test_csharp_symbol_extraction",
+        "test_typescript_symbol_extraction",
+        "test_pipeline_multilang_integration"
+      ],
+      "docstring": "Unit tests for MultiLanguageSymbolExtractor."
+    },
+    {
       "path": "tests/unit/test_paths.py",
-      "loc": 20,
+      "loc": 25,
       "classes": [
         "TestSafePathCanonicalization"
       ],
@@ -1305,15 +1607,37 @@
         "execute"
       ],
       "docstring": "Unit tests for isolated validation runner and Python compile checks."
+    },
+    {
+      "path": "tests/unit/test_web_api.py",
+      "loc": 374,
+      "classes": [
+        "AppEndpointClient"
+      ],
+      "functions": [
+        "test_web_client",
+        "test_get_index_html",
+        "test_get_stats",
+        "test_get_categories",
+        "test_search_bricks_default",
+        "test_search_bricks_with_filters",
+        "test_get_brick_detail",
+        "test_get_brick_detail_not_found",
+        "test_get_stats_projects_and_languages",
+        "test_get_categories_languages_and_projects"
+      ],
+      "docstring": "Unit tests for BrickForge Catalog Web API and Explorer endpoints."
     }
   ],
   "symbols": [
     "AdaptationResult",
+    "AppEndpointClient",
     "BaseCompositionProvider",
     "BaseLanguageAdapter",
     "BaseLanguageAdapterExtension",
     "BaseValidationCheck",
     "BrickContract",
+    "BrickForgeChatEngine",
     "BrickForgeConfig",
     "BrickIdentity",
     "BrickRepository",
@@ -1322,6 +1646,7 @@
     "CatalogQuery",
     "CatalogSearchHit",
     "CatalogSearchService",
+    "ChatRequest",
     "CheckResult",
     "CompositionConstraints",
     "CompositionContext",
@@ -1365,6 +1690,7 @@
     "ManifestGenerator",
     "MockCompositionProvider",
     "MockCrossLanguageAdapter",
+    "MultiLanguageSymbolExtractor",
     "PackageLicenseInfo",
     "PackageRequirement",
     "ParseDiagnostic",
@@ -1423,6 +1749,8 @@
     "adapter",
     "add_error",
     "add_info",
+    "add_ranked_rows",
+    "add_rows",
     "add_warning",
     "apply_migrations",
     "are_exact_duplicates",
@@ -1431,59 +1759,64 @@
     "as_text",
     "benchmark_env",
     "build_context",
+    "build_system_prompt",
     "bundle_brick",
     "bundle_fixture",
+    "can_extract",
     "can_handle",
+    "chat",
+    "chat_conversation",
+    "chat_conversation_stream",
+    "chat_fixture",
+    "chat_stream",
     "check_requirements",
     "check_version_satisfaction",
+    "classify_project_initiative",
     "collect_error_nodes",
+    "collect_project_context",
     "compute_brick_id",
     "compute_bytes_hash",
     "compute_content_hash",
     "compute_file_id",
     "compute_semantic_hash",
-    "connection",
-    "context_db_fixture",
-    "create",
-    "create_connection",
-    "create_parser",
-    "create_proposal",
-    "create_report",
-    "custom_gen",
-    "db_manager",
-    "db_path_resolved",
-    "deactivate_repository",
-    "detect_renamed_bricks",
-    "dfs",
-    "ensure_directories",
-    "error_count",
-    "execute"
+    "connection"
   ],
   "weaknesses": [
-    "**Test Coverage Gap**: 16 module(s) lack dedicated unit test suites (e.g. `src/brickforge/cli.py, src/brickforge/__init__.py, src/brickforge/__main__.py`).",
-    "**Silent Exception Swallowing**: Broad `except Exception:` blocks found in `src/brickforge/ingestion/pipeline.py, src/brickforge/parsers/diagnostics.py, src/brickforge/parsers/python.py`."
+    "**Test Coverage Gap**: 23 module(s) lack dedicated unit test suites (e.g. `mcp/server.py, scripts/search_repository.py, scripts/serve_catalog.py`).",
+    "**Silent Exception Swallowing**: Broad `except Exception:` blocks found in `scripts/serve_catalog.py, scripts/summarize_projects.py, scripts/sync_repositories.py`.",
+    "**High Module Complexity**: `src/brickforge/web/projects.py` has `1192` lines of code, increasing maintenance & context overhead."
   ],
   "suggestions": [
     {
       "id": "IMP-TESTS",
-      "label": "\ud83e\uddea Add Unit Tests for cli.py",
+      "label": "\ud83e\uddea Add Unit Tests for server.py",
       "category": "Testing",
-      "rationale": "Module `src/brickforge/cli.py` has no matching test file.",
+      "rationale": "Module `mcp/server.py` has no matching test file.",
       "target_files": [
-        "src/brickforge/cli.py",
-        "tests/test_cli.py"
+        "mcp/server.py",
+        "tests/test_server.py"
       ],
-      "prompt_payload": "Create a comprehensive pytest unit test suite for `src/brickforge/cli.py` in `tests/test_cli.py` covering happy paths, edge cases, and error handling."
+      "prompt_payload": "Create a comprehensive pytest unit test suite for `mcp/server.py` in `tests/test_server.py` covering happy paths, edge cases, and error handling."
     },
     {
       "id": "IMP-EXCEPT",
-      "label": "\ud83d\udee1\ufe0f Harden Error Handling in pipeline.py",
+      "label": "\ud83d\udee1\ufe0f Harden Error Handling in serve_catalog.py",
       "category": "Reliability",
       "rationale": "Replace generic exception catches with structured logging and typed error recovery.",
       "target_files": [
-        "src/brickforge/ingestion/pipeline.py"
+        "scripts/serve_catalog.py"
       ],
-      "prompt_payload": "Refactor broad `except Exception` blocks in `src/brickforge/ingestion/pipeline.py` to use specific exception types, structured error logging, and deterministic fallback states while preserving public signatures."
+      "prompt_payload": "Refactor broad `except Exception` blocks in `scripts/serve_catalog.py` to use specific exception types, structured error logging, and deterministic fallback states while preserving public signatures."
+    },
+    {
+      "id": "IMP-MODULAR",
+      "label": "\ud83e\uddf1 Refactor & Modularize projects.py",
+      "category": "Architecture",
+      "rationale": "`src/brickforge/web/projects.py` exceeds 1192 LOC and mixes multiple responsibilities.",
+      "target_files": [
+        "src/brickforge/web/projects.py"
+      ],
+      "prompt_payload": "Analyze `src/brickforge/web/projects.py` (1192 LOC) and improve its internal cohesion, type annotations, and helper decomposition without breaking existing imports."
     },
     {
       "id": "IMP-SEC",

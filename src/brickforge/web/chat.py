@@ -11,11 +11,16 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
+from brickforge.web.initiatives import INITIATIVES_REGISTRY
+
 DEFAULT_OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
 DEFAULT_MODEL = "qwen2.5-coder:7b"
+SERVER_DEFAULT_MODEL = "qwen3:1.7b"
 FALLBACK_MODELS = [
     "qwen2.5-coder:7b",
     "llama3.2:3b",
+    "qwen3:1.7b",
+    "openclaw-brain:latest",
     "qwen2.5:7b",
     "mistral-7b:latest",
     "deepseek-r1:8b",
@@ -327,9 +332,26 @@ class BrickForgeChatEngine:
 
         return results[:limit]
 
-    def build_system_prompt(self, candidate_bricks: List[Dict[str, Any]]) -> str:
-        """Formulate the system prompt with verified codebase grounding."""
+    def build_system_prompt(self, candidate_bricks: List[Dict[str, Any]], query: str = "") -> str:
+        """Formulate the system prompt with verified codebase grounding and strategic initiative context."""
         catalog_context_lines = []
+
+        # Detect matching strategic initiative domain
+        matched_initiative = None
+        q_lower = query.lower() if query else ""
+        for ini in INITIATIVES_REGISTRY:
+            if any(kw in q_lower for kw in ini.get("keywords", [])):
+                matched_initiative = ini
+                break
+
+        initiative_context = ""
+        if matched_initiative:
+            initiative_context = (
+                f"=== STRATEGIC INITIATIVE DOMAIN ===\n"
+                f"Initiative: {matched_initiative['name']} ({matched_initiative['slug']})\n"
+                f"Strategic Focus: {matched_initiative.get('tagline', '')}\n"
+                f"====================================\n\n"
+            )
 
         for idx, b in enumerate(candidate_bricks, 1):
             source_lines = (b.get("source_code") or "").splitlines()
@@ -369,6 +391,7 @@ class BrickForgeChatEngine:
             "3. If multiple bricks offer alternative approaches or toolchains, compare their trade-offs (e.g., speed vs formatting fidelity vs OCR on scanned pages).\n"
             "4. Provide copyable, ready-to-use Python code snippets showing how to import, call, or pipeline these bricks.\n"
             "5. Format your output using crisp, structured GitHub-flavored Markdown with clear headings and bullet points.\n\n"
+            f"{initiative_context}"
             "=== VERIFIED BRICKFORGE CATALOG BRICKS ===\n"
             f"{context_body}\n"
             "==========================================="
@@ -457,7 +480,7 @@ class BrickForgeChatEngine:
         retrieval_ms = round((time.perf_counter() - t_retrieval_start) * 1000, 1)
 
         # 2. Build system instruction with catalog grounding
-        system_prompt = self.build_system_prompt(matched_bricks)
+        system_prompt = self.build_system_prompt(matched_bricks, query=latest_user_message)
 
         prompt_payload = [{"role": "system", "content": system_prompt}]
         for m in messages[-6:]:
@@ -601,7 +624,7 @@ class BrickForgeChatEngine:
         }
 
         # 2. Build system instruction with catalog grounding
-        system_prompt = self.build_system_prompt(matched_bricks)
+        system_prompt = self.build_system_prompt(matched_bricks, query=latest_user_message)
         prompt_payload = [{"role": "system", "content": system_prompt}]
         for m in messages[-6:]:
             if m.get("role") in ("user", "assistant"):
@@ -629,8 +652,8 @@ class BrickForgeChatEngine:
                         stream_succeeded = True
                         token_buffer: List[str] = []
                         last_flush_time = time.perf_counter()
-                        FLUSH_INTERVAL = 0.035  # 35ms micro-batch
-                        BUFFER_THRESHOLD = 24   # ~24 chars per batch
+                        FLUSH_INTERVAL = 0.080  # 80ms micro-batch for natural paragraph streaming
+                        BUFFER_THRESHOLD = 64   # ~64 characters per batch
 
                         for line in response.iter_lines():
                             if not line:

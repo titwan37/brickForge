@@ -35,6 +35,12 @@ class AppEndpointClient:
     def get_brick(self, brick_id: str):
         return self.endpoints["/api/brick/{brick_id}"](brick_id=brick_id)
 
+    def get_initiatives(self):
+        return self.endpoints["/api/initiatives"]()
+
+    def get_initiative(self, initiative_id: str):
+        return self.endpoints["/api/initiative/{initiative_id}"](initiative_id=initiative_id)
+
 
 @pytest.fixture
 def test_web_client(tmp_path: Path):
@@ -330,5 +336,39 @@ def test_export_bricks_with_filters(test_web_client):
     assert res_proj["exported_count"] >= 2
     for item in res_proj["items"]:
         assert item["kind"] == "project"
+
+
+@pytest.mark.unit
+def test_get_initiatives(test_web_client):
+    client, _ = test_web_client
+    inis = client.get_initiatives()
+    assert len(inis) == 8
+    slugs = [ini["slug"] for ini in inis]
+    assert "autonomous-agents-orchestration" in slugs
+    assert "audio-dsp-speech-intelligence" in slugs
+    assert "document-intelligence-publishing" in slugs
+
+
+@pytest.mark.unit
+def test_get_initiative_detail(test_web_client):
+    client, _ = test_web_client
+    ini = client.get_initiative("autonomous-agents-orchestration")
+    assert ini["slug"] == "autonomous-agents-orchestration"
+    assert ini["name"] == "Autonomous Agents & Multi-Agent Coding"
+    assert "projects" in ini
+
+    with pytest.raises(HTTPException):
+        client.get_initiative("non-existent-initiative")
+
+
+@pytest.mark.unit
+def test_search_and_export_bricks_by_initiative(test_web_client):
+    client, _ = test_web_client
+    res = client.search_bricks(initiative="autonomous-agents-orchestration")
+    assert "items" in res
+
+    export_res = client.export_bricks(initiative="autonomous-agents-orchestration")
+    assert "items" in export_res
+    assert export_res["filters"]["initiative"] == "autonomous-agents-orchestration"
 
 

@@ -19,6 +19,12 @@ from brickforge.web.projects import (
     normalize_language_badge,
     detect_file_language,
 )
+from brickforge.web.initiatives import (
+    INITIATIVES_REGISTRY,
+    get_all_initiatives_with_rollups,
+    classify_project_initiative,
+    ensure_initiatives_schema,
+)
 
 DEFAULT_DB_PATH = Path("data/brickforge.db")
 
@@ -82,9 +88,26 @@ def _build_bricks_filters(
     kind: Optional[str],
     repo: Optional[str],
     language: Optional[str],
+    initiative_project_keys: Optional[List[str]] = None,
 ) -> Tuple[List[str], List[Any]]:
     where_clauses: List[str] = []
     params: List[Any] = []
+
+    # Filter by initiative project keys if provided
+    if initiative_project_keys is not None:
+        if not initiative_project_keys:
+            where_clauses.append("1 = 0")  # Empty initiative match
+        else:
+            proj_clauses = []
+            for pkey in initiative_project_keys:
+                if ":" in pkey:
+                    r_id, p_name = pkey.split(":", 1)
+                    proj_clauses.append("(s.repository_id = ? AND (s.relative_path LIKE ? OR s.relative_path LIKE ?))")
+                    params.extend([r_id, f"{p_name}/%", f"{p_name}\\%"])
+                else:
+                    proj_clauses.append("(s.relative_path LIKE ? OR s.relative_path LIKE ?)")
+                    params.extend([f"{pkey}/%", f"{pkey}\\%"])
+            where_clauses.append(f"({' OR '.join(proj_clauses)})")
 
     # Full text search or LIKE
     if query and query.strip():
@@ -172,10 +195,21 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
     template_path = Path(__file__).parent / "templates" / "index.html"
 
     @app.get("/", response_class=HTMLResponse)
+    @app.get("/catalog", response_class=HTMLResponse)
+    @app.get("/chat", response_class=HTMLResponse)
+    @app.get("/brickforge", response_class=HTMLResponse)
+    @app.get("/brickforge/catalog", response_class=HTMLResponse)
+    @app.get("/brickforge/chat", response_class=HTMLResponse)
     def index():
         if not template_path.exists():
             return HTMLResponse("<h1>BrickForge UI template not found</h1>", status_code=500)
         return HTMLResponse(template_path.read_text(encoding="utf-8"))
+
+    @app.get("/service-worker.js")
+    def service_worker():
+        """Serve an empty no-op service worker to silence PWA / browser service-worker lookup 404s."""
+        from fastapi.responses import Response
+        return Response(content="// BrickForge no-op service worker\n", media_type="application/javascript")
 
     @app.get("/api/stats")
     def get_stats():
@@ -297,23 +331,50 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
 
             total_bricks = cursor.execute("SELECT COUNT(*) FROM code_bricks;").fetchone()[0]
 
+            # Strategic Initiatives & Domains
+            initiatives = get_all_initiatives_with_rollups(conn, projects)
+
             return {
                 "total_bricks": total_bricks,
                 "total_projects": len(projects),
+                "total_initiatives": len(initiatives),
                 "topics": topics,
                 "kinds": kinds,
                 "repositories": repositories,
                 "languages": languages,
+                "initiatives": initiatives,
                 "projects": [
                     {
                         "name": p["symbol_name"],
                         "repository_id": p["repository_id"],
                         "brick_count": p["brick_count"],
                         "file_count": p["file_count"],
+                        "initiative_id": p.get("initiative_id"),
+                        "initiative_name": p.get("initiative_name"),
                     }
                     for p in projects[:30]
                 ],
             }
+
+    @app.get("/api/initiatives")
+    def get_initiatives():
+        if not resolved_db.exists():
+            return []
+        with get_db_connection(resolved_db) as conn:
+            projects = get_all_projects(conn)
+            return get_all_initiatives_with_rollups(conn, projects)
+
+    @app.get("/api/initiative/{initiative_id}")
+    def get_initiative_detail(initiative_id: str):
+        if not resolved_db.exists():
+            raise HTTPException(status_code=404, detail="Database not found")
+        with get_db_connection(resolved_db) as conn:
+            projects = get_all_projects(conn)
+            initiatives = get_all_initiatives_with_rollups(conn, projects)
+            target = next((ini for ini in initiatives if ini["id"] == initiative_id or ini["slug"] == initiative_id), None)
+            if not target:
+                raise HTTPException(status_code=404, detail=f"Initiative '{initiative_id}' not found")
+            return target
 
     @app.get("/api/bricks")
     def search_bricks(
@@ -322,6 +383,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
         kind: Optional[str] = None,
         repo: Optional[str] = None,
         language: Optional[str] = None,
+        initiative: Optional[str] = None,
         sort: str = "portability_desc",
         page: int = 1,
         page_size: int = 24,
@@ -330,9 +392,26 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
             return {"total": 0, "page": page, "page_size": page_size, "items": []}
 
         with get_db_connection(resolved_db) as conn:
+            ini_proj_keys: Optional[List[str]] = None
+            if initiative and initiative.strip() and initiative != "all":
+                ini_key = initiative.strip()
+                projects = get_all_projects(conn)
+                inis = get_all_initiatives_with_rollups(conn, projects)
+                match_ini = next((x for x in inis if x["id"] == ini_key or x["slug"] == ini_key), None)
+                if match_ini:
+                    ini_proj_keys = [p["project_key"] for p in match_ini.get("projects", [])]
+                else:
+                    ini_proj_keys = []
+
             # First-class Project Level support: api/bricks?kind=project
             if kind and kind.strip().lower() == "project":
                 projects = get_all_projects(conn)
+                # Compute initiative rollups to attach initiative tags
+                get_all_initiatives_with_rollups(conn, projects)
+
+                # Initiative filter
+                if ini_proj_keys is not None:
+                    projects = [p for p in projects if f"{p['repository_id']}:{p['symbol_name']}" in ini_proj_keys]
 
                 # Repository filter
                 if repo and repo.strip() and repo != "all":
@@ -378,7 +457,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
                 }
 
             cursor = conn.cursor()
-            where_clauses, params = _build_bricks_filters(query, topic, kind, repo, language)
+            where_clauses, params = _build_bricks_filters(query, topic, kind, repo, language, initiative_project_keys=ini_proj_keys)
             where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
             # Count total matching
@@ -477,6 +556,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
         kind: Optional[str] = None,
         repo: Optional[str] = None,
         language: Optional[str] = None,
+        initiative: Optional[str] = None,
         sort: str = "portability_desc",
         limit: int = 5000,
     ):
@@ -492,15 +572,31 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
                     "kind": kind,
                     "repo": repo,
                     "language": language,
+                    "initiative": initiative,
                     "sort": sort,
                 },
                 "items": [],
             }
 
         with get_db_connection(resolved_db) as conn:
+            ini_proj_keys: Optional[List[str]] = None
+            if initiative and initiative.strip() and initiative != "all":
+                ini_key = initiative.strip()
+                projects = get_all_projects(conn)
+                inis = get_all_initiatives_with_rollups(conn, projects)
+                match_ini = next((x for x in inis if x["id"] == ini_key or x["slug"] == ini_key), None)
+                if match_ini:
+                    ini_proj_keys = [p["project_key"] for p in match_ini.get("projects", [])]
+                else:
+                    ini_proj_keys = []
+
             # First-class Project Level support: api/bricks/export?kind=project
             if kind and kind.strip().lower() == "project":
                 projects = get_all_projects(conn)
+                get_all_initiatives_with_rollups(conn, projects)
+
+                if ini_proj_keys is not None:
+                    projects = [p for p in projects if f"{p['repository_id']}:{p['symbol_name']}" in ini_proj_keys]
 
                 if repo and repo.strip() and repo != "all":
                     projects = [p for p in projects if p["repository_id"] == repo.strip()]
@@ -543,13 +639,14 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
                         "kind": kind,
                         "repo": repo,
                         "language": language,
+                        "initiative": initiative,
                         "sort": sort,
                     },
                     "items": export_items,
                 }
 
             cursor = conn.cursor()
-            where_clauses, params = _build_bricks_filters(query, topic, kind, repo, language)
+            where_clauses, params = _build_bricks_filters(query, topic, kind, repo, language, initiative_project_keys=ini_proj_keys)
             where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
             count_sql = f"""
@@ -637,6 +734,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
                     "kind": kind,
                     "repo": repo,
                     "language": language,
+                    "initiative": initiative,
                     "sort": sort,
                 },
                 "items": items,
@@ -655,6 +753,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
 
             with get_db_connection(resolved_db) as conn:
                 projects = get_all_projects(conn)
+                get_all_initiatives_with_rollups(conn, projects)
                 target_proj = next(
                     (p for p in projects if p["symbol_name"] == proj_name and (not repo_id or p["repository_id"] == repo_id)),
                     None,
@@ -838,10 +937,21 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
     @app.get("/api/chat/models")
     def get_chat_models():
         models, is_online = chat_engine.get_available_models()
+        # On remote production host (e.g. Ionos VPS where lightweight qwen3:1.7b is installed),
+        # prioritize qwen3:1.7b as default; on local development machines, prefer qwen2.5-coder:7b
+        # or the first available model.
+        preferred_default = DEFAULT_MODEL
+        if "qwen3:1.7b" in models:
+            preferred_default = "qwen3:1.7b"
+        elif DEFAULT_MODEL in models:
+            preferred_default = DEFAULT_MODEL
+        elif models:
+            preferred_default = models[0]
+
         return {
             "models": models,
             "online": is_online,
-            "default": DEFAULT_MODEL,
+            "default": preferred_default,
         }
 
     @app.post("/api/chat")

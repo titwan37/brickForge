@@ -4,6 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BrickForge — Sovereign Code Brick Explorer</title>
+  <script>
+    // Immediate early theme application to eliminate flash of light theme
+    (function () {
+      const savedTheme = localStorage.getItem('afa-global-theme') || 'system';
+      let theme = savedTheme;
+      if (theme === 'system') {
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-theme-setting', savedTheme);
+    })();
+  </script>
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,6 +50,12 @@
   <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
 
   <script>
+  // To support both standalone local dev (http://127.0.0.1:8000/) and subpath deployment (https://afastudio.ch/brickforge/), 
+  // we can dynamically determine the API base prefix  
+  // Detect if running under /brickforge/ subpath or root /
+  const API_BASE = window.location.pathname.startsWith('/brickforge') ? '/brickforge' : '';
+  // e.g. fetch(`${API_BASE}/api/stats`)
+
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -56,6 +79,69 @@
   </script>
   <style>
     [x-cloak] { display: none !important; }
+    /* Light Theme (Default) */
+    :root {
+      --bg-main: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+    }
+
+    /* Dark Theme (Day / Night sync with afastudio & hub) */
+    html.dark {
+      color-scheme: dark;
+    }
+    html.dark body {
+      background-color: #0b0f19 !important;
+      color: #f1f5f9 !important;
+    }
+    html.dark header {
+      background-color: rgba(15, 23, 42, 0.95) !important;
+      border-color: #1e293b !important;
+    }
+    html.dark .bg-white {
+      background-color: #111827 !important;
+      border-color: #1f2937 !important;
+      color: #f8fafc !important;
+    }
+    html.dark .bg-slate-50 {
+      background-color: #1e293b !important;
+      border-color: #334155 !important;
+      color: #cbd5e1 !important;
+    }
+    html.dark .bg-slate-100 {
+      background-color: #1e293b !important;
+      color: #e2e8f0 !important;
+    }
+    html.dark .border-slate-200,
+    html.dark .border-slate-200\/90,
+    html.dark .border-slate-100 {
+      border-color: #1e293b !important;
+    }
+    html.dark .text-slate-900,
+    html.dark .text-slate-800 {
+      color: #f8fafc !important;
+    }
+    html.dark .text-slate-700,
+    html.dark .text-slate-600 {
+      color: #cbd5e1 !important;
+    }
+    html.dark .text-slate-500,
+    html.dark .text-slate-400 {
+      color: #94a3b8 !important;
+    }
+    html.dark input,
+    html.dark textarea,
+    html.dark select {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    html.dark .prose-chat h3 { color: #f8fafc !important; }
+    html.dark .prose-chat h4 { color: #e2e8f0 !important; }
+    html.dark .prose-chat code:not(pre code) { background: #1e293b; color: #38bdf8; }
+
     /* Custom scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -158,13 +244,28 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <div class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium hidden lg:flex items-center gap-1.5">
+          <!-- Global Theme Toggle (Day & Night) -->
+          <button 
+            type="button"
+            @click="toggleTheme()" 
+            class="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer flex items-center gap-1.5"
+            :title="currentTheme === 'dark' ? 'Switch to Day Theme' : 'Switch to Night Theme'"
+          >
+            <template x-if="currentTheme === 'dark'">
+              <i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+            </template>
+            <template x-if="currentTheme !== 'dark'">
+              <i data-lucide="moon" class="w-4 h-4 text-slate-600"></i>
+            </template>
+          </button>
+
+          <div class="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium hidden lg:flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span x-text="stats.total_bricks ? Number(stats.total_bricks).toLocaleString() + ' Bricks' : 'Indexing...'"></span>
           </div>
           <button 
             @click="fetchData()" 
-            class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+            class="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
             title="Refresh Catalog Data"
           >
             <i data-lucide="rotate-cw" class="w-4 h-4"></i>
@@ -517,6 +618,49 @@
       <!-- ============================================== -->
       <div class="flex-1 min-w-0 w-full space-y-5">
         
+        <!-- Segmented Macro View Switcher: Initiatives vs Projects vs Bricks -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-semibold overflow-x-auto">
+            <button 
+              type="button"
+              @click="catalogMode = 'initiatives'"
+              :class="catalogMode === 'initiatives' ? 'bg-white text-blue-700 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'"
+              class="px-3.5 py-1.5 rounded-lg transition flex items-center gap-2 shrink-0 cursor-pointer"
+            >
+              <i data-lucide="compass" class="w-4 h-4 text-blue-600"></i>
+              <span>Initiatives & Domains</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="catalogMode === 'initiatives' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-600'" x-text="initiatives.length || 8"></span>
+            </button>
+
+            <button 
+              type="button"
+              @click="selectKind('project'); catalogMode = 'projects'"
+              :class="(catalogMode === 'projects' || (activeKind === 'project' && catalogMode !== 'initiatives')) ? 'bg-white text-indigo-700 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'"
+              class="px-3.5 py-1.5 rounded-lg transition flex items-center gap-2 shrink-0 cursor-pointer"
+            >
+              <i data-lucide="folder-git-2" class="w-4 h-4 text-indigo-600"></i>
+              <span>All Projects</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="(catalogMode === 'projects' || activeKind === 'project') ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-600'" x-text="stats.total_projects || 0"></span>
+            </button>
+
+            <button 
+              type="button"
+              @click="selectKind('all'); catalogMode = 'bricks'"
+              :class="(catalogMode === 'bricks' && activeKind !== 'project') ? 'bg-white text-emerald-700 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'"
+              class="px-3.5 py-1.5 rounded-lg transition flex items-center gap-2 shrink-0 cursor-pointer"
+            >
+              <i data-lucide="blocks" class="w-4 h-4 text-emerald-600"></i>
+              <span>Code Bricks</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="(catalogMode === 'bricks' && activeKind !== 'project') ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'" x-text="Number(stats.total_bricks || 0).toLocaleString()"></span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 px-2 text-xs text-slate-500 font-medium">
+            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            <span class="text-[11px] font-mono text-slate-500" x-text="(stats.total_projects || 0) + ' Workspaces • ' + (stats.total_files || 0) + ' Files'"></span>
+          </div>
+        </div>
+
         <!-- Controls Bar: Search Input, AI Search & Filter Dropdown (agensi.io style) -->
         <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 flex flex-col md:flex-row items-center justify-between gap-3">
           
@@ -633,9 +777,16 @@
               <button @click="searchQuery = ''; fetchBricks(1)" class="hover:text-slate-900 ml-0.5 font-bold cursor-pointer" title="Clear search query">&times;</button>
             </span>
 
+            <!-- Active Initiative Pill -->
+            <span x-show="activeInitiative !== 'all'" class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full text-[11px] border border-blue-200 font-sans shadow-sm">
+              <span class="font-semibold text-blue-500">Domain:</span>
+              <span class="font-medium text-[11px]" x-text="getInitiativeName(activeInitiative)"></span>
+              <button @click="activeInitiative = 'all'; fetchBricks(1)" class="hover:text-blue-900 ml-0.5 font-bold cursor-pointer" title="Clear initiative filter">&times;</button>
+            </span>
+
             <!-- Clear All / Reset Filters Link -->
             <button 
-              x-show="activeTopic !== 'All' || activeKind !== 'all' || activeLanguage !== 'all' || activeRepo !== 'all' || (searchQuery && searchQuery.trim())" 
+              x-show="activeTopic !== 'All' || activeKind !== 'all' || activeLanguage !== 'all' || activeRepo !== 'all' || activeInitiative !== 'all' || (searchQuery && searchQuery.trim())" 
               @click="resetFilters()" 
               class="text-[11px] text-blue-600 hover:text-blue-800 font-semibold hover:underline ml-1 cursor-pointer transition flex items-center gap-1"
             >
@@ -650,8 +801,114 @@
         </div>
 
         <!-- ============================================== -->
+        <!-- STRATEGIC INITIATIVES PORTFOLIO GRID            -->
+        <!-- ============================================== -->
+        <div x-show="catalogMode === 'initiatives'" class="space-y-4" x-cloak>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <template x-for="ini in initiatives" :key="ini.id">
+              <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 hover:shadow-md hover:border-blue-300 transition-all flex flex-col justify-between group">
+                <div class="space-y-3">
+                  <!-- Header: Icon, Title & Badge -->
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                      <div 
+                        class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border shadow-2xs group-hover:scale-105 transition-transform"
+                        :class="{
+                          'bg-emerald-50 text-emerald-600 border-emerald-200': ini.color_accent === 'emerald',
+                          'bg-sky-50 text-sky-600 border-sky-200': ini.color_accent === 'sky',
+                          'bg-amber-50 text-amber-600 border-amber-200': ini.color_accent === 'amber',
+                          'bg-indigo-50 text-indigo-600 border-indigo-200': ini.color_accent === 'indigo',
+                          'bg-rose-50 text-rose-600 border-rose-200': ini.color_accent === 'rose',
+                          'bg-purple-50 text-purple-600 border-purple-200': ini.color_accent === 'purple',
+                          'bg-teal-50 text-teal-600 border-teal-200': ini.color_accent === 'teal',
+                          'bg-orange-50 text-orange-600 border-orange-200': ini.color_accent === 'orange'
+                        }"
+                      >
+                        <i :data-lucide="ini.icon || 'folder-kanban'" class="w-5 h-5"></i>
+                      </div>
+                      <div>
+                        <h3 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition" x-text="ini.name"></h3>
+                        <p class="text-xs text-slate-500 line-clamp-1" x-text="ini.tagline"></p>
+                      </div>
+                    </div>
+                    <span class="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 shrink-0" x-text="(ini.project_count || ini.total_projects || 0) + ' projs'"></span>
+                  </div>
+
+                  <!-- Initiative Metrics Badges -->
+                  <div class="grid grid-cols-3 gap-2 text-center text-xs py-1">
+                    <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                      <span class="text-[10px] text-slate-400 block uppercase font-bold">Projects</span>
+                      <span class="font-bold text-slate-800 font-mono text-xs" x-text="ini.project_count || ini.total_projects || 0"></span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                      <span class="text-[10px] text-slate-400 block uppercase font-bold">Files</span>
+                      <span class="font-bold text-slate-800 font-mono text-xs" x-text="Number(ini.total_files || 0).toLocaleString()"></span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                      <span class="text-[10px] text-slate-400 block uppercase font-bold">Bricks</span>
+                      <span class="font-bold text-blue-600 font-mono text-xs" x-text="Number(ini.total_bricks || 0).toLocaleString()"></span>
+                    </div>
+                  </div>
+
+                  <!-- Languages Palette -->
+                  <div class="flex items-center gap-1.5 flex-wrap pt-1" x-show="ini.languages && ini.languages.length > 0">
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase">Languages:</span>
+                    <template x-for="lang in (ini.languages || [])" :key="lang">
+                      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200" x-text="lang"></span>
+                    </template>
+                  </div>
+
+                  <!-- Member Projects Sample Chips -->
+                  <div class="space-y-1.5 pt-1" x-show="ini.projects && ini.projects.length > 0">
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase">Representative Workspaces:</span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <template x-for="p in (ini.projects ? ini.projects.slice(0, 6) : [])" :key="p.project_key">
+                        <button 
+                          @click="openBrickModal(p.brick_id)"
+                          type="button"
+                          class="text-[11px] font-medium px-2 py-0.5 rounded-lg bg-blue-50/70 hover:bg-blue-100 text-blue-700 hover:text-blue-900 border border-blue-100/80 truncate max-w-[140px] transition cursor-pointer" 
+                          :title="'Inspect Workspace Dossier: ' + (p.name || p.project_name)" 
+                          x-text="p.name || p.project_name"
+                        ></button>
+                      </template>
+                      <template x-if="ini.projects && ini.projects.length > 6">
+                        <span class="text-[10px] text-slate-400 font-mono" x-text="'+' + (ini.projects.length - 6) + ' more'"></span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action CTA: Explore Initiative Projects & Bricks -->
+                <div class="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="text-[11px] text-slate-400 font-mono" x-text="(ini.total_functions || 0) + ' fn • ' + (ini.total_classes || 0) + ' cls'"></span>
+                  <div class="flex items-center gap-2">
+                    <button 
+                      @click="selectInitiativeProjects(ini.id)"
+                      class="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                      title="View all workspace projects in this initiative"
+                    >
+                      <i data-lucide="folder-git-2" class="w-3.5 h-3.5 text-indigo-600"></i>
+                      <span>Projects (<span x-text="ini.project_count || ini.total_projects || 0"></span>)</span>
+                    </button>
+                    <button 
+                      @click="selectInitiative(ini.id)"
+                      class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm group-hover:bg-blue-600 cursor-pointer"
+                      title="View all extracted code bricks in this initiative"
+                    >
+                      <span>Explore Bricks</span>
+                      <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
         <!-- PRESENTATION CARD GRID (Inspired by agensi.io) -->
         <!-- ============================================== -->
+        <div x-show="catalogMode !== 'initiatives'" class="space-y-5" x-cloak>
         
         <!-- Loading State Skeleton -->
         <div x-show="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" x-cloak>
@@ -888,6 +1145,8 @@
           </div>
         </div>
 
+        </div> <!-- End of catalogMode !== 'initiatives' -->
+
       </div>
 
     </div>
@@ -898,7 +1157,7 @@
   <!-- =================================================== -->
   <main 
     x-show="currentView === 'chat'" 
-    class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6"
+    class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4 min-h-0 lg:h-[calc(100vh-4.25rem)]"
     x-cloak
   >
     <!-- Top Action / Breadcrumbs Header for Tab View -->
@@ -1000,10 +1259,10 @@
     </div>
 
     <!-- Main Studio Body: 2 Columns -->
-    <div class="flex flex-col lg:flex-row gap-6 items-stretch flex-1 min-h-0">
+    <div class="flex flex-col lg:flex-row gap-6 items-stretch flex-1 min-h-0 overflow-hidden">
       
       <!-- Left Studio Sidebar: Grounding Info & Starters -->
-      <aside class="w-full lg:w-72 shrink-0 space-y-4">
+      <aside class="w-full lg:w-72 shrink-0 space-y-4 overflow-y-auto pr-1">
         
         <!-- Grounded Knowledge Base Summary Card -->
         <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 space-y-3">
@@ -1043,6 +1302,8 @@
           <div class="space-y-1.5">
             <button 
               @click="sendChatMessage('How can I build a TTS or speech pipeline from our indexed bricks?')"
+              :disabled="isChatLoading"
+              :class="{'opacity-50 cursor-not-allowed': isChatLoading}"
               class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
             >
               <span class="text-sm">🎙️</span>
@@ -1050,6 +1311,8 @@
             </button>
             <button 
               @click="sendChatMessage('Suggest reusable AI agent prompt and orchestration bricks')"
+              :disabled="isChatLoading"
+              :class="{'opacity-50 cursor-not-allowed': isChatLoading}"
               class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
             >
               <span class="text-sm">🤖</span>
@@ -1057,6 +1320,8 @@
             </button>
             <button 
               @click="sendChatMessage('Find reusable token, JWT, and authentication handlers')"
+              :disabled="isChatLoading"
+              :class="{'opacity-50 cursor-not-allowed': isChatLoading}"
               class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
             >
               <span class="text-sm">🔒</span>
@@ -1064,6 +1329,8 @@
             </button>
             <button 
               @click="sendChatMessage('Which bricks are best for AST static analysis or parsing?')"
+              :disabled="isChatLoading"
+              :class="{'opacity-50 cursor-not-allowed': isChatLoading}"
               class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
             >
               <span class="text-sm">⚙️</span>
@@ -1071,6 +1338,8 @@
             </button>
             <button 
               @click="sendChatMessage('Summarize the top database storage and SQLite components')"
+              :disabled="isChatLoading"
+              :class="{'opacity-50 cursor-not-allowed': isChatLoading}"
               class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
             >
               <span class="text-sm">📊</span>
@@ -1082,12 +1351,12 @@
       </aside>
 
       <!-- Right Main Chat Thread & Input Area -->
-      <section class="flex-1 min-w-0 bg-white rounded-3xl border border-slate-200/90 shadow-sm flex flex-col min-h-[720px] lg:h-[calc(100vh-14rem)] overflow-hidden">
+      <section class="flex-1 min-w-0 bg-white rounded-3xl border border-slate-200/90 shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
         
         <!-- Messages Scroll Box -->
         <div 
           id="tabChatMessagesBox" 
-          class="flex-1 overflow-y-auto p-6 space-y-6 text-xs bg-slate-50/60"
+          class="flex-1 overflow-y-auto p-6 space-y-6 text-xs bg-slate-50/60 min-h-0"
         >
           <!-- Welcome Intro Card -->
           <div class="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-4 max-w-3xl mx-auto">
@@ -1164,17 +1433,31 @@
                   <!-- Markdown Output -->
                   <div class="text-sm leading-relaxed" x-html="msg.renderedHtml || renderMarkdown(msg.content)"></div>
 
-                  <!-- Real-time Loading Pulse when bubble is waiting for first tokens -->
-                  <div x-show="msg.isStreaming && !msg.content" class="flex items-center gap-2 text-slate-400 py-1 text-xs">
-                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-                    <span class="italic font-mono text-[11px]">
-                      Consulting catalog
-                      <template x-if="msg.retrieval_ms">
-                        <span class="text-emerald-600 font-semibold" x-text="'(' + msg.retrieval_ms + 'ms)'"></span>
-                      </template>
-                      and streaming response...
-                    </span>
-                    <span class="font-mono text-[11px] text-slate-500 font-semibold ml-1" x-text="chatElapsedSec + 's'"></span>
+                  <!-- Unified Single Assistant Thinking Indicator & Live Performance Counter -->
+                  <div x-show="msg.isStreaming && !msg.content" class="flex items-center gap-3 text-slate-500 py-2">
+                    <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                      <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2 text-xs flex items-center gap-2 font-medium flex-wrap">
+                      <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                      <span x-show="!msg.retrieval_ms">
+                        Consulting catalog bricks with <strong class="text-slate-900 font-mono" x-text="msg.modelUsed || selectedModel"></strong>...
+                      </span>
+                      <span x-show="msg.retrieval_ms" class="flex items-center gap-1.5 flex-wrap">
+                        <span>Cited</span>
+                        <span class="font-bold text-slate-900 font-mono" x-text="(msg.bricks?.length || 0) + ' bricks'"></span>
+                        <span class="text-emerald-600 font-mono font-semibold" x-text="'(' + msg.retrieval_ms + 'ms)'"></span>
+                        <span>• Streaming with</span>
+                        <strong class="text-slate-900 font-mono" x-text="msg.modelUsed || selectedModel"></strong>...
+                      </span>
+                      <span class="font-mono text-[11px] px-2 py-0.5 rounded-md bg-white text-slate-700 border border-slate-200 font-semibold flex items-center gap-1 shrink-0 ml-auto sm:ml-1">
+                        <i data-lucide="timer" class="w-3 h-3 text-slate-500"></i>
+                        <span x-text="chatElapsedSec + 's'"></span>
+                        <template x-if="chatTokensCount > 0">
+                          <span class="text-slate-400 font-normal" x-text="'• ' + chatTokensCount + ' tok'"></span>
+                        </template>
+                      </span>
+                    </div>
                   </div>
 
                   <!-- Referenced Catalog Bricks Presentation Grid -->
@@ -1259,37 +1542,10 @@
             </div>
           </template>
 
-          <!-- Assistant Thinking Spinner with Live Running Performance Counter -->
-          <div x-show="isChatLoading" class="flex items-center gap-3 text-slate-500 py-3 max-w-4xl mx-auto">
-            <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-              <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-            </div>
-            <div class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs flex items-center gap-2.5 shadow-sm font-medium">
-              <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-              <span x-show="!chatRetrievalMs">
-                Consulting catalog bricks with <strong class="text-slate-900 font-mono" x-text="selectedModel"></strong>...
-              </span>
-              <span x-show="chatRetrievalMs" class="flex items-center gap-1.5">
-                <span>Cited</span>
-                <span class="font-bold text-slate-900" x-text="(chatHistory[chatHistory.length - 1]?.bricks?.length || 0) + ' bricks'"></span>
-                <span class="text-emerald-600 font-mono font-semibold" x-text="'(' + chatRetrievalMs + 'ms)'"></span>
-                <span>• Streaming with</span>
-                <strong class="text-slate-900 font-mono" x-text="selectedModel"></strong>...
-              </span>
-              <span class="font-mono text-[11px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 ml-1 font-semibold flex items-center gap-1">
-                <i data-lucide="timer" class="w-3 h-3 text-slate-500"></i>
-                <span x-text="chatElapsedSec + 's'"></span>
-                <template x-if="chatTokensCount > 0">
-                  <span class="text-slate-400 font-normal" x-text="'• ' + chatTokensCount + ' tok'"></span>
-                </template>
-              </span>
-            </div>
-          </div>
-
         </div>
 
-        <!-- Chat Input Form in Tab View -->
-        <div class="p-4 bg-white border-t border-slate-200 shrink-0 space-y-2">
+        <!-- Chat Input Form in Tab View (Pinned to Bottom of Vertical Height) -->
+        <div class="p-4 bg-white border-t border-slate-200 shrink-0 space-y-2 mt-auto">
           <div class="relative flex items-center">
             <textarea 
               id="tabChatInputArea"
@@ -1981,6 +2237,10 @@
       return {
         // State
         currentView: 'catalog', // 'catalog' or 'chat' (Expanded Studio Tab)
+        currentTheme: document.documentElement.getAttribute('data-theme') || 'light',
+        catalogMode: 'initiatives', // 'initiatives' | 'projects' | 'bricks'
+        initiatives: [],
+        activeInitiative: 'all',
         searchQuery: '',
         activeTopic: 'All',
         activeKind: 'all',
@@ -2035,8 +2295,8 @@
 
         // Chat State
         isChatOpen: false,
-        chatModels: ['qwen2.5-coder:7b', 'llama3.2:3b', 'mistral-7b:latest', 'deepseek-r1:8b'],
-        selectedModel: 'qwen2.5-coder:7b',
+        chatModels: window.location.pathname.startsWith('/brickforge') ? ['qwen3:1.7b', 'openclaw-brain:latest'] : ['qwen2.5-coder:7b', 'llama3.2:3b', 'mistral-7b:latest', 'deepseek-r1:8b', 'qwen3:1.7b'],
+        selectedModel: window.location.pathname.startsWith('/brickforge') ? 'qwen3:1.7b' : 'qwen2.5-coder:7b',
         isOllamaOnline: false,
         chatInput: '',
         isChatLoading: false,
@@ -2053,10 +2313,61 @@
         currentBrick: {},
 
         async initData() {
+          this.initRouting();
+          this.initTheme();
           this.loadFilterCollapsed();
           this.loadChatHistory();
           await Promise.all([this.fetchData(), this.fetchChatModels()]);
           this.$nextTick(() => { lucide.createIcons(); });
+        },
+
+        initRouting() {
+          const syncFromLocation = () => {
+            const path = window.location.pathname.toLowerCase();
+            const search = new URLSearchParams(window.location.search);
+            const viewParam = search.get('view');
+            const hash = window.location.hash.toLowerCase();
+
+            if (path.endsWith('/chat') || viewParam === 'chat' || hash === '#chat') {
+              this.currentView = 'chat';
+              this.isChatOpen = false;
+            } else if (path.endsWith('/catalog') || viewParam === 'catalog' || hash === '#catalog') {
+              this.currentView = 'catalog';
+            }
+          };
+
+          syncFromLocation();
+          window.addEventListener('popstate', () => {
+            syncFromLocation();
+            this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+          });
+        },
+
+        initTheme() {
+          const savedSetting = localStorage.getItem('afa-global-theme') || 'system';
+          this.applyTheme(savedSetting);
+        },
+
+        applyTheme(setting) {
+          localStorage.setItem('afa-global-theme', setting);
+          document.documentElement.setAttribute('data-theme-setting', setting);
+          let resolved = setting;
+          if (setting === 'system') {
+            resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', resolved);
+          if (resolved === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+          this.currentTheme = resolved;
+          this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+        },
+
+        toggleTheme() {
+          const next = this.currentTheme === 'dark' ? 'light' : 'dark';
+          this.applyTheme(next);
         },
 
         loadChatHistory() {
@@ -2065,13 +2376,16 @@
             if (saved) {
               const parsed = JSON.parse(saved);
               if (Array.isArray(parsed) && parsed.length > 0) {
-                this.chatHistory = parsed.map((m, i) => {
-                  if (!m.id) m.id = 'msg-' + Date.now() + '-' + i;
-                  if (!m.renderedHtml && m.role === 'assistant') {
-                    m.renderedHtml = this.renderMarkdown(m.content);
-                  }
-                  return m;
-                });
+                this.chatHistory = parsed
+                  .filter(m => m && (m.role === 'user' ? (m.content && m.content.trim()) : (m.content || (m.bricks && m.bricks.length > 0))))
+                  .map((m, i) => {
+                    if (!m.id) m.id = 'msg-' + Date.now() + '-' + i;
+                    m.isStreaming = false; // Never leave restored messages in streaming state
+                    if (!m.renderedHtml && m.role === 'assistant') {
+                      m.renderedHtml = this.renderMarkdown(m.content || '');
+                    }
+                    return m;
+                  });
               }
             }
           } catch (e) {
@@ -2096,6 +2410,14 @@
 
         switchView(view) {
           this.currentView = view;
+          try {
+            const basePath = window.location.pathname.startsWith('/brickforge') ? '/brickforge' : '';
+            const targetUrl = `${basePath}/${view}`;
+            if (window.location.pathname !== targetUrl) {
+              window.history.pushState({ view }, '', targetUrl);
+            }
+          } catch (e) {}
+
           if (view === 'chat') {
             this.isChatOpen = false; // Close floating widget when expanded into full tab
             this.$nextTick(() => {
@@ -2126,7 +2448,7 @@
 
         async fetchChatModels() {
           try {
-            const res = await fetch('/api/chat/models');
+            const res = await fetch(`${API_BASE}/api/chat/models`);
             if (res.ok) {
               const data = await res.json();
               if (data.models && data.models.length > 0) {
@@ -2141,8 +2463,15 @@
         },
 
         async sendChatMessage(prefilledText = null) {
+          if (this.isChatLoading) return;
           const text = prefilledText || this.chatInput;
-          if (!text || !text.trim() || this.isChatLoading) return;
+          if (!text || !text.trim()) return;
+
+          this.isChatLoading = true;
+          this.chatInput = '';
+          this.chatRetrievalMs = null;
+          this.chatTokensCount = 0;
+          this.chatElapsedSec = '0.0';
 
           const userText = text.trim();
           const userMsgId = 'msg-' + Date.now() + '-u';
@@ -2168,11 +2497,6 @@
           });
 
           const assistantIdx = this.chatHistory.length - 1;
-          this.chatInput = '';
-          this.isChatLoading = true;
-          this.chatRetrievalMs = null;
-          this.chatTokensCount = 0;
-          this.chatElapsedSec = '0.0';
 
           const chatStartTime = performance.now();
           if (this.chatTimer) clearInterval(this.chatTimer);
@@ -2192,7 +2516,7 @@
               model: this.selectedModel
             };
 
-            const response = await fetch('/api/chat/stream', {
+            const response = await fetch(`${API_BASE}/api/chat/stream`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
@@ -2207,6 +2531,7 @@
             let buffer = '';
             let renderPending = false;
             let lastRenderTime = 0;
+            const RENDER_THROTTLE_MS = 80; // 80ms chunk interval for smooth, streamlined reading
 
             const flushText = () => {
               this.chatHistory[assistantIdx].content = accumulatedText;
@@ -2240,18 +2565,18 @@
                     this.chatTokensCount++;
                     accumulatedText += event.content;
                     
-                    // Throttle markdown parsing and DOM updates to ~40ms (buffered animation rate)
+                    // Throttle markdown parsing and DOM updates to ~80ms (streamlined reading rate)
                     const now = performance.now();
-                    if (now - lastRenderTime > 40) {
+                    if (now - lastRenderTime > RENDER_THROTTLE_MS) {
                       lastRenderTime = now;
                       flushText();
                     } else if (!renderPending) {
                       renderPending = true;
-                      requestAnimationFrame(() => {
+                      setTimeout(() => {
                         renderPending = false;
                         lastRenderTime = performance.now();
                         flushText();
-                      });
+                      }, Math.max(16, RENDER_THROTTLE_MS - (performance.now() - lastRenderTime)));
                     }
                   } else if (event.type === 'done') {
                     if (event.bricks && event.bricks.length > 0) {
@@ -2285,7 +2610,7 @@
           } catch (err) {
             console.warn('Stream chat error, falling back to standard chat API:', err);
             try {
-              const res = await fetch('/api/chat', {
+              const res = await fetch(`${API_BASE}/api/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2492,12 +2817,15 @@
 
         async fetchData() {
           try {
-            const [statsRes, catRes] = await Promise.all([
-              fetch('/api/stats').then(r => r.json()),
-              fetch('/api/categories').then(r => r.json())
+            const [statsRes, catRes, inisRes] = await Promise.all([
+              fetch(`${API_BASE}/api/stats`).then(r => r.json()),
+              fetch(`${API_BASE}/api/categories`).then(r => r.json()),
+              fetch(`${API_BASE}/api/initiatives`).then(r => r.json()).catch(() => [])
             ]);
             this.stats = statsRes;
             this.categories = catRes;
+            this.initiatives = inisRes || [];
+            this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
             await this.fetchBricks(1);
           } catch (err) {
             console.error('Error fetching initial data:', err);
@@ -2528,8 +2856,11 @@
             if (this.activeLanguage && this.activeLanguage !== 'all') {
               params.append('language', this.activeLanguage);
             }
+            if (this.activeInitiative && this.activeInitiative !== 'all') {
+              params.append('initiative', this.activeInitiative);
+            }
 
-            const res = await fetch(`/api/bricks?${params.toString()}`);
+            const res = await fetch(`${API_BASE}/api/bricks?${params.toString()}`);
             this.bricksData = await res.json();
           } catch (err) {
             console.error('Error loading bricks:', err);
@@ -2540,6 +2871,26 @@
               window.scrollTo({ top: 0, behavior: 'smooth' });
             });
           }
+        },
+
+        selectInitiative(iniId) {
+          this.activeInitiative = iniId;
+          this.activeKind = 'all';
+          this.catalogMode = 'bricks';
+          this.fetchBricks(1);
+        },
+
+        selectInitiativeProjects(iniId) {
+          this.activeInitiative = iniId;
+          this.activeKind = 'project';
+          this.catalogMode = 'projects';
+          this.fetchBricks(1);
+        },
+
+        getInitiativeName(iniId) {
+          if (!this.initiatives || !this.initiatives.length) return iniId;
+          const found = this.initiatives.find(i => i.id === iniId || i.slug === iniId);
+          return found ? found.name : iniId;
         },
 
         selectTopic(topicName) {
@@ -2584,6 +2935,7 @@
           this.activeKind = 'all';
           this.activeRepo = 'all';
           this.activeLanguage = 'all';
+          this.activeInitiative = 'all';
           this.sortOrder = 'portability_desc';
           this.fetchBricks(1);
         },
@@ -2611,8 +2963,11 @@
             if (this.activeLanguage && this.activeLanguage !== 'all') {
               params.append('language', this.activeLanguage);
             }
+            if (this.activeInitiative && this.activeInitiative !== 'all') {
+              params.append('initiative', this.activeInitiative);
+            }
 
-            const res = await fetch(`/api/bricks/export?${params.toString()}`);
+            const res = await fetch(`${API_BASE}/api/bricks/export?${params.toString()}`);
             if (!res.ok) throw new Error(`Export request failed with status ${res.status}`);
             const data = await res.json();
 
@@ -2621,6 +2976,7 @@
             const url = URL.createObjectURL(blob);
 
             const parts = ['brickforge_catalog'];
+            if (this.activeInitiative && this.activeInitiative !== 'all') parts.push(this.activeInitiative);
             if (this.activeLanguage && this.activeLanguage !== 'all') parts.push(this.activeLanguage);
             if (this.activeKind && this.activeKind !== 'all') parts.push(this.activeKind);
             if (this.activeTopic && this.activeTopic !== 'All') parts.push(this.activeTopic.toLowerCase().replace(/[^a-z0-9]+/g, '_'));
@@ -2651,7 +3007,7 @@
 
         async openBrickModal(brickId) {
           try {
-            const res = await fetch(`/api/brick/${brickId}`);
+            const res = await fetch(`${API_BASE}/api/brick/${brickId}`);
             if (res.ok) {
               this.currentBrick = await res.json();
               this.isDetailOpen = true;
