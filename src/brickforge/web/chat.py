@@ -627,6 +627,11 @@ class BrickForgeChatEngine:
                 with client.stream("POST", f"{self.endpoint}/api/chat", json=ollama_req) as response:
                     if response.status_code == 200:
                         stream_succeeded = True
+                        token_buffer: List[str] = []
+                        last_flush_time = time.perf_counter()
+                        FLUSH_INTERVAL = 0.035  # 35ms micro-batch
+                        BUFFER_THRESHOLD = 24   # ~24 chars per batch
+
                         for line in response.iter_lines():
                             if not line:
                                 continue
@@ -637,8 +642,20 @@ class BrickForgeChatEngine:
                                     if first_token_time is None:
                                         first_token_time = time.perf_counter()
                                     token_count += 1
-                                    yield {"type": "token", "content": token}
+                                    token_buffer.append(token)
+                                    now = time.perf_counter()
+                                    buffered_len = sum(len(t) for t in token_buffer)
+                                    # Flush if buffer reaches threshold, interval elapsed, or ends with newline
+                                    if buffered_len >= BUFFER_THRESHOLD or (now - last_flush_time) >= FLUSH_INTERVAL or "\n" in token:
+                                        yield {"type": "token", "content": "".join(token_buffer)}
+                                        token_buffer = []
+                                        last_flush_time = now
+
                                 if chunk.get("done"):
+                                    if token_buffer:
+                                        yield {"type": "token", "content": "".join(token_buffer)}
+                                        token_buffer = []
+
                                     t_done = time.perf_counter()
                                     total_sec = round(t_done - t_start, 2)
                                     total_ms = round((t_done - t_start) * 1000, 1)

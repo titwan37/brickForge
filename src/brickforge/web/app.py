@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import datetime
 import json
 from pathlib import Path
 import sqlite3
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -73,6 +74,79 @@ TOPIC_ICONS = {
     "Audio & Speech / DSP": "mic",
     "Security & Auth": "shield-check",
 }
+
+
+def _build_bricks_filters(
+    query: Optional[str],
+    topic: Optional[str],
+    kind: Optional[str],
+    repo: Optional[str],
+    language: Optional[str],
+) -> Tuple[List[str], List[Any]]:
+    where_clauses: List[str] = []
+    params: List[Any] = []
+
+    # Full text search or LIKE
+    if query and query.strip():
+        clean_q = query.strip()
+        fts_param = "".join(c for c in clean_q if c.isalnum() or c in (" ", "_", "-")).strip()
+        if fts_param:
+            where_clauses.append(
+                """
+                b.row_id IN (
+                    SELECT rowid FROM bricks_fts 
+                    WHERE bricks_fts MATCH ?
+                )
+                """
+            )
+            params.append(f'"{fts_param}"*')
+        else:
+            where_clauses.append("(b.symbol_name LIKE ? OR b.signature LIKE ?)")
+            params.extend([f"%{clean_q}%", f"%{clean_q}%"])
+
+    # Topic filter
+    if topic and topic.strip() and topic != "All":
+        where_clauses.append(f"({TOPIC_SQL_EXPR}) = ?")
+        params.append(topic.strip())
+
+    # Kind filter
+    if kind and kind.strip() and kind != "all":
+        where_clauses.append("b.kind = ?")
+        params.append(kind.strip())
+
+    # Repository filter
+    if repo and repo.strip() and repo != "all":
+        where_clauses.append("s.repository_id = ?")
+        params.append(repo.strip())
+
+    # Language filter
+    if language and language.strip() and language != "all":
+        lang_val = language.strip().lower()
+        if lang_val in ("py", "python"):
+            where_clauses.append("(b.language = 'python' OR s.relative_path LIKE '%.py')")
+        elif lang_val in ("ts", "typescript"):
+            where_clauses.append("(b.language = 'typescript' OR s.relative_path LIKE '%.ts')")
+        elif lang_val in ("tsx", "typescript-react"):
+            where_clauses.append("(b.language = 'typescript-react' OR s.relative_path LIKE '%.tsx')")
+        elif lang_val in ("js", "javascript"):
+            where_clauses.append("(b.language = 'javascript' OR s.relative_path LIKE '%.js' OR s.relative_path LIKE '%.mjs' OR s.relative_path LIKE '%.cjs')")
+        elif lang_val in ("cs", "csharp"):
+            where_clauses.append("(b.language = 'csharp' OR s.relative_path LIKE '%.cs')")
+        elif lang_val in ("rs", "rust"):
+            where_clauses.append("(b.language = 'rust' OR s.relative_path LIKE '%.rs')")
+        elif lang_val in ("cpp", "c++"):
+            where_clauses.append("(b.language = 'cpp' OR s.relative_path LIKE '%.cpp' OR s.relative_path LIKE '%.hpp' OR s.relative_path LIKE '%.cc')")
+        elif lang_val in ("c",):
+            where_clauses.append("(b.language = 'c' OR s.relative_path LIKE '%.c' OR s.relative_path LIKE '%.h')")
+        elif lang_val in ("go", "golang"):
+            where_clauses.append("(b.language = 'go' OR s.relative_path LIKE '%.go')")
+        elif lang_val in ("java",):
+            where_clauses.append("(b.language = 'java' OR s.relative_path LIKE '%.java')")
+        else:
+            where_clauses.append("(b.language = ? OR s.relative_path LIKE ?)")
+            params.extend([lang_val, f"%.{lang_val}"])
+
+    return where_clauses, params
 
 
 def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
@@ -304,71 +378,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
                 }
 
             cursor = conn.cursor()
-
-            where_clauses: List[str] = []
-            params: List[Any] = []
-
-            # Full text search or LIKE
-            if query and query.strip():
-                clean_q = query.strip()
-                # Check if FTS match works
-                fts_param = "".join(c for c in clean_q if c.isalnum() or c in (" ", "_", "-")).strip()
-                if fts_param:
-                    where_clauses.append(
-                        """
-                        b.row_id IN (
-                            SELECT rowid FROM bricks_fts 
-                            WHERE bricks_fts MATCH ?
-                        )
-                        """
-                    )
-                    params.append(f'"{fts_param}"*')
-                else:
-                    where_clauses.append("(b.symbol_name LIKE ? OR b.signature LIKE ?)")
-                    params.extend([f"%{clean_q}%", f"%{clean_q}%"])
-
-            # Topic filter
-            if topic and topic.strip() and topic != "All":
-                where_clauses.append(f"({TOPIC_SQL_EXPR}) = ?")
-                params.append(topic.strip())
-
-            # Kind filter
-            if kind and kind.strip() and kind != "all":
-                where_clauses.append("b.kind = ?")
-                params.append(kind.strip())
-
-            # Repository filter
-            if repo and repo.strip() and repo != "all":
-                where_clauses.append("s.repository_id = ?")
-                params.append(repo.strip())
-
-            # Language filter
-            if language and language.strip() and language != "all":
-                lang_val = language.strip().lower()
-                if lang_val in ("py", "python"):
-                    where_clauses.append("(b.language = 'python' OR s.relative_path LIKE '%.py')")
-                elif lang_val in ("ts", "typescript"):
-                    where_clauses.append("(b.language = 'typescript' OR s.relative_path LIKE '%.ts')")
-                elif lang_val in ("tsx", "typescript-react"):
-                    where_clauses.append("(b.language = 'typescript-react' OR s.relative_path LIKE '%.tsx')")
-                elif lang_val in ("js", "javascript"):
-                    where_clauses.append("(b.language = 'javascript' OR s.relative_path LIKE '%.js' OR s.relative_path LIKE '%.mjs' OR s.relative_path LIKE '%.cjs')")
-                elif lang_val in ("cs", "csharp"):
-                    where_clauses.append("(b.language = 'csharp' OR s.relative_path LIKE '%.cs')")
-                elif lang_val in ("rs", "rust"):
-                    where_clauses.append("(b.language = 'rust' OR s.relative_path LIKE '%.rs')")
-                elif lang_val in ("cpp", "c++"):
-                    where_clauses.append("(b.language = 'cpp' OR s.relative_path LIKE '%.cpp' OR s.relative_path LIKE '%.hpp' OR s.relative_path LIKE '%.cc')")
-                elif lang_val in ("c",):
-                    where_clauses.append("(b.language = 'c' OR s.relative_path LIKE '%.c' OR s.relative_path LIKE '%.h')")
-                elif lang_val in ("go", "golang"):
-                    where_clauses.append("(b.language = 'go' OR s.relative_path LIKE '%.go')")
-                elif lang_val in ("java",):
-                    where_clauses.append("(b.language = 'java' OR s.relative_path LIKE '%.java')")
-                else:
-                    where_clauses.append("(b.language = ? OR s.relative_path LIKE ?)")
-                    params.extend([lang_val, f"%.{lang_val}"])
-
+            where_clauses, params = _build_bricks_filters(query, topic, kind, repo, language)
             where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
             # Count total matching
@@ -457,6 +467,178 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
                 "page": page,
                 "page_size": page_size,
                 "total_pages": (total_items + page_size - 1) // page_size if total_items > 0 else 1,
+                "items": items,
+            }
+
+    @app.get("/api/bricks/export")
+    def export_bricks(
+        query: Optional[str] = None,
+        topic: Optional[str] = None,
+        kind: Optional[str] = None,
+        repo: Optional[str] = None,
+        language: Optional[str] = None,
+        sort: str = "portability_desc",
+        limit: int = 5000,
+    ):
+        if not resolved_db.exists():
+            return {
+                "version": "1.0",
+                "exported_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "total_matches": 0,
+                "exported_count": 0,
+                "filters": {
+                    "query": query,
+                    "topic": topic,
+                    "kind": kind,
+                    "repo": repo,
+                    "language": language,
+                    "sort": sort,
+                },
+                "items": [],
+            }
+
+        with get_db_connection(resolved_db) as conn:
+            # First-class Project Level support: api/bricks/export?kind=project
+            if kind and kind.strip().lower() == "project":
+                projects = get_all_projects(conn)
+
+                if repo and repo.strip() and repo != "all":
+                    projects = [p for p in projects if p["repository_id"] == repo.strip()]
+
+                if language and language.strip() and language != "all":
+                    target_lang = language.strip().lower()
+                    projects = [
+                        p for p in projects 
+                        if target_lang in [l.lower() for l in p.get("languages", [])]
+                        or target_lang in [b.lower() for b in p.get("language_badges", [])]
+                    ]
+
+                if query and query.strip():
+                    q_lower = query.strip().lower()
+                    projects = [
+                        p for p in projects 
+                        if q_lower in p["symbol_name"].lower() or q_lower in p.get("ai_summary", "").lower()
+                    ]
+
+                if sort == "name_asc":
+                    projects.sort(key=lambda x: x["symbol_name"].lower())
+                elif sort == "name_desc":
+                    projects.sort(key=lambda x: x["symbol_name"].lower(), reverse=True)
+                elif sort == "complexity_desc":
+                    projects.sort(key=lambda x: x.get("file_count", 0), reverse=True)
+                else:
+                    projects.sort(key=lambda x: x.get("brick_count", 0), reverse=True)
+
+                total_items = len(projects)
+                export_items = projects[:limit]
+
+                return {
+                    "version": "1.0",
+                    "exported_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "total_matches": total_items,
+                    "exported_count": len(export_items),
+                    "filters": {
+                        "query": query,
+                        "topic": topic,
+                        "kind": kind,
+                        "repo": repo,
+                        "language": language,
+                        "sort": sort,
+                    },
+                    "items": export_items,
+                }
+
+            cursor = conn.cursor()
+            where_clauses, params = _build_bricks_filters(query, topic, kind, repo, language)
+            where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+
+            count_sql = f"""
+            SELECT COUNT(b.row_id)
+            FROM code_bricks b
+            JOIN source_files s ON b.file_id = s.row_id
+            {where_sql};
+            """
+            total_items = cursor.execute(count_sql, params).fetchone()[0]
+
+            sort_map = {
+                "portability_desc": "b.portability_score DESC, b.row_id ASC",
+                "name_asc": "b.symbol_name ASC",
+                "name_desc": "b.symbol_name DESC",
+                "complexity_desc": "b.cyclomatic_complexity DESC",
+                "recent": "b.indexed_at DESC",
+            }
+            order_clause = sort_map.get(sort, "b.portability_score DESC, b.row_id ASC")
+
+            data_sql = f"""
+            SELECT 
+                b.row_id,
+                b.id AS brick_id,
+                b.symbol_name,
+                b.qualified_name,
+                b.kind,
+                b.language,
+                b.visibility,
+                b.signature,
+                b.docstring,
+                b.is_async,
+                b.cyclomatic_complexity,
+                b.portability_score,
+                b.start_line,
+                b.end_line,
+                s.repository_id,
+                s.relative_path,
+                s.loc,
+                {TOPIC_SQL_EXPR} AS topic
+            FROM code_bricks b
+            JOIN source_files s ON b.file_id = s.row_id
+            {where_sql}
+            ORDER BY {order_clause}
+            LIMIT ?;
+            """
+            cursor.execute(data_sql, [*params, limit])
+            rows = cursor.fetchall()
+
+            items = []
+            for r in rows:
+                rel = r["relative_path"] or ""
+                proj = rel.split("/")[0] if "/" in rel else (rel.split("\\")[0] if "\\" in rel else "root")
+                lang_badge = normalize_language_badge(r["language"], rel)
+
+                items.append({
+                    "brick_id": r["brick_id"],
+                    "symbol_name": r["symbol_name"],
+                    "qualified_name": r["qualified_name"],
+                    "kind": r["kind"],
+                    "language": r["language"] or "python",
+                    "language_badge": lang_badge,
+                    "project": proj,
+                    "visibility": r["visibility"],
+                    "signature": r["signature"] or f"{r['kind']} {r['symbol_name']}",
+                    "docstring": (r["docstring"] or "").strip(),
+                    "is_async": bool(r["is_async"]),
+                    "cyclomatic_complexity": r["cyclomatic_complexity"] or 1,
+                    "portability_score": round(float(r["portability_score"] or 1.0), 2),
+                    "start_line": r["start_line"],
+                    "end_line": r["end_line"],
+                    "line_count": (r["end_line"] - r["start_line"] + 1) if r["end_line"] and r["start_line"] else (r["loc"] or 0),
+                    "repository_id": r["repository_id"],
+                    "relative_path": r["relative_path"],
+                    "topic": r["topic"],
+                })
+
+            return {
+                "version": "1.0",
+                "exported_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "total_matches": total_items,
+                "exported_count": len(items),
+                "filters": {
+                    "query": query,
+                    "topic": topic,
+                    "kind": kind,
+                    "repo": repo,
+                    "language": language,
+                    "sort": sort,
+                },
                 "items": items,
             }
 

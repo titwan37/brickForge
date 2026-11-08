@@ -4,19 +4,22 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status: MVP Complete](https://img.shields.io/badge/status-MVP%20Complete-brightgreen.svg)]()
+[![Status: Production Ready](https://img.shields.io/badge/status-Production%20Ready-brightgreen.svg)]()
+[![Catalog: 160k+ Bricks](https://img.shields.io/badge/catalog-160k%2B%20bricks-orange.svg)]()
+[![Multi-Language](https://img.shields.io/badge/languages-Python%20%7C%20C%23%20%7C%20TS%20%7C%20Rust%20%7C%20C%2B%2B-blueviolet.svg)]()
 
 ---
 
 ## 🎯 Vision & Value Proposition
 
-In modern software organizations, code components, utility functions, schemas, and algorithms are often fragmented across multiple micro-repositories or mono-repo silos. **BrickForge** acts as an autonomous indexing forge:
-- **Discovers and Indexes**: Statically parses and registers reusable code modules ("Bricks") across local repositories into an authoritative SQLite catalog.
-- **Extracts Contracts**: Captures type-annotated signatures, docstrings, parameters, return types, and pure-function invariants without running the source code.
-- **Resolves Dependency Graphs**: Traverses calls and inheritance hierarchies to assemble self-contained source bundles with rewritten imports and provenance manifests.
-- **Composes & Adapts**: Generates adaptation proposals for target environments with unified diffs, licensing reports, and review workflows.
-- **Validates in Isolation**: Automatically tests extracted bundles using syntax compilation, dependency checks, and unit test harnesses.
-- **Agent Integration**: Exposes a Model Context Protocol (MCP) server for seamless discovery by AI coding agents (Antigravity, Claude Code, Cursor, Copilot).
+In modern software ecosystems, high-value code components, utility algorithms, schema models, and architectural patterns are scattered across local repositories, legacy drives, and monorepo silos. **BrickForge** transforms your local codebase into an autonomous, searchable component registry:
+
+- **Indexes at Scale**: Statically parses and registers **160,000+ reusable code modules ("Bricks")** and **280+ projects** across local repositories into an authoritative SQLite database.
+- **Multi-Language AST Extraction**: Native Python AST plus Tree-sitter grammars across **Python, C#, TypeScript/TSX, JavaScript, C/C++, Rust, Go, and Java**.
+- **Extracts Clear Contracts**: Captures type-annotated signatures, docstrings, parameters, return types, cyclomatic complexity, and self-containment portability scores without running source code.
+- **Project-Level Intelligence**: Aggregates multi-file directories into project-level entries (`kind=project`) with AI-synthesized architectural intent and metric rollups.
+- **Grounded AI Architect**: Features a local, conversational assistant powered by local Ollama LLMs (`qwen2.5-coder:7b`, `llama3.2:3b`), grounded in real-time by SQLite FTS5 lexical BM25 retrieval.
+- **Sovereign & Zero-Build**: Runs 100% locally with a zero-build Tailwind CSS + Alpine.js web studio, requiring no external cloud dependencies or telemetry.
 
 ---
 
@@ -24,29 +27,65 @@ In modern software organizations, code components, utility functions, schemas, a
 
 ```mermaid
 flowchart TD
-    subgraph StorageLayer["💾 Storage & Persistence"]
-        DB[("SQLite Catalog (WAL mode)<br/>bricks, dependencies, FTS5 index")]
+    subgraph StorageLayer["💾 Storage & Persistence (SQLite WAL)"]
+        DB[("SQLite Catalog (data/brickforge.db)<br/>code_bricks, repositories, source_files")]
+        FTS[("FTS5 Virtual Index<br/>bricks_fts (BM25 Token Matching)")]
+        Deps[("Dependency Graph<br/>brick_dependencies, external_packages")]
     end
 
-    subgraph IngestionEngine["⚙️ Phase 1 & 2: Ingestion & Understanding"]
-        Discovery["File Discovery & Walker<br/>src/brickforge/ingestion/discovery.py"]
-        Ignore["Security & Ignore Filter<br/>src/brickforge/ingestion/ignore_rules.py"]
-        Planner["Incremental Scan Planner<br/>src/brickforge/ingestion/planner.py"]
-        Parser["AST & Tree-Sitter Parser<br/>src/brickforge/parsers/"]
-        Analysis["Imports & Dependencies<br/>src/brickforge/analysis/"]
+    subgraph IngestionEngine["⚙️ Ingestion & Parsing Pipeline"]
+        Discovery["Discovery & Walker<br/><code>src/brickforge/ingestion/discovery.py</code>"]
+        Ignore["Security & Exclusion Filter<br/><code>src/brickforge/ingestion/ignore_rules.py</code>"]
+        Planner["Incremental Scan Planner (SHA-256)<br/><code>src/brickforge/ingestion/planner.py</code>"]
+        PyParser["Native Python AST Parser<br/><code>src/brickforge/parsers/python.py</code>"]
+        MultiLang["Tree-Sitter Multi-Language Parser<br/><code>src/brickforge/parsers/multilang_symbols.py</code><br/>(C#, TS, JS, C/C++, Rust, Go, Java)"]
+        Analysis["Imports & Dependencies<br/><code>src/brickforge/analysis/</code>"]
+        Projects["Project Intent Synthesizer<br/><code>src/brickforge/web/projects.py</code>"]
     end
 
-    subgraph ServiceEngine["🔍 Phase 3 & 4: Search, Extraction & Composition"]
-        Search["FTS5 & Lexical Search<br/>src/brickforge/search/"]
-        Contracts["Contract Inspection<br/>src/brickforge/contracts.py"]
-        Bundler["Source Bundler & Rewriter<br/>src/brickforge/extraction/"]
-        Composition["Composition & Adaptation<br/>src/brickforge/composition/"]
-        Validation["Isolated Validation Runner<br/>src/brickforge/validation/"]
+    subgraph ServiceEngine["🔍 Search & Composition"]
+        Search["FTS5 Catalog Search<br/><code>src/brickforge/search/</code>"]
+        Bundler["Source Bundler & Rewriter<br/><code>src/brickforge/extraction/</code>"]
+        Validation["Subprocess Sandbox Validator<br/><code>src/brickforge/validation/</code>"]
     end
 
-    Discovery --> Ignore --> Planner --> Parser --> Analysis --> DB
-    DB --> Search --> Contracts --> Bundler --> Composition --> Validation
+    subgraph GroundedChatEngine["🤖 Grounded AI Architect (RAG & Ollama)"]
+        ChatEngine["Query Analyzer & Thematic Expander<br/><code>src/brickforge/web/chat.py</code>"]
+        RAG["FTS5 Real-Time Retrieval (Cited Bricks)"]
+        Ollama["Local Ollama LLM Stream<br/>(qwen2.5-coder:7b / Offline Fallback)"]
+        MicroBuffer["Micro-Batch Buffer (~24 chars / 35ms)"]
+    end
+
+    subgraph WebStudio["🌐 Sovereign Web Studio (Tailwind + Alpine.js)"]
+        CatalogUI["Catalog Explorer<br/>Dynamic Filter Bar (Topic, Kind, Language, Repo)"]
+        StudioUI["Full-Page Studio View & Persistent Chat Bubble<br/>Bottom-Docked Input, 60fps rAF Stream, Markdown Export"]
+    end
+
+    Discovery --> Ignore --> Planner --> PyParser & MultiLang --> Analysis --> DB & Deps
+    DB --> FTS
+    DB --> Projects
+    FTS --> Search --> CatalogUI
+    DB --> Bundler --> Validation
+    
+    Search --> RAG --> ChatEngine --> Ollama --> MicroBuffer --> StudioUI
 ```
+
+---
+
+## 💻 Multi-Language Support Matrix
+
+BrickForge parses source files using high-performance, error-tolerant parsers tailored to each language ecosystem:
+
+| Language | Extensions | Parser Engine | Extracted Symbols |
+|---|---|---|---|
+| **Python** | `.py` | Native `ast` (Python 3.10+) | Functions, Async Functions, Classes, Methods |
+| **C#** | `.cs` | Tree-sitter (`csharp`) | Classes, Interfaces, Structs, Enums, Methods, Properties |
+| **TypeScript / TSX** | `.ts`, `.tsx` | Tree-sitter (`typescript`, `tsx`) | Functions, Classes, Interfaces, Type Aliases, Methods |
+| **JavaScript / JSX** | `.js`, `.jsx`, `.mjs` | Tree-sitter (`javascript`) | Functions, Classes, Methods |
+| **Rust** | `.rs` | Tree-sitter (`rust`) | Functions (`fn`), Structs, Traits, Enums, Impl Methods |
+| **C / C++** | `.c`, `.cpp`, `.cc`, `.h`, `.hpp` | Tree-sitter (`c`, `cpp`) | Functions, Classes, Structs, Enums, Methods |
+| **Go** | `.go` | Tree-sitter (`go`) | Functions (`func`), Methods, Structs, Interfaces |
+| **Java** | `.java` | Tree-sitter (`java`) | Classes, Interfaces, Methods, Enums |
 
 ---
 
@@ -54,29 +93,35 @@ flowchart TD
 
 ```text
 c:\Dev\brickForge
-├── docs/                  # Documentation & operational guides
-│   ├── quickstart.md      # Getting started, CLI, Python API, and database ops
-│   ├── security.md        # Security boundaries, traversal checks, and execution guarantees
-│   ├── ARCHITECTURE.md    # Detailed architectural specifications
-│   └── DESIGN_PACK.md     # Engineering lifecycle and roadmap
+├── config/                # Repository registration manifests
+│   └── repositories.json  # Multi-root repository definitions & exclude globs
+├── docs/                  # Architecture & operational specifications
+│   ├── ARCHITECTURE.md    # In-depth system & RAG streaming architecture
+│   ├── quickstart.md      # CLI, Python API, and database operations guide
+│   └── security.md        # Static security boundaries and path canonicalization
+├── scripts/               # Operational utility scripts
+│   ├── serve_catalog.py   # One-click FastAPI web server launcher
+│   └── sync_repositories.py # Multi-root incremental sync & indexer
 ├── src/brickforge/        # Primary Python source package
 │   ├── analysis/          # Call graphs, dependencies, and symbol indexing
 │   ├── composition/       # Composition models, adaptation service, and approval workflow
 │   ├── extraction/        # Bundling, import rewriter, manifest, and output formatters
 │   ├── ingestion/         # Discovery, fingerprints, path sanitization, and scan planner
-│   ├── parsers/           # Python AST and Tree-Sitter error recovery runtime
+│   ├── parsers/           # Python AST and Tree-Sitter multi-language runtime
 │   ├── search/            # SQLite FTS5 search service and query models
-│   ├── storage/           # SQLite migrations, connection manager, and brick repository
-│   ├── validation/        # Isolated test runners, syntax checking, and validation reports
-│   └── cli.py             # CLI commands (init, scan, search)
-├── tasks/                 # Task tracking manifests (tasks.json)
+│   ├── storage/           # SQLite migrations, WAL connection manager, and brick repository
+│   ├── validation/        # Subprocess isolated test runners and syntax checking
+│   └── web/               # FastAPI web server, AI Architect chat engine, and templates
+│       ├── app.py         # REST & SSE API endpoints
+│       ├── chat.py        # Conversational RAG engine, query expansion, and Ollama bridge
+│       ├── projects.py    # Project aggregation, language detection, and intent synthesis
+│       └── templates/     # Single-page sovereign web studio (index.html)
 ├── tests/                 # Automated test suite
-│   ├── unit/              # Fast unit test coverage
-│   ├── integration/       # Database, FTS, and persistence integration tests
-│   ├── e2e/               # End-to-end vertical slice & incremental indexing tests
-│   ├── security/          # Filesystem boundary, symlink, and traversal security tests
-│   └── performance/       # Ingestion throughput and search latency baseline tests
-└── pyproject.toml         # Packaging specification
+│   ├── unit/              # Fast unit tests (chat engine, parsers, search, web API)
+│   ├── integration/       # Database migrations, FTS5, and persistence integration
+│   ├── e2e/               # End-to-end multi-root indexing and extraction
+│   └── security/          # Path canonicalization and symlink security tests
+└── pyproject.toml         # Packaging & dependency configuration
 ```
 
 ---
@@ -90,170 +135,97 @@ c:\Dev\brickForge
 git clone https://github.com/titwan37/brickForge.git
 cd brickForge
 
-# Install editable package
+# Install package in editable development mode
 python -m pip install -e .
 ```
 
-Verify installation:
+Verify your installation:
 ```bash
 python -m brickforge --help
 ```
 
-### 2. Basic Operations
+---
+
+### 2. Multi-Root Indexing & Repository Sync
+
+Configure your repository roots in `config/repositories.json`, then run the incremental synchronizer:
 
 ```bash
-# Initialize local SQLite catalog and search tables
-python -m brickforge init
-
-# Scan a local repository
-python -m brickforge scan --repo-path /path/to/my-repo --repo-id my-repo
-
-# Search for components in the catalog
-python -m brickforge search "calculate_total"
-```
-
-### 3. Launching the Web Catalog Explorer
-
-BrickForge includes a sovereign, zero-build single-page web explorer to navigate the indexed catalog:
-
-```bash
-# Launch via dedicated script (opens your browser automatically at http://127.0.0.1:8000)
-python scripts/serve_catalog.py
-
-# Or launch via the CLI
-python -m brickforge serve --port 8000
-```
-
-**Explorer Capabilities**:
-- **Thematic Sidebar**: Dynamic category breakdown with live badge counts (AI & LLM / Agents, Testing & Benchmarks, Core & Utilities, UI & Frontend, Data & Database, Web & APIs, Docs & Parsers, Audio/DSP, Security).
-- **Full-Text & Signature Search**: Instant debounced FTS5 queries, kind filters (Functions, Classes, Methods), and repository selectors.
-- **Presentation Card Grid**: 3-column responsive layout displaying signature snippets, docstring previews, portability rating badges, and cyclomatic complexity.
-- **Slide-Over Contract Inspector**: Comprehensive drawer with AST signature contract, documentation, dependency list (internal vs external pip packages), and Prism.js syntax-highlighted source code with 1-click export.
-- **Grounded Conversational Chatbot (Ollama Local)**: Floating interactive assistant (`Ask BrickForge AI`) grounded on the 64,414 catalog bricks. Advises developers on composability and reusability for specific themes (e.g., **TTS / Speech**, **AI Agent Prompts**, **Auth / JWT**, **Data Pipelines**), cites exact repository file paths (`Lstart-Lend`), renders Markdown reports with verified code snippets, and links directly to candidate bricks. Runs on local Ollama models (`qwen2.5-coder:7b`, `llama3.2:3b`) with intelligent zero-dependency fallback synthesis when offline.
-
-For detailed CLI and Python API examples, see [docs/quickstart.md](file:///C:/Dev/brickForge/docs/quickstart.md).
-
----
-
-## 🔒 Security Model
-
-BrickForge adheres to strict security invariants:
-1. **Never Executes Scanned Code**: All parsing and analysis is strictly static via `ast.parse` and tree-sitter.
-2. **Filesystem Boundaries**: Enforces `safe_path_canonicalization` to block parent traversal (`../`) and external symlink escape.
-3. **Sensitive File Filtering**: Automatically ignores `.git`, `.env`, `.venv`, `node_modules`, and credentials.
-4. **Allowlisted Exports**: Composed code is only exported to explicitly permitted destination paths.
-5. **Subprocess Isolation**: Validation runs in isolated subprocesses with enforced timeouts.
-
-For complete details, see [docs/security.md](file:///C:/Dev/brickForge/docs/security.md).
-
----
-
-## 🧪 Running Tests
-
-Always execute tests using the Python module invocation:
-
-```bash
-# Run all unit tests
-python -m pytest tests/unit/
-
-# Run integration tests
-python -m pytest tests/integration/
-
-# Run end-to-end tests
-python -m pytest tests/e2e/
-
-# Run security boundary tests
-python -m pytest tests/security/
-
-# Run performance baseline tests
-python -m pytest tests/performance/
-
-# Run full test suite
-python -m pytest
-```
-
----
-
-## 🗂️ Multi-Repository Configuration & Rich Sync
-
-BrickForge supports multi-repository registration and incremental indexing from a declarative `config/repositories.json` file, with a rich interactive console UI.
-
-### 1. Review of `config/repositories.json`
-
-**Status**: **Valid & Production Ready**
-
-- **Structure**: Clean, valid JSON structure with 8 repository roots across `C:`, `L:`, `G:`, OneDrive, and Visual Studio versions.
-- **Path Escaping**: All Windows backslashes (`\\`) are correctly escaped.
-- **Exclusion Rules**: 
-  - Standard development artifacts are excluded (`.git`, `.venv`, `node_modules`).
-  - Visual Studio build directories (`bin/`, `obj/`, `.vs/`, `Debug/`, `Release/`, `ipch/`) and compiler metadata (`*.sdf`, `*.suo`) are filtered out.
-  - Added protections for `dev-c`: excludes database binaries (`*.db`, `*.sqlite`, `**/data/**`) and pytest cache (`**/.pytest_cache/**`), preventing internal database files from being indexed as code.
-
----
-
-### 2. Review of `scripts/sync_repositories.py`
-
-**Status**: **Enhanced & Tested**
-
-The script has been updated with several key improvements:
-1. **Automatic Path Resolution**: Automatically checks `config/repositories.json` by default (as well as `repositories.json` in the root).
-2. **Custom Ignore Enforcement**: Directly injects the `exclude_globs` configured for each repository into `IgnoreRules` during scan planning.
-3. **Database Migration & Auto-Creation**: Applies migrations and creates `data/brickforge.db` if it doesn't already exist.
-4. **CLI Argument Parser (`argparse`)**:
-   - `--config PATH`: Specify a custom config file.
-   - `--repo ID`: Scan only a single repository (e.g. `--repo dev-c` or `--repo vs-2019`).
-   - `--no-scan`: Sync and register the repositories in the database without immediately triggering a full scan.
-   - `--force`: Force re-indexing of unchanged files.
-5. **Safe Inaccessible Path Handling**: If a cloud drive (`L:\My Drive` or `G:\My Drive`) or disconnected drive is not accessible, it logs a clear `[WARN]` and proceeds with the other repositories rather than crashing.
-
----
-
-### 3. How to Use
-
-Open your terminal in `c:\Dev\brickForge`:
-
-#### Option A: Register Repositories Without Scanning Immediately
-Quickly syncs your 8 repository definitions into the SQLite catalog:
-```powershell
-python scripts/sync_repositories.py --no-scan
-```
-*Output:*
-```text
-[BrickForge] Loading repository configuration: C:\Dev\brickForge\config\repositories.json
-[BrickForge] Synced 8 repositories into catalog: C:\Dev\brickForge\data\brickforge.db
-[BrickForge] Scan skipped (--no-scan). Repositories are registered.
-```
-
-#### Option B: Scan a Single Repository
-If you want to test indexing on a specific repository first (e.g. `dev-c`):
-```powershell
-python scripts/sync_repositories.py --repo dev-c
-```
-
-#### Option C: Full Sync and Scan of All Enabled Repositories
-Scans all 8 repositories, discovers AST symbols, and indexes them into the catalog:
-```powershell
+# Register repositories and run an incremental delta scan
 python scripts/sync_repositories.py
-```
 
-#### Option D: Force a Complete Re-index
-Bypasses the SHA-256 cache and forces all files to be re-parsed:
-```powershell
+# Or scan a single repository root (e.g. dev-c)
+python scripts/sync_repositories.py --repo dev-c
+
+# Or force a complete re-index (bypassing the SHA-256 cache)
 python scripts/sync_repositories.py --force
 ```
 
 ---
 
-### 4. Searching Your Indexed Repositories
+### 3. Launching the Sovereign Web Studio
 
-Once scanned, you can query your newly built code catalog:
+Launch the interactive single-page Web Studio (opens automatically at [http://127.0.0.1:8000](http://127.0.0.1:8000)):
 
-```powershell
-# Search using the BrickForge CLI
-python -m brickforge search "your_function_or_class_name"
+```bash
+# Launch via convenience launcher script
+python scripts/serve_catalog.py
+
+# Or launch via the BrickForge CLI
+python -m brickforge serve --port 8000
 ```
 
-Or query via Python:
+---
+
+## 🎨 Web Studio & AI Architect Features
+
+The BrickForge web interface is a zero-build, responsive single-page application built with Tailwind CSS, Alpine.js, Lucide Icons, Prism.js, and Marked.js:
+
+### 1. Interactive Catalog Explorer
+- **Thematic Sidebar**: Browse code categories with real-time counts (AI & Agents, Data & Storage, Web APIs, Testing & Quality, Security, Parsers & AST, Audio/DSP).
+- **Dynamic Filter Bar**: Real-time chips reflecting `activeTopic`, `activeKind` (Functions, Classes, Methods, Projects), `activeLanguage` (Python, C#, TypeScript, Rust, C++, Go), and `activeRepo`.
+- **Card Grid & Contract Drawer**: 3-column responsive card view displaying signature contracts, docstrings, cyclomatic complexity, and portability scores, with a slide-over code inspector.
+
+### 2. Full-Page AI Architect Studio (`currentView === 'chat'`)
+- **Expanded Dual-Column Workspace**: Grounded catalog telemetry on the left, conversation timeline on the right.
+- **Bottom-Docked Input Bar**: `tabChatInputArea` stays firmly docked at the viewport base.
+- **Instant Cited Code Bricks**: Top 5 candidate bricks appear instantly (<60ms) in an interactive card grid before LLM text streams.
+- **Single Thinking Spinner**: Clean, unified spinner indicating background progress.
+
+### 3. Persistent Floating Chat Bubble (`currentView !== 'chat'`)
+- Chat with the catalog without leaving the catalog view.
+- **Uninterrupted Stream Persistence**: Switching between Catalog view and Studio view preserves active SSE streams without dropping tokens or resetting history.
+
+### 4. High-Performance Buffered Streaming
+- **Backend Micro-Batching**: Chunks are batched (~24 characters, 35ms, or newline) to eliminate SSE flood.
+- **Frontend 60fps Rendering**: Text is flushed via `requestAnimationFrame` on a 45ms throttle, eliminating browser thread stutter.
+
+### 5. Live Telemetry & Export Tools
+- **Live Latency Telemetry**: Displays Quick Cited Bricks FTS5 time (ms), Ollama generation time, tokens/second, and total latency.
+- **1-Click Markdown Export**:
+  - Single message: **Copy Markdown** to clipboard or **Export .md** to disk.
+  - Entire session: **Copy All** to clipboard or **ChatHistory.md** download.
+- **Keyboard Shortcuts**: `Ctrl+Enter` or `Enter` to submit prompt, `Shift+Enter` for multiline input.
+
+---
+
+## 🔍 CLI & Python API Usage
+
+### Command Line Interface
+
+```bash
+# Initialize SQLite catalog
+python -m brickforge init
+
+# Scan a directory
+python -m brickforge scan --repo-path /path/to/repo --repo-id my-repo
+
+# Search for symbols using FTS5
+python -m brickforge search "markdown to pdf"
+```
+
+### Python API
+
 ```python
 from pathlib import Path
 from brickforge.storage.database import DatabaseManager
@@ -262,31 +234,43 @@ from brickforge.search.service import CatalogSearchService, CatalogQuery
 db_mgr = DatabaseManager(db_path=Path("data/brickforge.db"))
 search = CatalogSearchService(db_mgr)
 
-# Search across all 8 repositories
-hits = search.search(CatalogQuery(query="UserService", limit=10))
-for hit in hits:
-    print(f"{hit.symbol_name} ({hit.kind}) in [{hit.repository_id}] {hit.relative_path}")
+# Execute full-text lexical search
+results = search.search(CatalogQuery(query="MarkdownToPdfConverter", limit=5))
+for brick in results:
+    print(f"[{brick.language}] {brick.symbol_name} ({brick.kind}) -> {brick.relative_path}")
 ```
-
 
 ---
 
-### 5. Web Catalog Explorer & AI Chatbot
+## 🔒 Security Model
 
-Launch the interactive web UI (styled with Tailwind CSS, Alpine.js, Lucide Icons, and Prism syntax highlighting, following the layout of [agensi.io](https://agensi.io)):
+BrickForge operates under strict security boundaries:
+1. **Zero Dynamic Execution**: Code is analyzed strictly through static AST and Tree-sitter parsers. It is never imported, evaluated, or executed during indexing.
+2. **Filesystem Confinement**: Path traversal protection enforces `safe_path_canonicalization`, preventing `../` escapes and blocking symlinks that resolve outside registered roots.
+3. **Sensitive File Blacklisting**: Built-in exclusions automatically reject credential files (`.env`, `*.pem`), build directories, and database binaries.
+4. **Subprocess Isolation**: Bundle extraction tests execute in disposable sandboxes with enforced timeouts.
 
-```powershell
-python scripts/serve_catalog.py
+For complete security guarantees, see [docs/security.md](file:///C:/Dev/brickForge/docs/security.md).
+
+---
+
+## 🧪 Testing
+
+Always execute tests using the Python module invocation:
+
+```bash
+# Run unit tests
+python -m pytest tests/unit/
+
+# Run web API & chat engine tests
+python -m pytest tests/unit/test_chat_engine.py tests/unit/test_web_api.py
+
+# Run full test suite
+python -m pytest
 ```
-Open [http://localhost:8000](http://localhost:8000) in your browser.
-
-#### Highlights & Capabilities
-- **Thematic Taxonomy**: Filter code bricks by domain (AI & LLM / Agents, Data & Database, Web & HTTP API, Testing & Benchmarks, CLI & System Utilities, Cryptography & Security, Audio & DSP / Media, etc.).
-- **Symbol Kinds & Project Level**: Filter by `function`, `class`, `method`, or explore entire projects (`kind=project`) with AI-extracted intent and metrics (source files, classes, methods, functions).
-- **Language Detection & Filtering**: Filter by language badges (`py`, `ts`, `tsx`, `js`, `cs`, `cpp`).
-- **Conversational Ollama Assistant**: Built-in floating chat bubble grounded in your catalog via SQLite FTS5 RAG. Ask how to compose bricks for TTS, Agents, Auth, or AST parsing, with verified code snippets and exact file locations.
 
 ---
 
 ## 📜 License
-MIT License. Crafted for resilient autonomous software development.
+
+MIT License. Designed for sovereign, resilient software engineering.

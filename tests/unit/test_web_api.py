@@ -29,6 +29,9 @@ class AppEndpointClient:
     def search_bricks(self, **kwargs):
         return self.endpoints["/api/bricks"](**kwargs)
 
+    def export_bricks(self, **kwargs):
+        return self.endpoints["/api/bricks/export"](**kwargs)
+
     def get_brick(self, brick_id: str):
         return self.endpoints["/api/brick/{brick_id}"](brick_id=brick_id)
 
@@ -297,4 +300,35 @@ def test_get_project_detail(test_web_client):
     assert "source_code" in proj_dossier
     assert "# PROJECT DOSSIER: agents" in proj_dossier["source_code"]
     assert len(proj_dossier["dependencies"]) >= 1
+
+
+@pytest.mark.unit
+def test_export_bricks_default(test_web_client):
+    client, _ = test_web_client
+    res = client.export_bricks()
+    assert res["version"] == "1.0"
+    assert "exported_at" in res
+    assert res["total_matches"] >= 3
+    assert res["exported_count"] == len(res["items"])
+    assert res["exported_count"] >= 3
+    assert "filters" in res
+
+
+@pytest.mark.unit
+def test_export_bricks_with_filters(test_web_client):
+    client, _ = test_web_client
+    res_py = client.export_bricks(language="py")
+    assert res_py["exported_count"] == 2
+    for item in res_py["items"]:
+        assert item["language"] == "python"
+
+    res_rust = client.export_bricks(language="rs")
+    assert res_rust["exported_count"] == 1
+    assert res_rust["items"][0]["symbol_name"] == "AudioStreamEngine"
+
+    res_proj = client.export_bricks(kind="project")
+    assert res_proj["exported_count"] >= 2
+    for item in res_proj["items"]:
+        assert item["kind"] == "project"
+
 
