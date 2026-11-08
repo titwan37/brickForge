@@ -6,14 +6,16 @@ import hashlib
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from brickforge.analysis.dependencies import ExtractedDependency, PythonDependencyExtractor
 from brickforge.analysis.imports import PythonImportAnalyzer
 from brickforge.analysis.symbol_index import RepositorySymbolIndex
+from brickforge.ingestion.discovery import get_language_hint
 from brickforge.ingestion.fingerprints import compute_file_id
 from brickforge.parsers.base import ExtractedSymbol, ParseDiagnostic
 from brickforge.parsers.diagnostics import DiagnosticCollector, DiagnosticReport
+from brickforge.parsers.multilang_symbols import MultiLanguageSymbolExtractor
 from brickforge.parsers.python_symbols import PythonSymbolExtractor
 from brickforge.parsers.tree_sitter_runtime import TreeSitterRuntime
 from brickforge.storage.brick_repository import BrickRepository
@@ -51,7 +53,15 @@ class RecoverablePythonParser:
         # 1. Attempt standard AST parsing to see if the file is completely clean
         try:
             import ast
-            ast.parse(code_str, filename=file_path or "<string>")
+            import warnings
+            with warnings.catch_warnings(record=True) as caught_warnings:
+                warnings.simplefilter("always")
+                ast.parse(code_str, filename=file_path or "<string>")
+                for w in caught_warnings:
+                    collector.add_warning(
+                        message=str(w.message),
+                        line=getattr(w, "lineno", None),
+                    )
             extractor = PythonSymbolExtractor(code_str)
             symbols = extractor.extract_all()
             return symbols, collector.create_report(parse_status="ok")
@@ -171,12 +181,15 @@ class IngestionPipeline:
         brick_repository: BrickRepository,
         root_path: Union[str, Path] = "",
         symbol_index: Optional[RepositorySymbolIndex] = None,
+        tree_sitter_runtime: Optional[TreeSitterRuntime] = None,
     ):
         self.repository_id = repository_id
         self.brick_repo = brick_repository
         self.root_path = Path(root_path) if root_path else None
         self.symbol_index = symbol_index or RepositorySymbolIndex()
-        self.parser = RecoverablePythonParser()
+        self.ts_runtime = tree_sitter_runtime or TreeSitterRuntime()
+        self.parser = RecoverablePythonParser(self.ts_runtime)
+        self.multilang_extractor = MultiLanguageSymbolExtractor(self.ts_runtime)
         self.dep_extractor = PythonDependencyExtractor()
         self.import_analyzer = PythonImportAnalyzer()
 
@@ -209,14 +222,28 @@ class IngestionPipeline:
         loc = len(code_str.splitlines())
         byte_size = len(code_bytes)
 
-        # Check if file is supported
-        if not norm_path.endswith((".py", ".pyi")):
+        language_hint = get_language_hint(norm_path)
+
+        # 1. Python source parsing
+        if norm_path.endswith((".py", ".pyi")) or language_hint == "python":
+            symbols, report = self.parser.parse_source(code_str, file_path=norm_path)
+            parser_name = "tree_sitter_python" if report.parse_status == "partial" else "python_ast"
+            saved_lang = "python"
+
+        # 2. Multi-language AST parsing (C#, TypeScript, JavaScript, C++, C, Go, Rust, Java)
+        elif self.multilang_extractor.can_extract(language_hint):
+            symbols, report = self.multilang_extractor.extract_symbols(code_bytes, language_hint, file_path=norm_path)
+            parser_name = f"tree_sitter_{language_hint}"
+            saved_lang = language_hint
+
+        # 3. Non-AST or markup/data files (HTML, CSS, JSON, XML, Markdown, etc.)
+        else:
             report = DiagnosticReport(file_path=norm_path, parse_status="unsupported")
             file_row_id = self.brick_repo.upsert_source_file(
                 repository_id=self.repository_id,
                 relative_path=norm_path,
                 file_hash=file_hash,
-                language="unknown",
+                language=language_hint,
                 byte_size=byte_size,
                 loc=loc,
                 modified_ns=modified_ns,
@@ -225,19 +252,16 @@ class IngestionPipeline:
             )
             return file_row_id, report, []
 
-        # Parse with error recovery
-        symbols, report = self.parser.parse_source(code_str, file_path=norm_path)
-
         # Save source file record
         file_row_id = self.brick_repo.upsert_source_file(
             repository_id=self.repository_id,
             relative_path=norm_path,
             file_hash=file_hash,
-            language="python",
+            language=saved_lang,
             byte_size=byte_size,
             loc=loc,
             modified_ns=modified_ns,
-            parser_name="tree_sitter_python" if report.parse_status == "partial" else "python_ast",
+            parser_name=parser_name,
             parser_version="1.0",
             parse_status=report.parse_status,
             parse_diagnostics=report.to_json(),
@@ -252,10 +276,12 @@ class IngestionPipeline:
 
         for sym in symbols:
             parent_id = name_to_brick_row.get(sym.parent_name) if sym.parent_name else None
+            portability = 0.95 if sym.kind in ("function", "interface") else (0.90 if sym.kind in ("class", "struct") else 0.85)
             brick_row = self.brick_repo.upsert_brick(
                 file_row_id=file_row_id,
                 symbol=sym,
                 parent_row_id=parent_id,
+                portability_score=portability,
             )
             brick_row_ids.append(brick_row)
             name_to_brick_row[sym.qualified_name] = brick_row

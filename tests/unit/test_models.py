@@ -1,14 +1,24 @@
 import pytest
 from pydantic import ValidationError
 
-from src.brickforge.models.repository import Repository
-from src.brickforge.models.scan import (
-    ScanRun,
-    ScanStatus,
-    SourceFileMetadata,
-    Exclusion,
-    ScanError,
-)
+try:
+    from brickforge.models.repository import Repository
+    from brickforge.models.scan import (
+        ScanRun,
+        ScanStatus,
+        SourceFileMetadata,
+        Exclusion,
+        ScanError,
+    )
+except ImportError:
+    from src.brickforge.models.repository import Repository
+    from src.brickforge.models.scan import (
+        ScanRun,
+        ScanStatus,
+        SourceFileMetadata,
+        Exclusion,
+        ScanError,
+    )
 
 
 def test_repository_model():

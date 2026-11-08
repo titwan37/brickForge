@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from src.brickforge.ingestion.ignore_rules import IgnoreRules
+from brickforge.ingestion.ignore_rules import IgnoreRules
 
 class TestIgnoreRules(unittest.TestCase):
     @patch.object(IgnoreRules, '__init__', return_value=None)

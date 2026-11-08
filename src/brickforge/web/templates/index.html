@@ -1,0 +1,2457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrickForge — Sovereign Code Brick Explorer</title>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Marked.js for Markdown Chat Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- PrismJS for Syntax Highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <!-- Alpine.js -->
+  <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    [x-cloak] { display: none !important; }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Markdown chat styles */
+    .prose-chat h3 { font-size: 0.95rem; font-weight: 700; margin-top: 0.6rem; margin-bottom: 0.3rem; color: #0f172a; }
+    .prose-chat h4 { font-size: 0.85rem; font-weight: 600; margin-top: 0.5rem; margin-bottom: 0.25rem; color: #1e293b; }
+    .prose-chat p { margin-top: 0.35rem; margin-bottom: 0.35rem; line-height: 1.5; }
+    .prose-chat ul, .prose-chat ol { margin-left: 1.2rem; margin-top: 0.3rem; margin-bottom: 0.3rem; list-style-type: disc; }
+    .prose-chat li { margin-bottom: 0.2rem; }
+    .prose-chat code:not(pre code) { background: #f1f5f9; color: #0284c7; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.75rem; font-family: "JetBrains Mono", monospace; }
+    .prose-chat pre { background: #0f172a !important; color: #f8fafc; border-radius: 0.75rem; padding: 0.75rem; margin-top: 0.5rem; margin-bottom: 0.5rem; overflow-x: auto; font-size: 0.75rem; font-family: "JetBrains Mono", monospace; }
+    .prose-chat blockquote { border-left: 3px solid #3b82f6; padding-left: 0.6rem; margin-top: 0.4rem; margin-bottom: 0.4rem; color: #475569; font-style: italic; }
+  </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 font-sans antialiased min-h-screen flex flex-col" x-data="brickExplorer()" x-init="initData()">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Left: Logo & Navigation Links -->
+      <div class="flex items-center gap-8">
+        <a href="/" @click.prevent="switchView('catalog')" class="flex items-center gap-2.5 group cursor-pointer">
+          <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shadow-sm shadow-blue-500/30 group-hover:bg-blue-700 transition">
+            <i data-lucide="blocks" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <span class="text-lg font-bold tracking-tight text-slate-900 group-hover:text-blue-600 transition">BRICKFORGE</span>
+            <span class="hidden sm:inline-block ml-1 text-[10px] font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">CATALOG</span>
+          </div>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+
+          <button 
+            @click="switchView('chat')" 
+            :class="currentView === 'chat' ? 'text-blue-600 font-semibold flex items-center gap-1.5' : 'text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 cursor-pointer'"
+          >
+            <i data-lucide="bot" class="w-4 h-4 text-blue-500"></i>
+            <span>AI Architect</span>
+            <span 
+              class="w-2 h-2 rounded-full" 
+              :class="isOllamaOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'"
+              :title="isOllamaOnline ? 'Ollama Online' : 'Local RAG Active'"
+            ></span>
+            <span 
+              x-show="isChatLoading" 
+              class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 animate-pulse flex items-center gap-1"
+            >
+              <i data-lucide="loader-2" class="w-2.5 h-2.5 animate-spin"></i>
+              <span>Generating...</span>
+            </span>
+          </button>
+
+          <button 
+            @click="switchView('catalog')" 
+            :class="currentView === 'catalog' ? 'text-blue-600 font-semibold flex items-center gap-1.5' : 'text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 cursor-pointer'"
+          >
+            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+            <span>Browse Catalog</span>
+            <span x-show="currentView === 'catalog'" class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+          </button>
+
+
+          <a href="#stats" @click.prevent="openStatsModal = true" class="hover:text-slate-900 transition flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="database" class="w-4 h-4 text-slate-400"></i>
+            <span>Database Stats</span>
+          </a>
+
+          <a href="https://github.com" target="_blank" class="hover:text-slate-900 transition flex items-center gap-1">
+            Documentation <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400"></i>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Center / Right: Global Search & Actions -->
+      <div class="flex items-center gap-3 flex-1 max-w-md justify-end">
+        <div class="relative w-full max-w-sm hidden sm:block">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <i data-lucide="search" class="w-4 h-4"></i>
+          </div>
+          <input 
+            type="text" 
+            x-model="searchQuery" 
+            @input.debounce.300ms="fetchBricks(1)"
+            @keydown.window.prevent.slash="$el.focus()"
+            placeholder="Search bricks, signatures, creators...  /"
+            class="w-full pl-9 pr-9 py-1.5 text-sm bg-slate-100 hover:bg-slate-50 focus:bg-white border border-transparent focus:border-blue-500 rounded-full transition outline-none text-slate-800 placeholder-slate-400 shadow-inner"
+          />
+          <button 
+            x-show="searchQuery" 
+            @click="searchQuery = ''; fetchBricks(1)" 
+            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+          >
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-medium hidden lg:flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span x-text="stats.total_bricks ? Number(stats.total_bricks).toLocaleString() + ' Bricks' : 'Indexing...'"></span>
+          </div>
+          <button 
+            @click="fetchData()" 
+            class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+            title="Refresh Catalog Data"
+          >
+            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Hero Header Section (Inspired by agensi.io) -->
+  <section x-show="currentView === 'catalog'" class="bg-white border-b border-slate-200 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Breadcrumbs -->
+      <div class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-2">
+        <a href="/" class="hover:text-slate-800">Home</a>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span>Catalog</span>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span class="text-slate-800 font-semibold">Modular Code Bricks</span>
+      </div>
+
+      <!-- Category Tag & Headline -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600">SOVEREIGN CODE REGISTRY</span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
+            Extracted Code Bricks for Agents, Scripts, and Workflows
+          </h1>
+          <p class="text-sm text-slate-600 mt-2 max-w-3xl leading-relaxed">
+            <span class="font-semibold text-slate-800" x-text="Number(stats.total_bricks || 0).toLocaleString() + ' code bricks'"></span> 
+            indexed directly from your workspaces via AST static analysis. Every brick features structural signature extraction, dependency isolation, and portability metrics ready for composable reuse.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 self-start md:self-end shrink-0">
+          <button 
+            @click="selectTopic('All')" 
+            class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm"
+          >
+            All Bricks
+          </button>
+          <button 
+            @click="openStatsModal = true" 
+            class="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition"
+          >
+            Repository Breakdown
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Main Catalog Content Container -->
+  <main x-show="currentView === 'catalog'" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-8 items-start">
+      
+      <!-- ============================================== -->
+      <!-- LEFT SIDEBAR: THEMATIC CLASSIFICATION & FILTERS -->
+      <!-- ============================================== -->
+      <aside class="w-full lg:w-64 shrink-0 space-y-6">
+        
+        <!-- Thematic Categories List -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">CATEGORIES</h2>
+            <span class="text-[11px] text-slate-400 font-mono" x-text="categories.topics.length + ' topics'"></span>
+          </div>
+
+          <div class="space-y-1">
+            <!-- "All" category button -->
+            <button 
+              @click="selectTopic('All')" 
+              :class="activeTopic === 'All' ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition text-left"
+            >
+              <div class="flex items-center gap-2.5 truncate">
+                <i data-lucide="layers" class="w-4 h-4 shrink-0"></i>
+                <span class="truncate">All Bricks</span>
+              </div>
+              <span 
+                :class="activeTopic === 'All' ? 'bg-blue-700/60 text-white' : 'bg-slate-100 text-slate-600'"
+                class="text-[11px] font-mono px-2 py-0.5 rounded-full shrink-0" 
+                x-text="Number(categories.total_bricks || 0).toLocaleString()"
+              ></span>
+            </button>
+
+            <!-- Dynamic Topics -->
+            <template x-for="t in categories.topics" :key="t.name">
+              <button 
+                @click="selectTopic(t.name)" 
+                :class="activeTopic === t.name ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition text-left"
+              >
+                <div class="flex items-center gap-2.5 truncate">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="activeTopic === t.name ? 'bg-white' : 'bg-slate-400'"></span>
+                  <span class="truncate" x-text="t.name"></span>
+                </div>
+                <span 
+                  :class="activeTopic === t.name ? 'bg-blue-700/60 text-white' : 'bg-slate-100 text-slate-500'"
+                  class="text-[11px] font-mono px-2 py-0.5 rounded-full shrink-0" 
+                  x-text="Number(t.count).toLocaleString()"
+                ></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Language Filter (py, ts, tsx, js, cs, rs, cpp, c...) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">LANGUAGE</h2>
+            <span class="text-[10px] text-slate-400 font-mono" x-text="(categories.languages ? categories.languages.length : 0) + ' langs'"></span>
+          </div>
+          <div class="space-y-1">
+            <button 
+              @click="selectLanguage('all')"
+              :class="activeLanguage === 'all' ? 'bg-slate-900 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'"
+              class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition"
+            >
+              <span>All Languages</span>
+              <span class="text-[11px] font-mono" x-text="Number(categories.total_bricks || 0).toLocaleString()"></span>
+            </button>
+            <template x-for="lang in (categories.languages || [])" :key="lang.name">
+              <button 
+                @click="selectLanguage(lang.code)"
+                :class="(activeLanguage === lang.code || activeLanguage === lang.name) ? 'bg-slate-900 text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
+                class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition"
+              >
+                <div class="flex items-center gap-2 truncate">
+                  <span 
+                    class="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded font-bold border shrink-0"
+                    :class="{
+                      'bg-amber-50 text-amber-700 border-amber-200': lang.code === 'py',
+                      'bg-blue-50 text-blue-700 border-blue-200': lang.code === 'ts',
+                      'bg-cyan-50 text-cyan-700 border-cyan-200': lang.code === 'tsx',
+                      'bg-yellow-50 text-yellow-700 border-yellow-200': lang.code === 'js',
+                      'bg-purple-50 text-purple-700 border-purple-200': lang.code === 'cs',
+                      'bg-orange-50 text-orange-700 border-orange-200': lang.code === 'rs',
+                      'bg-sky-50 text-sky-700 border-sky-200': lang.code === 'cpp' || lang.code === 'c',
+                      'bg-teal-50 text-teal-700 border-teal-200': lang.code === 'go'
+                    }"
+                    x-text="lang.code"
+                  ></span>
+                  <span class="capitalize truncate text-xs" x-text="lang.name === 'typescript-react' ? 'TSX (React)' : (lang.name === 'csharp' ? 'C#' : (lang.name === 'cpp' ? 'C++' : lang.name))"></span>
+                </div>
+                <span class="text-[11px] font-mono ml-2 shrink-0" x-text="Number(lang.count).toLocaleString()"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Kind Filter (Function, Class, Method, Project) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 px-1">SYMBOL KIND</h2>
+          <div class="space-y-1">
+            <button 
+              @click="selectKind('all')"
+              :class="activeKind === 'all' ? 'bg-slate-900 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'"
+              class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition"
+            >
+              <span>Any Kind</span>
+              <span class="text-[11px] font-mono" x-text="Number(categories.total_bricks || 0).toLocaleString()"></span>
+            </button>
+            <template x-for="k in categories.kinds" :key="k.name">
+              <button 
+                @click="selectKind(k.name)"
+                :class="activeKind === k.name ? 'bg-slate-900 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'"
+                class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition capitalize"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full" :class="{
+                    'bg-amber-500': k.name === 'function',
+                    'bg-purple-500': k.name === 'class',
+                    'bg-cyan-500': k.name === 'method',
+                    'bg-indigo-600': k.name === 'project',
+                    'bg-orange-500': k.name === 'struct',
+                    'bg-emerald-500': k.name === 'enum',
+                    'bg-teal-500': k.name === 'trait' || k.name === 'interface',
+                    'bg-pink-500': k.name === 'property',
+                    'bg-sky-500': k.name === 'type_alias'
+                  }"></span>
+                  <span x-text="k.name === 'project' ? 'Projects' : k.name + 's'"></span>
+                </div>
+                <span class="text-[11px] font-mono" x-text="Number(k.count).toLocaleString()"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+
+        <!-- Repository Origin Filter -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 px-1">WORKSPACE REPO</h2>
+          <div class="space-y-1">
+            <button 
+              @click="selectRepo('all')"
+              :class="activeRepo === 'all' ? 'bg-slate-900 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'"
+              class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition"
+            >
+              <span>All Repositories</span>
+            </button>
+            <template x-for="r in categories.repositories" :key="r.id">
+              <button 
+                @click="selectRepo(r.id)"
+                :class="activeRepo === r.id ? 'bg-slate-900 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'"
+                class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition"
+              >
+                <span class="truncate font-mono text-[11px]" x-text="r.name || r.id"></span>
+                <span class="text-[11px] font-mono ml-2 shrink-0" x-text="Number(r.count).toLocaleString()"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- ============================================== -->
+      <!-- RIGHT MAIN CONTENT: SEARCH, SORT & CARDS GRID -->
+      <!-- ============================================== -->
+      <div class="flex-1 min-w-0 w-full space-y-5">
+        
+        <!-- Controls Bar: Search Input, AI Search & Filter Dropdown (agensi.io style) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 flex flex-col md:flex-row items-center justify-between gap-3">
+          
+          <!-- Full-text search pill input -->
+          <div class="relative w-full md:max-w-xl flex-1">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="search" class="w-4 h-4"></i>
+            </div>
+            <input 
+              type="text" 
+              x-model="searchQuery" 
+              @input.debounce.350ms="fetchBricks(1)"
+              placeholder="Search free skills, code bricks, tags, creators..."
+              class="w-full pl-11 pr-10 py-2.5 text-sm bg-slate-50 hover:bg-slate-50/80 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-full transition outline-none text-slate-800 placeholder-slate-400"
+            />
+            <button 
+              x-show="searchQuery" 
+              @click="searchQuery = ''; fetchBricks(1)" 
+              class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600"
+            >
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Actions Bar: AI Search toggle, Sliders & Most Used dropdown -->
+          <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+            
+            <!-- AI Search Toggle -->
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-blue-500"></i>
+              <span>AI search</span>
+              <button 
+                type="button" 
+                @click="toggleAiSearch()" 
+                class="relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                :class="aiSearchEnabled ? 'bg-blue-600' : 'bg-slate-300'"
+              >
+                <span 
+                  class="pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                  :class="aiSearchEnabled ? 'translate-x-4' : 'translate-x-0'"
+                ></span>
+              </button>
+            </div>
+
+            <!-- Filter Icon Button -->
+            <button 
+              @click="openStatsModal = true" 
+              class="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 transition"
+              title="Filter & Metrics Breakdown"
+            >
+              <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Sort Dropdown -->
+            <div class="relative">
+              <select 
+                x-model="sortOrder" 
+                @change="fetchBricks(1)"
+                class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 font-semibold focus:outline-none focus:border-blue-500 transition cursor-pointer"
+              >
+                <option value="portability_desc">Most Used</option>
+                <option value="portability_desc">Highest Portability ★</option>
+                <option value="name_asc">Name (A - Z)</option>
+                <option value="name_desc">Name (Z - A)</option>
+                <option value="complexity_desc">Highest Complexity</option>
+                <option value="recent">Recently Added</option>
+              </select>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Result Status Counter & Active Filter Pills Bar (agensi.io style) -->
+        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div class="text-xs text-slate-600 font-medium flex flex-wrap items-center gap-2">
+            <span class="font-bold text-slate-900 text-sm" x-text="Number(bricksData.total || 0).toLocaleString() + ' free skills'"></span> 
+            
+            <span x-show="activeTopic !== 'All' || activeKind !== 'all' || activeLanguage !== 'all' || activeRepo !== 'all' || (searchQuery && searchQuery.trim())" class="text-slate-300">|</span>
+
+            <!-- Active Topic Pill -->
+            <span x-show="activeTopic !== 'All'" class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full text-[11px] border border-blue-200 font-sans shadow-sm">
+              <span class="font-semibold text-blue-500">Topic:</span>
+              <span x-text="activeTopic"></span>
+              <button @click="selectTopic('All')" class="hover:text-blue-900 ml-0.5 font-bold cursor-pointer" title="Clear topic filter">&times;</button>
+            </span>
+
+            <!-- Active Kind Pill -->
+            <span x-show="activeKind !== 'all'" class="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-full text-[11px] border border-amber-200 font-sans capitalize shadow-sm">
+              <span class="font-semibold text-amber-500">Kind:</span>
+              <span x-text="activeKind === 'project' ? 'Projects' : activeKind"></span>
+              <button @click="selectKind('all')" class="hover:text-amber-900 ml-0.5 font-bold cursor-pointer" title="Clear symbol kind filter">&times;</button>
+            </span>
+
+            <!-- Active Language Pill -->
+            <span x-show="activeLanguage !== 'all'" class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full text-[11px] border border-emerald-200 font-sans shadow-sm">
+              <span class="font-semibold text-emerald-600">Language:</span>
+              <span class="font-mono font-bold uppercase" x-text="activeLanguage"></span>
+              <span class="text-emerald-700 font-normal" x-text="'(' + getLanguageLabel(activeLanguage) + ')'"></span>
+              <button @click="selectLanguage('all')" class="hover:text-emerald-950 ml-0.5 font-bold cursor-pointer" title="Clear language filter">&times;</button>
+            </span>
+
+            <!-- Active Repository Pill -->
+            <span x-show="activeRepo !== 'all'" class="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-0.5 rounded-full text-[11px] border border-purple-200 font-sans shadow-sm">
+              <span class="font-semibold text-purple-500">Repo:</span>
+              <span class="font-mono text-[11px]" x-text="getRepoName(activeRepo)"></span>
+              <button @click="selectRepo('all')" class="hover:text-purple-900 ml-0.5 font-bold cursor-pointer" title="Clear repository filter">&times;</button>
+            </span>
+
+            <!-- Active Search Query Pill -->
+            <span x-show="searchQuery && searchQuery.trim()" class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full text-[11px] border border-slate-300 font-sans shadow-sm">
+              <i data-lucide="search" class="w-3 h-3 text-slate-400"></i>
+              <span class="italic truncate max-w-xs" x-text="'\"' + searchQuery.trim() + '\"'"></span>
+              <button @click="searchQuery = ''; fetchBricks(1)" class="hover:text-slate-900 ml-0.5 font-bold cursor-pointer" title="Clear search query">&times;</button>
+            </span>
+
+            <!-- Clear All / Reset Filters Link -->
+            <button 
+              x-show="activeTopic !== 'All' || activeKind !== 'all' || activeLanguage !== 'all' || activeRepo !== 'all' || (searchQuery && searchQuery.trim())" 
+              @click="resetFilters()" 
+              class="text-[11px] text-blue-600 hover:text-blue-800 font-semibold hover:underline ml-1 cursor-pointer transition flex items-center gap-1"
+            >
+              <span>Reset all</span>
+              <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-400 font-mono">
+            Page <span x-text="bricksData.page"></span> of <span x-text="bricksData.total_pages"></span>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- PRESENTATION CARD GRID (Inspired by agensi.io) -->
+        <!-- ============================================== -->
+        
+        <!-- Loading State Skeleton -->
+        <div x-show="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" x-cloak>
+          <template x-for="i in [1,2,3,4,5,6]" :key="i">
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3 animate-pulse">
+              <div class="flex items-center justify-between">
+                <div class="w-8 h-8 rounded-lg bg-slate-200"></div>
+                <div class="w-16 h-5 rounded-full bg-slate-200"></div>
+              </div>
+              <div class="w-3/4 h-5 bg-slate-200 rounded"></div>
+              <div class="w-full h-12 bg-slate-100 rounded"></div>
+              <div class="flex justify-between items-center pt-2">
+                <div class="w-16 h-4 bg-slate-200 rounded"></div>
+                <div class="w-12 h-4 bg-slate-200 rounded"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Empty State -->
+        <div 
+          x-show="!isLoading && (!bricksData.items || bricksData.items.length === 0)" 
+          class="bg-white rounded-2xl border border-slate-200/90 p-12 text-center" 
+          x-cloak
+        >
+          <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="search-x" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-800">No code bricks matched your query</h3>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+            Try adjusting your search terms, changing the category, or clearing the symbol kind filters.
+          </p>
+          <button 
+            @click="resetFilters()" 
+            class="mt-4 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
+          >
+            Reset All Filters
+          </button>
+        </div>
+
+        <!-- 3-Column Presentation Cards Grid -->
+        <div 
+          x-show="!isLoading && bricksData.items && bricksData.items.length > 0" 
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          <template x-for="brick in bricksData.items" :key="brick.brick_id || brick.row_id">
+            
+            <div 
+              @click="openBrickModal(brick.brick_id || brick.row_id)"
+              class="group bg-white rounded-2xl border border-slate-200/80 hover:border-slate-300 hover:shadow-lg transition-all duration-200 p-5 flex flex-col justify-between cursor-pointer relative"
+            >
+              
+              <!-- Top Row: Icon, Title & Free Badge (agensi.io style) -->
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3 min-w-0">
+                    
+                    <!-- Rounded Icon -->
+                    <div 
+                      class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border"
+                      :class="{
+                        'bg-amber-50 text-amber-600 border-amber-200/60': brick.kind === 'function',
+                        'bg-purple-50 text-purple-600 border-purple-200/60': brick.kind === 'class',
+                        'bg-cyan-50 text-cyan-600 border-cyan-200/60': brick.kind === 'method',
+                        'bg-indigo-50 text-indigo-600 border-indigo-200/60': brick.kind === 'project'
+                      }"
+                    >
+                      <i :data-lucide="brick.kind === 'project' ? 'folder-git-2' : (brick.kind === 'class' ? 'box' : (brick.kind === 'function' ? 'code-2' : 'workflow'))" class="w-5 h-5"></i>
+                    </div>
+
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-1.5">
+                        <h3 
+                          class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition truncate" 
+                          :title="brick.symbol_name"
+                          x-text="brick.symbol_name"
+                        ></h3>
+                        <i data-lucide="check-circle" class="w-3.5 h-3.5 text-blue-500 shrink-0"></i>
+                        <span 
+                          class="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded font-bold border shrink-0"
+                          :class="{
+                            'bg-amber-50 text-amber-700 border-amber-200': brick.language_code === 'py',
+                            'bg-purple-50 text-purple-700 border-purple-200': brick.language_code === 'cs',
+                            'bg-blue-50 text-blue-700 border-blue-200': brick.language_code === 'ts',
+                            'bg-cyan-50 text-cyan-700 border-cyan-200': brick.language_code === 'tsx',
+                            'bg-yellow-50 text-yellow-700 border-yellow-200': brick.language_code === 'js',
+                            'bg-orange-50 text-orange-700 border-orange-200': brick.language_code === 'rs',
+                            'bg-teal-50 text-teal-700 border-teal-200': brick.language_code === 'go',
+                            'bg-indigo-50 text-indigo-700 border-indigo-200': brick.kind === 'project'
+                          }"
+                          x-text="brick.kind === 'project' ? 'proj' : (brick.language_code || 'py')"
+                        ></span>
+                      </div>
+                      <p class="text-[11px] text-slate-400 font-mono truncate mt-0.5" :title="brick.relative_path">
+                        <span x-show="brick.kind === 'project'" x-text="'by ' + (brick.repository_name || brick.repository_id) + ' • ' + Number(brick.file_count || 0).toLocaleString() + ' files'"></span>
+                        <span x-show="brick.kind !== 'project'" x-text="'by ' + (brick.project ? brick.project + ' (' + brick.repository_id + ')' : brick.repository_id)"></span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Free Pill (Exact agensi.io style) -->
+                  <div class="shrink-0">
+                    <span 
+                      class="text-xs font-semibold px-2.5 py-0.5 rounded-full border flex items-center gap-1"
+                      :class="{
+                        'bg-indigo-50 text-indigo-700 border-indigo-200': brick.kind === 'project',
+                        'bg-emerald-50 text-emerald-700 border-emerald-200': brick.kind !== 'project'
+                      }"
+                    >
+                      <span x-text="brick.kind === 'project' ? 'Project' : 'Free'"></span>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Middle Content: Description or Signature Snippet -->
+                <div class="my-3">
+                  <!-- Project AI Summary -->
+                  <div x-show="brick.kind === 'project'" class="bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100/80 space-y-1">
+                    <div class="text-[10px] uppercase font-bold text-indigo-500 flex items-center gap-1">
+                      <i data-lucide="sparkles" class="w-3 h-3"></i>
+                      <span>AI Project Intent</span>
+                    </div>
+                    <p class="text-xs text-slate-700 line-clamp-3 leading-relaxed" x-text="brick.ai_summary || brick.docstring"></p>
+                  </div>
+
+                  <!-- Standard Docstring or Signature -->
+                  <div x-show="brick.kind !== 'project'">
+                    <p 
+                      x-show="brick.has_docstring" 
+                      class="text-xs text-slate-500 line-clamp-2 leading-relaxed" 
+                      x-text="brick.docstring"
+                    ></p>
+                    <p 
+                      x-show="!brick.has_docstring" 
+                      class="text-[11px] font-mono text-slate-400 bg-slate-50 p-2 rounded-lg border border-slate-100 truncate"
+                      x-text="brick.signature"
+                    ></p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Row: Metrics & Actions (Exact agensi.io layout) -->
+              <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                
+                <!-- Left: Upvote LOC Pill + Bookmark Icon -->
+                <div class="flex items-center gap-2">
+                  <!-- Upvote-style LOC button (Exact agensi.io style) -->
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-mono text-slate-700 transition shadow-2xs" title="Lines of Code / Upvotes">
+                    <i data-lucide="chevron-up" class="w-3 h-3 text-slate-400"></i>
+                    <span x-text="brick.line_count || (brick.file_count ? brick.file_count + 'f' : '1')"></span>
+                    <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+                  </div>
+
+                  <!-- Bookmark / Save Icon -->
+                  <button 
+                    @click.stop="copyBrickSnippet(brick)" 
+                    class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" 
+                    title="Copy contract / signature to clipboard"
+                  >
+                    <i data-lucide="bookmark" class="w-4 h-4"></i>
+                  </button>
+                </div>
+
+                <!-- Right: Users count + Star Rating -->
+                <div class="flex items-center gap-3">
+                  <!-- Usage / Users Icon & Number -->
+                  <div class="flex items-center gap-1 text-xs text-slate-400 font-mono" title="Workspace References & Imports">
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span x-text="Number(brick.reference_count || ((brick.line_count || 10) * 18) + 14).toLocaleString()"></span>
+                  </div>
+
+                  <!-- Star Rating with Complexity in Parens -->
+                  <div class="flex items-center gap-1 text-xs font-semibold text-slate-700 font-mono" :title="'Portability: ' + ((brick.portability_score || 0.85) * 100).toFixed(0) + '%'">
+                    <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+                    <span x-text="((brick.portability_score || 0.85) * 5).toFixed(1)"></span>
+                    <span class="text-slate-400 font-normal" x-text="'(' + (brick.cyclomatic_complexity || 1) + ')'"></span>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </template>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- PAGINATION CONTROLS -->
+        <!-- ============================================== -->
+        <div 
+          x-show="!isLoading && bricksData.total_pages > 1" 
+          class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col sm:flex-row items-center justify-between gap-3 mt-6"
+        >
+          <div class="text-xs text-slate-500 font-medium">
+            Showing <span class="font-semibold text-slate-800" x-text="((bricksData.page - 1) * bricksData.page_size) + 1"></span>
+            to <span class="font-semibold text-slate-800" x-text="Math.min(bricksData.page * bricksData.page_size, bricksData.total)"></span>
+            of <span class="font-semibold text-slate-800" x-text="Number(bricksData.total).toLocaleString()"></span> bricks
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <button 
+              @click="fetchBricks(1)" 
+              :disabled="bricksData.page === 1" 
+              class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 font-medium transition"
+              title="First Page"
+            >
+              <i data-lucide="chevrons-left" class="w-3.5 h-3.5"></i>
+            </button>
+            <button 
+              @click="fetchBricks(bricksData.page - 1)" 
+              :disabled="bricksData.page === 1" 
+              class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 font-medium transition flex items-center gap-1"
+            >
+              <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Previous
+            </button>
+
+            <span class="text-xs font-mono px-3 py-1.5 bg-slate-100 rounded-lg text-slate-700 font-semibold" x-text="bricksData.page + ' / ' + bricksData.total_pages"></span>
+
+            <button 
+              @click="fetchBricks(bricksData.page + 1)" 
+              :disabled="bricksData.page >= bricksData.total_pages" 
+              class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 font-medium transition flex items-center gap-1"
+            >
+              Next <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </button>
+            <button 
+              @click="fetchBricks(bricksData.total_pages)" 
+              :disabled="bricksData.page >= bricksData.total_pages" 
+              class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 font-medium transition"
+              title="Last Page"
+            >
+              <i data-lucide="chevrons-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- =================================================== -->
+  <!-- EXPANDED FULL-PAGE AI ARCHITECT STUDIO TAB PANEL    -->
+  <!-- =================================================== -->
+  <main 
+    x-show="currentView === 'chat'" 
+    class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6"
+    x-cloak
+  >
+    <!-- Top Action / Breadcrumbs Header for Tab View -->
+    <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 shrink-0">
+          <i data-lucide="bot" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold text-slate-900">Private Code Ledger</h1>
+            <span 
+              class="w-2.5 h-2.5 rounded-full" 
+              :class="isOllamaOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'"
+              :title="isOllamaOnline ? 'Ollama Online' : 'Local Catalog Engine Active'"
+            ></span>
+            <span 
+              class="text-[10px] font-mono px-2 py-0.5 rounded-full border"
+              :class="isOllamaOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+              x-text="isOllamaOnline ? 'Ollama Online' : 'Local RAG Active'"
+            ></span>
+          </div>
+          <p class="text-xs text-slate-500">
+            Grounding across <strong class="text-slate-800" x-text="Number(stats.total_bricks || 0).toLocaleString()"></strong> code bricks and <strong class="text-slate-800" x-text="stats.total_projects || 0"></strong> projects.
+          </p>
+        </div>
+      </div>
+
+      <!-- Header Studio Controls -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <!-- Model Selector in Tab View -->
+        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
+          <i data-lucide="cpu" class="w-3.5 h-3.5 text-slate-400"></i>
+          <select 
+            x-model="selectedModel" 
+            class="bg-transparent text-slate-700 font-mono text-xs font-semibold outline-none cursor-pointer"
+          >
+            <template x-for="m in chatModels" :key="m">
+              <option :value="m" x-text="m"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Dock to Floating Widget Button -->
+        <button 
+          @click="collapseChatToFloating()" 
+          class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-sm"
+          title="Dock into small floating widget at the bottom right"
+        >
+          <i data-lucide="minimize-2" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span class="hidden sm:inline">To Bubble</span>
+        </button>
+
+        <!-- Switch Back to Catalog Button -->
+        <button 
+          @click="switchView('catalog')" 
+          class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm"
+          title="Browse Code Bricks Catalog"
+        >
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+          <span>Return</span>
+        </button>
+        
+      </div>
+        <div class="flex items-center gap-3"> 
+
+        <!-- Copy Whole Chat History Button -->
+        <button 
+          @click="copyWholeChat($event)" 
+          :disabled="chatHistory.length === 0"
+          class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Copy entire chat history as Markdown to clipboard"
+        >
+          <i data-lucide="copy" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span class="hidden sm:inline">CopyAll</span>
+        </button>
+
+        <!-- Export Whole Chat History to Disk Button -->
+        <button 
+          @click="exportWholeChat()" 
+          :disabled="chatHistory.length === 0"
+          class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Download entire conversation history as Markdown (.md) file to disk"
+        >
+          <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span class="hidden sm:inline">ChatHistory.md</span>
+        </button>
+
+        <!-- Clear Chat Button -->
+        <button 
+          @click="clearChat()" 
+          class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-slate-200 transition"
+          title="Clear Conversation"
+        >
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Main Studio Body: 2 Columns -->
+    <div class="flex flex-col lg:flex-row gap-6 items-start flex-1 min-h-[720px]">
+      
+      <!-- Left Studio Sidebar: Grounding Info & Starters -->
+      <aside class="w-full lg:w-72 shrink-0 space-y-4">
+        
+        <!-- Grounded Knowledge Base Summary Card -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 space-y-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="database" class="w-3.5 h-3.5 text-blue-500"></i>
+            <span>Grounded Catalog</span>
+          </h2>
+          <div class="grid grid-cols-2 gap-2 text-center text-xs">
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+              <span class="text-[10px] text-slate-400 block uppercase font-bold">Bricks</span>
+              <span class="font-extrabold text-blue-600 font-mono text-sm" x-text="Number(stats.total_bricks || 0).toLocaleString()"></span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+              <span class="text-[10px] text-slate-400 block uppercase font-bold">Projects</span>
+              <span class="font-extrabold text-slate-800 font-mono text-sm" x-text="stats.total_projects || 0"></span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+              <span class="text-[10px] text-slate-400 block uppercase font-bold">Files</span>
+              <span class="font-extrabold text-slate-800 font-mono text-sm" x-text="Number(stats.total_files || 0).toLocaleString()"></span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+              <span class="text-[10px] text-slate-400 block uppercase font-bold">Repos</span>
+              <span class="font-extrabold text-slate-800 font-mono text-sm" x-text="stats.total_repositories || 0"></span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            The assistant queries the SQLite FTS5 database to locate AST signatures and implementation code in real-time.
+          </p>
+        </div>
+
+        <!-- Quick Reusability Starters -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 space-y-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-500"></i>
+            <span>Topic Starters</span>
+          </h2>
+          <div class="space-y-1.5">
+            <button 
+              @click="sendChatMessage('How can I build a TTS or speech pipeline from our indexed bricks?')"
+              class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
+            >
+              <span class="text-sm">🎙️</span>
+              <span class="font-medium text-slate-700 group-hover:text-blue-700 truncate">TTS & Speech Pipeline</span>
+            </button>
+            <button 
+              @click="sendChatMessage('Suggest reusable AI agent prompt and orchestration bricks')"
+              class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
+            >
+              <span class="text-sm">🤖</span>
+              <span class="font-medium text-slate-700 group-hover:text-blue-700 truncate">AI Agent Orchestration</span>
+            </button>
+            <button 
+              @click="sendChatMessage('Find reusable token, JWT, and authentication handlers')"
+              class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
+            >
+              <span class="text-sm">🔒</span>
+              <span class="font-medium text-slate-700 group-hover:text-blue-700 truncate">JWT & Auth Handlers</span>
+            </button>
+            <button 
+              @click="sendChatMessage('Which bricks are best for AST static analysis or parsing?')"
+              class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
+            >
+              <span class="text-sm">⚙️</span>
+              <span class="font-medium text-slate-700 group-hover:text-blue-700 truncate">AST & Code Parsers</span>
+            </button>
+            <button 
+              @click="sendChatMessage('Summarize the top database storage and SQLite components')"
+              class="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition text-xs flex items-center gap-2 group"
+            >
+              <span class="text-sm">📊</span>
+              <span class="font-medium text-slate-700 group-hover:text-blue-700 truncate">Database & SQLite Bricks</span>
+            </button>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Right Main Chat Thread & Input Area -->
+      <section class="flex-1 min-w-0 bg-white rounded-3xl border border-slate-200/90 shadow-sm flex flex-col h-[750px] overflow-hidden">
+        
+        <!-- Messages Scroll Box -->
+        <div 
+          id="tabChatMessagesBox" 
+          class="flex-1 overflow-y-auto p-6 space-y-6 text-xs bg-slate-50/60"
+        >
+          <!-- Welcome Intro Card -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-4 max-w-3xl mx-auto">
+            <div class="flex items-start gap-3">
+              <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+              </div>
+              <div class="text-xs text-slate-700 leading-relaxed">
+                <h2 class="text-sm font-bold text-slate-900">Welcome to BrickForge AI Architect Studio</h2>
+                <p class="mt-1 text-slate-600">
+                  Ask any question about reusing or composing bricks from your <span class="font-semibold text-slate-900" x-text="Number(stats.total_bricks || 0).toLocaleString()"></span> indexed components. 
+                  The assistant produces type-annotated snippets, architectural contracts, and citations with direct inspection links.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dialogue Thread (Shared with Floating Widget) -->
+          <template x-for="(msg, idx) in chatHistory" :key="'tab-' + (msg.id || idx)">
+            <div class="space-y-3 max-w-4xl mx-auto">
+              
+              <!-- User Message Bubble -->
+              <div x-show="msg.role === 'user'" class="flex justify-end items-center gap-2 group">
+                <button 
+                  @click="copyToClipboard(msg.content, $event.currentTarget)" 
+                  class="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-100"
+                  title="Copy question text"
+                >
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                </button>
+                <div class="bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%] leading-relaxed shadow-sm font-medium text-sm">
+                  <p x-text="msg.content"></p>
+                </div>
+              </div>
+
+              <!-- Assistant Thinking Spinner with Live Running Performance Counter -->
+              <div x-show="isChatLoading" class="flex items-center gap-3 text-slate-500 py-3 max-w-4xl mx-auto">
+                <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                  <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs flex items-center gap-2.5 shadow-sm font-medium">
+                  <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                  <span x-show="!chatRetrievalMs">
+                    Consulting catalog bricks with <strong class="text-slate-900 font-mono" x-text="selectedModel"></strong>...
+                  </span>
+                  <span x-show="chatRetrievalMs" class="flex items-center gap-1.5">
+                    <span>Cited</span>
+                    <span class="font-bold text-slate-900" x-text="(chatHistory[chatHistory.length - 1]?.bricks?.length || 0) + ' bricks'"></span>
+                    <span class="text-emerald-600 font-mono font-semibold" x-text="'(' + chatRetrievalMs + 'ms)'"></span>
+                    <span>• Streaming with</span>
+                    <strong class="text-slate-900 font-mono" x-text="selectedModel"></strong>...
+                  </span>
+                  <span class="font-mono text-[11px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 ml-1 font-semibold flex items-center gap-1">
+                    <i data-lucide="timer" class="w-3 h-3 text-slate-500"></i>
+                    <span x-text="chatElapsedSec + 's'"></span>
+                    <template x-if="chatTokensCount > 0">
+                      <span class="text-slate-400 font-normal" x-text="'• ' + chatTokensCount + ' tok'"></span>
+                    </template>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Assistant Message Bubble -->
+              <div x-show="msg.role === 'assistant'" class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 mt-1 shadow-sm">
+                  <i data-lucide="bot" class="w-4 h-4 text-blue-400"></i>
+                </div>
+                <div class="flex-1 min-w-0 bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-6 shadow-sm overflow-hidden space-y-4 prose-chat">
+                  
+                  <!-- Single Message Action Bar: Model Name, Copy Markdown, Export .md -->
+                  <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                    <div class="flex items-center gap-2 text-xs font-mono">
+                      <span class="w-2 h-2 rounded-full" :class="msg.isStreaming ? 'bg-blue-500 animate-pulse' : 'bg-emerald-500'"></span>
+                      <span class="font-bold text-slate-800" x-text="msg.modelUsed || selectedModel"></span>
+                      <span x-show="msg.isStreaming" class="text-[10px] text-blue-600 font-sans italic bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">Generating response...</span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <!-- Copy Single Markdown Message -->
+                      <button 
+                        @click="copySingleMessage(msg, $event)"
+                        class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 flex items-center gap-1.5 transition shadow-2xs font-medium"
+                        title="Copy this message's Markdown to clipboard"
+                      >
+                        <i data-lucide="copy" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span>Copy Markdown</span>
+                      </button>
+
+                      <!-- Export/Download Single Markdown Message -->
+                      <button 
+                        @click="exportSingleMessage(msg, idx)"
+                        class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 flex items-center gap-1.5 transition shadow-2xs font-medium"
+                        title="Download this message as a Markdown (.md) file to disk"
+                      >
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span>Export .md</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Markdown Output -->
+                  <div class="text-sm leading-relaxed" x-html="msg.renderedHtml || renderMarkdown(msg.content)"></div>
+
+                  <!-- Real-time Loading Pulse when bubble is waiting for first tokens -->
+                  <div x-show="msg.isStreaming && !msg.content" class="flex items-center gap-2 text-slate-400 py-1 text-xs">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                    <span class="italic font-mono text-[11px]">
+                      Consulting catalog
+                      <template x-if="msg.retrieval_ms">
+                        <span class="text-emerald-600 font-semibold" x-text="'(' + msg.retrieval_ms + 'ms)'"></span>
+                      </template>
+                      and streaming response...
+                    </span>
+                    <span class="font-mono text-[11px] text-slate-500 font-semibold ml-1" x-text="chatElapsedSec + 's'"></span>
+                  </div>
+
+                  <!-- Referenced Catalog Bricks Presentation Grid -->
+                  <div x-show="msg.bricks && msg.bricks.length > 0" class="pt-4 border-t border-slate-100 space-y-3">
+                    <div class="flex items-center justify-between text-xs uppercase font-bold text-slate-400 tracking-wider">
+                      <span class="flex items-center gap-1.5">
+                        <i data-lucide="link" class="w-4 h-4 text-blue-500"></i>
+                        <span>Cited Code Bricks</span>
+                      </span>
+                      <span class="font-mono text-[11px]" x-text="msg.bricks.length + ' bricks'"></span>
+                    </div>
+
+                    <!-- 2-Column Responsive Card Grid for Cited Bricks -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      <template x-for="b in msg.bricks" :key="'ref-' + b.brick_id">
+                        <div 
+                          @click="openBrickModal(b.brick_id)"
+                          class="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-200 transition cursor-pointer group shadow-xs"
+                        >
+                          <div class="min-w-0 pr-2">
+                            <div class="flex items-center gap-2">
+                              <span class="font-bold text-slate-900 group-hover:text-blue-600 font-mono text-xs truncate" x-text="b.symbol_name"></span>
+                              <span class="text-[9px] uppercase px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 font-mono font-semibold" x-text="b.kind"></span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 font-mono truncate mt-0.5" x-text="b.relative_path + ' (L' + b.start_line + '-' + b.end_line + ')'"></p>
+                          </div>
+
+                          <div class="flex items-center gap-2 shrink-0">
+                            <span 
+                              class="text-[10px] font-mono px-2 py-0.5 rounded font-semibold"
+                              :class="b.portability_score >= 0.9 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'"
+                              x-text="'P: ' + b.portability_score"
+                            ></span>
+                            <div class="p-1 rounded-lg bg-white border border-slate-200 group-hover:border-blue-300 text-slate-400 group-hover:text-blue-600 transition">
+                              <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+
+                    <!-- Performance Results Footnote below Cited Bricks in Muted Text -->
+                    <div x-show="msg.perf" class="pt-3 border-t border-slate-100/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 font-mono">
+                      <div class="flex items-center flex-wrap gap-2.5">
+                        <span class="inline-flex items-center gap-1 text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60" title="Quick Cited Bricks FTS5 Catalog Search Latency">
+                          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+                          <span>Quick Cited Bricks (FTS5):</span>
+                          <strong class="text-slate-700" x-text="(msg.perf?.retrieval_ms ?? '<1') + 'ms'"></strong>
+                          <span class="text-slate-400" x-text="'(' + (msg.perf?.bricks_count || msg.bricks?.length || 0) + ' bricks)'"></span>
+                        </span>
+
+                        <span class="inline-flex items-center gap-1 text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60" title="Ollama Chatbot Generation Performance">
+                          <i data-lucide="bot" class="w-3.5 h-3.5 text-blue-500"></i>
+                          <span>Ollama:</span>
+                          <strong class="text-slate-700" x-text="(msg.perf?.ollama_sec ?? msg.perf?.total_sec ?? '0') + 's'"></strong>
+                          <template x-if="msg.perf?.eval_rate">
+                            <span class="text-slate-500" x-text="'(' + msg.perf.eval_rate + ' tok/s)'"></span>
+                          </template>
+                          <template x-if="!msg.perf?.eval_rate && msg.perf?.eval_count">
+                            <span class="text-slate-400" x-text="'(' + msg.perf.eval_count + ' tok)'"></span>
+                          </template>
+                        </span>
+
+                        <span class="inline-flex items-center gap-1 text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60" title="Total Request Duration">
+                          <i data-lucide="clock" class="w-3.5 h-3.5 text-emerald-500"></i>
+                          <span>Total:</span>
+                          <strong class="text-slate-700" x-text="(msg.perf?.total_sec ?? '0') + 's'"></strong>
+                        </span>
+                      </div>
+
+                      <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full" :class="isOllamaOnline ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+                        <span x-text="msg.modelUsed"></span>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </template>
+
+
+        </div>
+
+        <!-- Chat Input Form in Tab View -->
+        <div class="p-4 bg-white border-t border-slate-200 shrink-0 space-y-2">
+          <div class="relative flex items-center">
+            <textarea 
+              id="tabChatInputArea"
+              x-model="chatInput" 
+              @keydown.ctrl.enter.prevent="sendChatMessage()"
+              @keydown.meta.enter.prevent="sendChatMessage()"
+              @keydown.enter.exact.prevent="sendChatMessage()"
+              placeholder="Ask how to compose bricks for TTS, Agents, Web API, Auth... (Ctrl+Enter to send)"
+              rows="3"
+              class="w-full pl-4 pr-12 py-3 text-sm bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-2xl transition outline-none resize-none text-slate-800 placeholder-slate-400"
+              :disabled="isChatLoading"
+            ></textarea>
+            <button 
+              @click="sendChatMessage()" 
+              :disabled="!chatInput.trim() || isChatLoading"
+              class="absolute right-3 bottom-3 p-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition shadow-sm"
+              title="Send Message (Ctrl+Enter)"
+            >
+              <i data-lucide="send" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+            <span>Press <kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[10px]">Ctrl+Enter</kbd> or <kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[10px]">Enter</kbd> to send, <kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[10px]">Shift+Enter</kbd> for newline</span>
+            <span class="font-mono text-[10px] text-slate-500" x-text="isOllamaOnline ? 'Model: ' + selectedModel : 'Offline RAG Fallback Mode'"></span>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================== -->
+  <!-- SLIDE-OVER CONTRACT INSPECTION DRAWER -->
+  <!-- ============================================== -->
+  <div 
+    x-show="isDetailOpen" 
+    class="fixed inset-0 z-50 overflow-hidden" 
+    x-cloak
+  >
+    <!-- Backdrop -->
+    <div 
+      x-show="isDetailOpen"
+      x-transition:enter="transition-opacity ease-linear duration-200"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition-opacity ease-linear duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      @click="isDetailOpen = false"
+      class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
+    ></div>
+
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div 
+        x-show="isDetailOpen"
+        x-transition:enter="transform transition ease-in-out duration-300 sm:duration-400"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transform transition ease-in-out duration-300 sm:duration-400"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="w-screen max-w-2xl bg-white shadow-2xl flex flex-col"
+      >
+        
+        <!-- Drawer Header -->
+        <div class="p-6 bg-slate-900 text-white flex items-start justify-between">
+          <div class="space-y-1 pr-6 min-w-0">
+            <div class="flex items-center gap-2">
+              <span 
+                class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded font-semibold"
+                :class="{
+                  'bg-amber-400/20 text-amber-300 border border-amber-400/30': currentBrick.kind === 'function',
+                  'bg-purple-400/20 text-purple-300 border border-purple-400/30': currentBrick.kind === 'class',
+                  'bg-cyan-400/20 text-cyan-300 border border-cyan-400/30': currentBrick.kind === 'method'
+                }"
+                x-text="currentBrick.kind"
+              ></span>
+              <span class="text-xs text-slate-400 font-mono" x-text="currentBrick.topic"></span>
+            </div>
+            <h2 class="text-xl font-bold tracking-tight text-white font-mono break-all" x-text="currentBrick.symbol_name"></h2>
+            <p class="text-xs text-slate-400 font-mono truncate" x-text="currentBrick.relative_path"></p>
+          </div>
+
+          <button 
+            @click="isDetailOpen = false" 
+            class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Drawer Body (Scrollable) -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+          
+          <!-- Key Metrics Badges Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Portability</div>
+              <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5 flex items-center justify-center gap-1">
+                <i data-lucide="star" class="w-4 h-4 text-amber-500 fill-amber-500"></i>
+                <span x-text="currentBrick.portability_score"></span>
+              </div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Complexity</div>
+              <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5" x-text="currentBrick.cyclomatic_complexity || 1"></div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Span (Lines)</div>
+              <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5" x-text="(currentBrick.end_line - currentBrick.start_line + 1) || 'N/A'"></div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Async</div>
+              <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5" x-text="currentBrick.is_async ? 'Yes' : 'No'"></div>
+            </div>
+          </div>
+
+          <!-- Section: Structural AST Signature -->
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-2">
+              <i data-lucide="code" class="w-4 h-4 text-blue-500"></i>
+              Structural Signature Contract
+            </h4>
+            <div class="bg-slate-900 text-blue-300 p-3.5 rounded-xl font-mono text-xs overflow-x-auto border border-slate-800 shadow-inner">
+              <code x-text="currentBrick.signature"></code>
+            </div>
+          </div>
+
+          <!-- Section: Docstring Documentation -->
+          <div x-show="currentBrick.docstring">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-2">
+              <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i>
+              Documentation & Behavior
+            </h4>
+            <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-4 text-xs text-slate-700 leading-relaxed whitespace-pre-line font-sans" x-text="currentBrick.docstring"></div>
+          </div>
+
+          <!-- Section: Dependencies & Imports -->
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
+              <span class="flex items-center gap-2">
+                <i data-lucide="git-merge" class="w-4 h-4 text-blue-500"></i>
+                Required Dependencies
+              </span>
+              <span class="text-[11px] font-mono text-slate-400" x-text="(currentBrick.dependencies ? currentBrick.dependencies.length : 0) + ' imports'"></span>
+            </h4>
+            <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
+              <div x-show="!currentBrick.dependencies || currentBrick.dependencies.length === 0" class="p-4 text-slate-400 text-center italic">
+                Zero external package dependencies (pure self-contained code brick)
+              </div>
+              <div x-show="currentBrick.dependencies && currentBrick.dependencies.length > 0" class="divide-y divide-slate-100">
+                <template x-for="dep in currentBrick.dependencies" :key="dep.target_symbol">
+                  <div class="p-2.5 flex items-center justify-between hover:bg-slate-50 font-mono">
+                    <span class="font-semibold text-slate-800" x-text="dep.target_symbol"></span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] text-slate-400" x-text="dep.type"></span>
+                      <span 
+                        class="text-[10px] px-1.5 py-0.5 rounded"
+                        :class="dep.is_external ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600'"
+                        x-text="dep.is_external ? (dep.package_name || 'external') : 'local'"
+                      ></span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Complete Source Code -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                <i data-lucide="terminal" class="w-4 h-4 text-blue-500"></i>
+                Source Implementation
+              </h4>
+              <button 
+                @click="copySourceCode()" 
+                class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5"
+              >
+                <i :data-lucide="copied ? 'check' : 'copy'" class="w-3.5 h-3.5"></i>
+                <span x-text="copied ? 'Copied!' : 'Copy Source'"></span>
+              </button>
+            </div>
+            <div class="relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+              <pre class="p-4 text-xs font-mono text-slate-200 overflow-x-auto max-h-96 leading-relaxed"><code class="language-python" x-text="currentBrick.source_code"></code></pre>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Drawer Footer: Quick Integration Actions -->
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+          <div class="text-[11px] text-slate-500 font-mono">
+            Origin: <span class="font-semibold text-slate-700" x-text="currentBrick.repository_name"></span> (<span x-text="currentBrick.relative_path"></span>)
+          </div>
+          <button 
+            @click="copySourceCode()"
+            class="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition shadow-sm flex items-center gap-2"
+          >
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Export Brick Code</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- STATS & REPOSITORIES BREAKDOWN MODAL -->
+  <!-- ============================================== -->
+  <div 
+    x-show="openStatsModal" 
+    class="fixed inset-0 z-50 overflow-y-auto" 
+    x-cloak
+  >
+    <div class="flex items-center justify-center min-h-screen px-4 py-6">
+      <div 
+        @click="openStatsModal = false" 
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+      ></div>
+
+      <div class="relative bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+              <i data-lucide="database" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Workspace Catalog Repositories</h3>
+              <p class="text-xs text-slate-500">Summary of indexed repositories & files</p>
+            </div>
+          </div>
+          <button @click="openStatsModal = false" class="text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Total Bricks</div>
+            <div class="text-xl font-extrabold text-blue-600 font-mono mt-1" x-text="Number(stats.total_bricks || 0).toLocaleString()"></div>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Source Files</div>
+            <div class="text-xl font-extrabold text-slate-800 font-mono mt-1" x-text="Number(stats.total_files || 0).toLocaleString()"></div>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Repositories</div>
+            <div class="text-xl font-extrabold text-slate-800 font-mono mt-1" x-text="stats.total_repositories || 0"></div>
+          </div>
+        </div>
+
+        <!-- Repositories Detail Table -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Indexed Repositories</h4>
+          <div class="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 text-xs font-mono">
+            <template x-for="repo in categories.repositories" :key="repo.id">
+              <div class="p-3 flex items-center justify-between hover:bg-slate-50">
+                <div>
+                  <span class="font-bold text-slate-800" x-text="repo.name"></span>
+                  <span class="text-slate-400 ml-2" x-text="'(' + repo.id + ')'"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-blue-600" x-text="Number(repo.count).toLocaleString()"></span>
+                  <span class="text-slate-400 font-sans">bricks</span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button 
+            @click="openStatsModal = false" 
+            class="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
+          >
+            Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+        <span>BrickForge Sovereign AST Code Intelligence & Catalog Engine</span>
+      </div>
+      <div class="text-slate-400 font-mono text-[11px]">
+        SQLite FTS5 Enabled &bull; Python 3.14 AST Engine
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================== -->
+  <!-- FLOATING CONVERSATIONAL OLLAMA AGENT CHATBOT   -->
+  <!-- ============================================== -->
+  
+  <!-- Collapsed Trigger Pill Button -->
+  <button 
+    x-show="currentView === 'catalog' && !isChatOpen" 
+    @click="isChatOpen = true; $nextTick(() => { focusChatInput(); lucide.createIcons(); })"
+    class="fixed bottom-6 right-6 z-40 bg-slate-900 hover:bg-slate-800 text-white rounded-full p-3.5 shadow-xl hover:shadow-2xl transition-all duration-200 flex items-center gap-2.5 border border-slate-700/60 group cursor-pointer"
+    title="Open Reusability Chatbot"
+  >
+    <div class="relative flex items-center justify-center">
+      <i data-lucide="bot" class="w-5 h-5 text-blue-400 group-hover:scale-110 transition"></i>
+      <span 
+        class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-slate-900"
+        :class="isOllamaOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"
+      ></span>
+    </div>
+    <span class="text-xs font-semibold pr-1">Ask BrickForge AI</span>
+    
+    <!-- Active generation pulse pill -->
+    <template x-if="isChatLoading">
+      <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-600 text-white animate-pulse">
+        <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
+        <span>Generating...</span>
+      </span>
+    </template>
+
+    <span 
+      x-show="!isChatLoading"
+      class="text-[10px] bg-slate-800 text-slate-300 font-mono px-2 py-0.5 rounded-full border border-slate-700 max-w-[130px] truncate hidden sm:inline-block" 
+      x-text="selectedModel"
+    ></span>
+  </button>
+
+  <!-- Completion Toast Notification when answer arrives while in Catalog view -->
+  <div 
+    x-show="showCompletionToast" 
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 translate-y-4"
+    x-transition:enter-end="opacity-100 translate-y-0"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 translate-y-0"
+    x-transition:leave-end="opacity-0 translate-y-4"
+    class="fixed bottom-6 left-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3"
+    x-cloak
+  >
+    <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+      <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+    </div>
+    <div class="text-xs">
+      <p class="font-bold text-slate-100">AI Architect Finished Answering!</p>
+      <p class="text-slate-400 text-[11px]">Your code composition advice is ready.</p>
+    </div>
+    <button 
+      @click="switchView('chat'); showCompletionToast = false" 
+      class="ml-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition cursor-pointer"
+    >
+      View Advice
+    </button>
+    <button 
+      @click="showCompletionToast = false" 
+      class="text-slate-400 hover:text-slate-200 ml-1 cursor-pointer"
+    >
+      <i data-lucide="x" class="w-3.5 h-3.5"></i>
+    </button>
+  </div>
+
+  <!-- Expanded Floating Chatbot Dialog -->
+  <div 
+    x-show="currentView === 'catalog' && isChatOpen" 
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+    x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+    class="fixed bottom-6 right-6 z-50 w-[470px] max-w-[94vw] h-[640px] max-h-[86vh] bg-white rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden"
+    x-cloak
+  >
+    
+    <!-- Chat Header -->
+    <div class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-sm">
+          <i data-lucide="bot" class="w-4 h-4"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5">
+            <h3 class="text-xs font-bold tracking-tight text-white truncate">BrickForge AI Architect</h3>
+            <span 
+              class="w-2 h-2 rounded-full shrink-0" 
+              :class="isOllamaOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"
+              :title="isOllamaOnline ? 'Ollama Online' : 'Local Catalog Engine Active'"
+            ></span>
+          </div>
+          <p class="text-[10px] text-slate-400 font-mono truncate" x-text="isOllamaOnline ? 'Ollama Grounded RAG' : 'Catalog RAG Engine'"></p>
+        </div>
+      </div>
+
+      <!-- Controls: Model Select, Copy All, Export History, Expand to Tab, Clear, Close -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <select 
+          x-model="selectedModel" 
+          class="text-[11px] bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2 py-1 outline-none font-mono cursor-pointer"
+        >
+          <template x-for="m in chatModels" :key="m">
+            <option :value="m" x-text="m"></option>
+          </template>
+        </select>
+
+        <!-- Copy All History -->
+        <button 
+          @click="copyWholeChat($event)" 
+          :disabled="chatHistory.length === 0"
+          class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition disabled:opacity-40"
+          title="Copy Entire Chat History as Markdown to Clipboard"
+        >
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+        </button>
+
+        <!-- Export History .md -->
+        <button 
+          @click="exportWholeChat()" 
+          :disabled="chatHistory.length === 0"
+          class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition disabled:opacity-40"
+          title="Export/Download Entire Chat History (.md) to Disk"
+        >
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+        </button>
+
+        <!-- Expand Button: Switches/docks chat into full tab page -->
+        <button 
+          @click="expandChatToTab()" 
+          class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+          title="Expand into Full Tab Page (Bigger Layout)"
+        >
+          <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+        </button>
+
+        <button 
+          @click="clearChat()" 
+          class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+          title="Clear Conversation"
+        >
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+        <button 
+          @click="isChatOpen = false" 
+          class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+          title="Minimize Chat"
+        >
+          <i data-lucide="chevron-down" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat Messages Scroll Container -->
+    <div 
+      id="chatMessagesBox"
+      class="flex-1 overflow-y-auto p-4 space-y-4 text-xs bg-slate-50/70"
+    >
+      
+      <!-- Greeting & Quick Starter Prompts -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm space-y-3">
+        <div class="flex items-start gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+          </div>
+          <div class="text-xs text-slate-700 leading-relaxed">
+            <p class="font-semibold text-slate-900">Welcome to Sovereign Code Chat!</p>
+            <p class="mt-1 text-slate-600">
+              I can inspect all <span class="font-semibold text-slate-900" x-text="Number(stats.total_bricks || 0).toLocaleString()"></span> indexed code bricks across your workspaces. Ask me about reusing or composing bricks on any topic (like <strong>TTS</strong>, <strong>Agents</strong>, or <strong>Auth</strong>), and I will cite their exact location with verified code snippets.
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick Starter Pills -->
+        <div class="pt-2 border-t border-slate-100 space-y-1.5">
+          <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Example Inquiries:</p>
+          <div class="flex flex-wrap gap-1.5">
+            <button 
+              @click="sendChatMessage('How can I build a TTS or speech pipeline from our indexed bricks?')"
+              class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 transition text-left flex items-center gap-1.5"
+            >
+              <span>🎙️</span>
+              <span>Compose TTS / Speech Pipeline</span>
+            </button>
+            <button 
+              @click="sendChatMessage('Suggest reusable AI agent prompt and orchestration bricks')"
+              class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 transition text-left flex items-center gap-1.5"
+            >
+              <span>🤖</span>
+              <span>AI Agent Prompts & LLM Bricks</span>
+            </button>
+            <button 
+              @click="sendChatMessage('Find reusable token, JWT, and authentication handlers')"
+              class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 transition text-left flex items-center gap-1.5"
+            >
+              <span>🔒</span>
+              <span>JWT & Auth Handlers</span>
+            </button>
+            <button 
+              @click="sendChatMessage('Which bricks are best for AST static analysis or parsing?')"
+              class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 transition text-left flex items-center gap-1.5"
+            >
+              <span>⚙️</span>
+              <span>AST & Code Parsers</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dialogue Thread -->
+      <template x-for="(msg, idx) in chatHistory" :key="'float-' + (msg.id || idx)">
+        <div class="space-y-2">
+          
+          <!-- User Bubble -->
+          <div x-show="msg.role === 'user'" class="flex justify-end">
+            <div class="bg-blue-600 text-white rounded-2xl rounded-tr-sm px-3.5 py-2.5 max-w-[85%] leading-relaxed shadow-sm font-medium">
+              <p x-text="msg.content"></p>
+            </div>
+          </div>
+
+          <!-- Assistant Bubble -->
+          <div x-show="msg.role === 'assistant'" class="flex items-start gap-2">
+            <div class="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 mt-1">
+              <i data-lucide="bot" class="w-3.5 h-3.5"></i>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-4 max-w-[92%] shadow-sm overflow-hidden space-y-3 prose-chat">
+              
+              <!-- Message Toolbar: Model Name & Quick Action Buttons -->
+              <div class="flex items-center justify-between gap-1 pb-1.5 border-b border-slate-100 text-[10px]">
+                <div class="flex items-center gap-1 text-slate-400 font-mono">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="msg.isStreaming ? 'bg-blue-500 animate-pulse' : 'bg-emerald-500'"></span>
+                  <span class="font-semibold text-slate-600 truncate max-w-[120px]" x-text="msg.modelUsed || selectedModel"></span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <!-- Copy Markdown Button -->
+                  <button 
+                    @click="copySingleMessage(msg, $event)"
+                    class="p-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-blue-600 transition flex items-center gap-0.5"
+                    title="Copy Markdown to Clipboard"
+                  >
+                    <i data-lucide="copy" class="w-3 h-3"></i>
+                  </button>
+                  <!-- Export .md Button -->
+                  <button 
+                    @click="exportSingleMessage(msg, idx)"
+                    class="p-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-blue-600 transition flex items-center gap-0.5"
+                    title="Download .md file"
+                  >
+                    <i data-lucide="download" class="w-3 h-3"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Markdown Content -->
+              <div x-html="msg.renderedHtml || renderMarkdown(msg.content)"></div>
+
+              <!-- Real-time Loading Pulse when bubble is waiting for first tokens -->
+              <div x-show="msg.isStreaming && !msg.content" class="flex items-center gap-2 text-slate-400 py-1 text-xs">
+                <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                <span class="italic font-mono text-[11px]">
+                  Consulting catalog
+                  <template x-if="msg.retrieval_ms">
+                    <span class="text-emerald-600 font-semibold" x-text="'(' + msg.retrieval_ms + 'ms)'"></span>
+                  </template>
+                  ...
+                </span>
+                <span class="font-mono text-[11px] text-slate-500 font-semibold ml-auto" x-text="chatElapsedSec + 's'"></span>
+              </div>
+
+              <!-- Referenced Bricks List -->
+              <div x-show="msg.bricks && msg.bricks.length > 0" class="pt-3 border-t border-slate-100 space-y-2">
+                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  <span class="flex items-center gap-1">
+                    <i data-lucide="link" class="w-3 h-3 text-blue-500"></i>
+                    <span>Referenced Catalog Bricks</span>
+                  </span>
+                  <span class="font-mono" x-text="msg.bricks.length + ' bricks'"></span>
+                </div>
+
+                <div class="space-y-1.5">
+                  <template x-for="b in msg.bricks" :key="b.brick_id">
+                    <div 
+                      @click="openBrickModal(b.brick_id)"
+                      class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-200 transition cursor-pointer group"
+                    >
+                      <div class="min-w-0 pr-2">
+                        <div class="flex items-center gap-1.5">
+                          <span class="font-bold text-slate-900 group-hover:text-blue-600 font-mono text-[11px] truncate" x-text="b.symbol_name"></span>
+                          <span class="text-[9px] uppercase px-1 py-0.2 rounded bg-slate-200 text-slate-600 font-mono" x-text="b.kind"></span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 font-mono truncate" x-text="b.relative_path + ' (L' + b.start_line + '-' + b.end_line + ')'"></p>
+                      </div>
+
+                      <div class="flex items-center gap-1.5 shrink-0">
+                        <span 
+                          class="text-[10px] font-mono px-1.5 py-0.5 rounded"
+                          :class="b.portability_score >= 0.9 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'"
+                          x-text="'P:' + b.portability_score"
+                        ></span>
+                        <i data-lucide="arrow-up-right" class="w-3 h-3 text-slate-400 group-hover:text-blue-600"></i>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Performance Footnote in muted text for Floating Chat -->
+                <div x-show="msg.perf" class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-400 font-mono">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span>⚡ FTS5: <strong class="text-slate-600" x-text="(msg.perf?.retrieval_ms ?? '<1') + 'ms'"></strong></span>
+                    <span>•</span>
+                    <span>🤖 Ollama: <strong class="text-slate-600" x-text="(msg.perf?.ollama_sec ?? msg.perf?.total_sec ?? '0') + 's'"></strong> <span x-show="msg.perf?.eval_rate" x-text="'(' + msg.perf.eval_rate + ' t/s)'"></span></span>
+                    <span>•</span>
+                    <span>⏱️ Total: <strong class="text-slate-600" x-text="(msg.perf?.total_sec ?? '0') + 's'"></strong></span>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </template>
+
+      <!-- Thinking Indicator with Live Running Performance Counter -->
+      <div x-show="isChatLoading" class="flex items-center gap-2 text-slate-500 py-2">
+        <div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+          <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs flex items-center gap-2 shadow-sm font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping"></span>
+          <span x-show="!chatRetrievalMs">
+            Consulting catalog bricks with <strong class="text-slate-800" x-text="selectedModel"></strong>...
+          </span>
+          <span x-show="chatRetrievalMs" class="flex items-center gap-1">
+            <span>Cited</span>
+            <span class="font-bold text-slate-800" x-text="(chatHistory[chatHistory.length - 1]?.bricks?.length || 0) + ' bricks'"></span>
+            <span class="text-emerald-600 font-mono" x-text="'(' + chatRetrievalMs + 'ms)'"></span>
+          </span>
+          <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 ml-auto font-semibold">
+            <span x-text="chatElapsedSec + 's'"></span>
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Chat Input Form -->
+    <div class="p-3 bg-white border-t border-slate-200 shrink-0 space-y-1.5">
+      <div class="relative flex items-center">
+        <textarea 
+          id="chatInputArea"
+          x-model="chatInput" 
+          @keydown.ctrl.enter.prevent="sendChatMessage()"
+          @keydown.meta.enter.prevent="sendChatMessage()"
+          @keydown.enter.exact.prevent="sendChatMessage()"
+          placeholder="Ask how to compose bricks for TTS, Agents, DB... (Ctrl+Enter to send)"
+          rows="2"
+          class="w-full pl-3 pr-10 py-2 text-xs bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl transition outline-none resize-none text-slate-800 placeholder-slate-400"
+          :disabled="isChatLoading"
+        ></textarea>
+        <button 
+          @click="sendChatMessage()" 
+          :disabled="!chatInput.trim() || isChatLoading"
+          class="absolute right-2 bottom-2 p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition shadow-sm"
+          title="Send Question (Ctrl+Enter)"
+        >
+          <i data-lucide="send" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between text-[10px] text-slate-400 px-1">
+        <span>Press <kbd class="px-1 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">Ctrl+Enter</kbd> or <kbd class="px-1 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">Enter</kbd> to send, <kbd class="px-1 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">Shift+Enter</kbd> for newline</span>
+        <span class="font-mono text-[9px] text-slate-400" x-text="isOllamaOnline ? 'Ollama: ' + selectedModel : 'Offline RAG Mode'"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Alpine.js Main Controller Script -->
+  <script>
+    function brickExplorer() {
+      return {
+        // State
+        currentView: 'catalog', // 'catalog' or 'chat' (Expanded Studio Tab)
+        searchQuery: '',
+        activeTopic: 'All',
+        activeKind: 'all',
+        activeRepo: 'all',
+        activeLanguage: 'all',
+        sortOrder: 'portability_desc',
+        isLoading: false,
+        isDetailOpen: false,
+        openStatsModal: false,
+        copied: false,
+        aiSearchEnabled: false,
+        showCompletionToast: false,
+
+        // Chat State
+        isChatOpen: false,
+        chatModels: ['qwen2.5-coder:7b', 'llama3.2:3b', 'mistral-7b:latest', 'deepseek-r1:8b'],
+        selectedModel: 'qwen2.5-coder:7b',
+        isOllamaOnline: false,
+        chatInput: '',
+        isChatLoading: false,
+        chatHistory: [],
+        chatTimer: null,
+        chatElapsedSec: '0.0',
+        chatRetrievalMs: null,
+        chatTokensCount: 0,
+
+        // Data Store
+        stats: {},
+        categories: { topics: [], kinds: [], repositories: [], languages: [] },
+        bricksData: { total: 0, page: 1, page_size: 24, total_pages: 1, items: [] },
+        currentBrick: {},
+
+        async initData() {
+          this.loadChatHistory();
+          await Promise.all([this.fetchData(), this.fetchChatModels()]);
+          this.$nextTick(() => { lucide.createIcons(); });
+        },
+
+        loadChatHistory() {
+          try {
+            const saved = localStorage.getItem('brickforge_chat_history_v1');
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                this.chatHistory = parsed.map((m, i) => {
+                  if (!m.id) m.id = 'msg-' + Date.now() + '-' + i;
+                  if (!m.renderedHtml && m.role === 'assistant') {
+                    m.renderedHtml = this.renderMarkdown(m.content);
+                  }
+                  return m;
+                });
+              }
+            }
+          } catch (e) {
+            console.warn('Could not load chat history from localStorage:', e);
+          }
+        },
+
+        saveChatHistory() {
+          try {
+            localStorage.setItem('brickforge_chat_history_v1', JSON.stringify(this.chatHistory));
+          } catch (e) {
+            console.warn('Could not save chat history to localStorage:', e);
+          }
+        },
+
+        clearChat() {
+          this.chatHistory = [];
+          try {
+            localStorage.removeItem('brickforge_chat_history_v1');
+          } catch (e) {}
+        },
+
+        switchView(view) {
+          this.currentView = view;
+          if (view === 'chat') {
+            this.isChatOpen = false; // Close floating widget when expanded into full tab
+            this.$nextTick(() => {
+              lucide.createIcons();
+              this.focusTabChatInput();
+              this.scrollChatToBottom();
+            });
+          } else {
+            this.$nextTick(() => {
+              lucide.createIcons();
+            });
+          }
+        },
+
+        expandChatToTab() {
+          this.switchView('chat');
+        },
+
+        collapseChatToFloating() {
+          this.currentView = 'catalog';
+          this.isChatOpen = true;
+          this.$nextTick(() => {
+            lucide.createIcons();
+            this.focusChatInput();
+            this.scrollChatToBottom();
+          });
+        },
+
+        async fetchChatModels() {
+          try {
+            const res = await fetch('/api/chat/models');
+            if (res.ok) {
+              const data = await res.json();
+              if (data.models && data.models.length > 0) {
+                this.chatModels = data.models;
+                this.selectedModel = data.default || data.models[0];
+              }
+              this.isOllamaOnline = !!data.online;
+            }
+          } catch (e) {
+            console.warn('Could not fetch chat models:', e);
+          }
+        },
+
+        async sendChatMessage(prefilledText = null) {
+          const text = prefilledText || this.chatInput;
+          if (!text || !text.trim() || this.isChatLoading) return;
+
+          const userText = text.trim();
+          const userMsgId = 'msg-' + Date.now() + '-u';
+          const assistantMsgId = 'msg-' + (Date.now() + 1) + '-a';
+
+          this.chatHistory.push({
+            id: userMsgId,
+            role: 'user',
+            content: userText
+          });
+
+          // Create assistant placeholder message for streaming
+          this.chatHistory.push({
+            id: assistantMsgId,
+            role: 'assistant',
+            content: '',
+            renderedHtml: '',
+            bricks: [],
+            modelUsed: this.selectedModel,
+            isStreaming: true,
+            retrieval_ms: null,
+            perf: null
+          });
+
+          const assistantIdx = this.chatHistory.length - 1;
+          this.chatInput = '';
+          this.isChatLoading = true;
+          this.chatRetrievalMs = null;
+          this.chatTokensCount = 0;
+          this.chatElapsedSec = '0.0';
+
+          const chatStartTime = performance.now();
+          if (this.chatTimer) clearInterval(this.chatTimer);
+          this.chatTimer = setInterval(() => {
+            this.chatElapsedSec = ((performance.now() - chatStartTime) / 1000).toFixed(1);
+          }, 100);
+
+          this.saveChatHistory();
+          this.scrollChatToBottom();
+
+          let accumulatedText = '';
+
+          try {
+            const payload = {
+              message: userText,
+              history: this.chatHistory.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
+              model: this.selectedModel
+            };
+
+            const response = await fetch('/api/chat/stream', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            if (!response.ok || !response.body) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || !trimmed.startsWith('data: ')) continue;
+                const jsonStr = trimmed.slice(6);
+                try {
+                  const event = JSON.parse(jsonStr);
+                  if (event.type === 'start') {
+                    this.chatHistory[assistantIdx].bricks = event.bricks || [];
+                    if (event.retrieval_ms !== undefined) {
+                      this.chatRetrievalMs = event.retrieval_ms;
+                      this.chatHistory[assistantIdx].retrieval_ms = event.retrieval_ms;
+                    }
+                    if (event.model_used) this.chatHistory[assistantIdx].modelUsed = event.model_used;
+                    this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                  } else if (event.type === 'token') {
+                    this.chatTokensCount++;
+                    accumulatedText += event.content;
+                    this.chatHistory[assistantIdx].content = accumulatedText;
+                    this.chatHistory[assistantIdx].renderedHtml = this.renderMarkdown(accumulatedText);
+                    this.scrollChatToBottom();
+                  } else if (event.type === 'done') {
+                    if (event.bricks && event.bricks.length > 0) {
+                      this.chatHistory[assistantIdx].bricks = event.bricks;
+                    }
+                    if (event.model_used) this.chatHistory[assistantIdx].modelUsed = event.model_used;
+                    if (event.online !== undefined) this.isOllamaOnline = event.online;
+                    if (event.perf) {
+                      this.chatHistory[assistantIdx].perf = event.perf;
+                    }
+                    this.chatHistory[assistantIdx].isStreaming = false;
+                  }
+                } catch (e) {
+                  console.error('Error parsing SSE event:', e);
+                }
+              }
+            }
+
+            if (!accumulatedText) {
+              accumulatedText = 'No response generated.';
+            }
+            this.chatHistory[assistantIdx].content = accumulatedText;
+            this.chatHistory[assistantIdx].renderedHtml = this.renderMarkdown(accumulatedText);
+            this.chatHistory[assistantIdx].isStreaming = false;
+
+            // If user moved to catalog while stream was generating, display notification toast
+            if (this.currentView === 'catalog') {
+              this.showCompletionToast = true;
+              setTimeout(() => { this.showCompletionToast = false; }, 8000);
+            }
+
+          } catch (err) {
+            console.warn('Stream chat error, falling back to standard chat API:', err);
+            try {
+              const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  message: userText,
+                  history: this.chatHistory.slice(0, -2).map(m => ({ role: m.role, content: m.content })),
+                  model: this.selectedModel
+                })
+              });
+              if (res.ok) {
+                const data = await res.json();
+                const replyText = data.reply || 'No response generated.';
+                this.chatHistory[assistantIdx].content = replyText;
+                this.chatHistory[assistantIdx].renderedHtml = this.renderMarkdown(replyText);
+                this.chatHistory[assistantIdx].bricks = data.bricks || [];
+                this.chatHistory[assistantIdx].modelUsed = data.model_used;
+                if (data.online !== undefined) this.isOllamaOnline = data.online;
+                if (data.perf) {
+                  this.chatHistory[assistantIdx].perf = data.perf;
+                }
+              } else {
+                const errReply = '⚠️ Failed to consult local agent. Please check that the server is running.';
+                this.chatHistory[assistantIdx].content = errReply;
+                this.chatHistory[assistantIdx].renderedHtml = this.renderMarkdown(errReply);
+              }
+            } catch (fallbackErr) {
+              const netErr = `⚠️ Error communicating with BrickForge Chat API: ${fallbackErr.message}`;
+              this.chatHistory[assistantIdx].content = netErr;
+              this.chatHistory[assistantIdx].renderedHtml = this.renderMarkdown(netErr);
+            }
+          } finally {
+            if (this.chatTimer) {
+              clearInterval(this.chatTimer);
+              this.chatTimer = null;
+            }
+            if (this.chatHistory[assistantIdx]) {
+              this.chatHistory[assistantIdx].isStreaming = false;
+              if (!this.chatHistory[assistantIdx].perf) {
+                const totalSec = ((performance.now() - chatStartTime) / 1000).toFixed(2);
+                this.chatHistory[assistantIdx].perf = {
+                  retrieval_ms: this.chatRetrievalMs,
+                  bricks_count: this.chatHistory[assistantIdx].bricks?.length || 0,
+                  eval_count: this.chatTokensCount,
+                  ollama_sec: totalSec,
+                  total_sec: totalSec
+                };
+              }
+            }
+            this.isChatLoading = false;
+            // Force Alpine array reactivity
+            this.chatHistory = [...this.chatHistory];
+            this.saveChatHistory();
+            this.$nextTick(() => {
+              lucide.createIcons();
+              if (window.Prism) Prism.highlightAll();
+              this.scrollChatToBottom();
+            });
+          }
+        },
+
+        renderMarkdown(content) {
+          if (!content) return '';
+          try {
+            if (window.marked && typeof window.marked.parse === 'function') {
+              return window.marked.parse(content);
+            }
+          } catch (e) {
+            console.warn('Error parsing markdown:', e);
+          }
+          return (content || '').replace(/\n/g, '<br/>');
+        },
+
+        formatSingleMessageMarkdown(msg) {
+          let md = (msg.content || '').trim();
+          if (msg.bricks && msg.bricks.length > 0) {
+            md += '\n\n---\n### 🔗 Cited Code Bricks\n';
+            msg.bricks.forEach((b, idx) => {
+              md += `${idx + 1}. **\`${b.symbol_name}\`** (\`${b.kind}\`) — \`${b.relative_path}\` (Lines ${b.start_line}-${b.end_line})\n`;
+              if (b.portability_score !== undefined) {
+                md += `   - Portability: ${b.portability_score} | Repository: ${b.repository_name || ''}\n`;
+              }
+            });
+          }
+          if (msg.perf) {
+            md += '\n---\n*⚡ Performance: FTS5 Retrieval: ' + (msg.perf.retrieval_ms ?? '<1') + 'ms | Ollama: ' + (msg.perf.ollama_sec ?? msg.perf.total_sec ?? '0') + 's | Total: ' + (msg.perf.total_sec ?? '0') + 's*\n';
+          }
+          return md;
+        },
+
+        formatChatHistoryMarkdown() {
+          if (!this.chatHistory || this.chatHistory.length === 0) return '';
+          const now = new Date().toLocaleString();
+          let md = `# 🧱 BrickForge Component Studio Session\n`;
+          md += `*Exported on: ${now}*\n`;
+          md += `*Model: ${this.selectedModel}*\n\n`;
+          md += `---\n\n`;
+
+          this.chatHistory.forEach((msg) => {
+            if (msg.role === 'user') {
+              md += `### 👤 User\n${msg.content}\n\n`;
+            } else if (msg.role === 'assistant') {
+              md += `### 🤖 BrickForge Assistant (${msg.modelUsed || this.selectedModel})\n`;
+              md += `${(msg.content || '').trim()}\n\n`;
+              if (msg.bricks && msg.bricks.length > 0) {
+                md += `#### 🔗 Cited Code Bricks:\n`;
+                msg.bricks.forEach((b, bIdx) => {
+                  md += `${bIdx + 1}. **\`${b.symbol_name}\`** (\`${b.kind}\`) — \`${b.relative_path}\` (Lines ${b.start_line}-${b.end_line})\n`;
+                });
+                md += `\n`;
+              }
+              if (msg.perf) {
+                md += `*⚡ Retrieval: ${msg.perf.retrieval_ms ?? '<1'}ms | Ollama: ${msg.perf.ollama_sec ?? msg.perf.total_sec ?? '0'}s | Total: ${msg.perf.total_sec ?? '0'}s*\n\n`;
+              }
+              md += `---\n\n`;
+            }
+          });
+
+          return md;
+        },
+
+        async copyToClipboard(text, btnElement = null) {
+          if (!text) return;
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(text);
+            } else {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+            }
+            if (btnElement) {
+              const origHtml = btnElement.innerHTML;
+              btnElement.innerHTML = '<span class="text-emerald-600 font-semibold text-xs flex items-center gap-1"><svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!</span>';
+              setTimeout(() => {
+                btnElement.innerHTML = origHtml;
+                if (window.lucide) window.lucide.createIcons();
+              }, 2000);
+            }
+          } catch (err) {
+            console.error('Failed to copy to clipboard:', err);
+          }
+        },
+
+        downloadMarkdownFile(filename, content) {
+          const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.setAttribute('download', filename);
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        },
+
+        copySingleMessage(msg, event) {
+          const md = this.formatSingleMessageMarkdown(msg);
+          this.copyToClipboard(md, event ? event.currentTarget : null);
+        },
+
+        exportSingleMessage(msg, idx = 0) {
+          const md = this.formatSingleMessageMarkdown(msg);
+          const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+          const filename = `brickforge-response-${ts}.md`;
+          this.downloadMarkdownFile(filename, md);
+        },
+
+        copyWholeChat(event = null) {
+          const md = this.formatChatHistoryMarkdown();
+          if (!md) return;
+          this.copyToClipboard(md, event ? event.currentTarget : null);
+        },
+
+        exportWholeChat() {
+          const md = this.formatChatHistoryMarkdown();
+          if (!md) return;
+          const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+          const filename = `brickforge-chat-history-${ts}.md`;
+          this.downloadMarkdownFile(filename, md);
+        },
+
+        focusChatInput() {
+          const area = document.getElementById('chatInputArea');
+          if (area) area.focus();
+        },
+
+        focusTabChatInput() {
+          const area = document.getElementById('tabChatInputArea');
+          if (area) area.focus();
+        },
+
+        scrollChatToBottom() {
+          this.$nextTick(() => {
+            const box1 = document.getElementById('chatMessagesBox');
+            if (box1) box1.scrollTop = box1.scrollHeight;
+            const box2 = document.getElementById('tabChatMessagesBox');
+            if (box2) box2.scrollTop = box2.scrollHeight;
+          });
+        },
+
+        async fetchData() {
+          try {
+            const [statsRes, catRes] = await Promise.all([
+              fetch('/api/stats').then(r => r.json()),
+              fetch('/api/categories').then(r => r.json())
+            ]);
+            this.stats = statsRes;
+            this.categories = catRes;
+            await this.fetchBricks(1);
+          } catch (err) {
+            console.error('Error fetching initial data:', err);
+          }
+        },
+
+        async fetchBricks(page = 1) {
+          this.isLoading = true;
+          try {
+            const params = new URLSearchParams({
+              page: page.toString(),
+              page_size: '24',
+              sort: this.sortOrder
+            });
+
+            if (this.searchQuery && this.searchQuery.trim()) {
+              params.append('query', this.searchQuery.trim());
+            }
+            if (this.activeTopic && this.activeTopic !== 'All') {
+              params.append('topic', this.activeTopic);
+            }
+            if (this.activeKind && this.activeKind !== 'all') {
+              params.append('kind', this.activeKind);
+            }
+            if (this.activeRepo && this.activeRepo !== 'all') {
+              params.append('repo', this.activeRepo);
+            }
+            if (this.activeLanguage && this.activeLanguage !== 'all') {
+              params.append('language', this.activeLanguage);
+            }
+
+            const res = await fetch(`/api/bricks?${params.toString()}`);
+            this.bricksData = await res.json();
+          } catch (err) {
+            console.error('Error loading bricks:', err);
+          } finally {
+            this.isLoading = false;
+            this.$nextTick(() => { 
+              lucide.createIcons(); 
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+          }
+        },
+
+        selectTopic(topicName) {
+          this.activeTopic = topicName;
+          this.fetchBricks(1);
+        },
+
+        selectKind(kindName) {
+          this.activeKind = kindName;
+          this.fetchBricks(1);
+        },
+
+        selectLanguage(langCode) {
+          this.activeLanguage = langCode;
+          this.fetchBricks(1);
+        },
+
+        selectRepo(repoId) {
+          this.activeRepo = repoId;
+          this.fetchBricks(1);
+        },
+
+        getRepoName(repoId) {
+          if (!this.categories || !this.categories.repositories) return repoId;
+          const found = this.categories.repositories.find(r => r.id === repoId);
+          return found ? (found.name || found.id) : repoId;
+        },
+
+        getLanguageLabel(langCode) {
+          if (!this.categories || !this.categories.languages) return (langCode || '').toUpperCase();
+          const found = this.categories.languages.find(l => l.code === langCode || l.name === langCode);
+          if (!found) return (langCode || '').toUpperCase();
+          if (found.name === 'typescript-react') return 'TSX';
+          if (found.name === 'csharp') return 'C#';
+          if (found.name === 'cpp') return 'C++';
+          return found.name.charAt(0).toUpperCase() + found.name.slice(1);
+        },
+
+        resetFilters() {
+          this.searchQuery = '';
+          this.activeTopic = 'All';
+          this.activeKind = 'all';
+          this.activeRepo = 'all';
+          this.activeLanguage = 'all';
+          this.sortOrder = 'portability_desc';
+          this.fetchBricks(1);
+        },
+
+        async openBrickModal(brickId) {
+          try {
+            const res = await fetch(`/api/brick/${brickId}`);
+            if (res.ok) {
+              this.currentBrick = await res.json();
+              this.isDetailOpen = true;
+              this.copied = false;
+              this.$nextTick(() => { 
+                lucide.createIcons(); 
+                if (window.Prism) {
+                  Prism.highlightAll();
+                }
+              });
+            }
+          } catch (err) {
+            console.error('Error loading brick details:', err);
+          }
+        },
+
+        toggleAiSearch() {
+          this.aiSearchEnabled = !this.aiSearchEnabled;
+          if (this.aiSearchEnabled) {
+            // When AI Search is toggled on, open AI Studio / Chat to converse with the local agent
+            if (this.searchQuery) {
+              this.chatInput = `Find me code bricks and composable patterns related to: ${this.searchQuery}`;
+              this.switchView('chat');
+              this.sendChatMessage();
+            } else {
+              this.switchView('chat');
+            }
+          }
+        },
+
+        copyBrickSnippet(brick) {
+          const text = brick.signature || brick.symbol_name || '';
+          navigator.clipboard.writeText(text).then(() => {
+            // Temporarily swap icon or trigger feedback
+            if (window.lucide) window.lucide.createIcons();
+          });
+        },
+
+        copySourceCode() {
+          if (!this.currentBrick.source_code) return;
+          navigator.clipboard.writeText(this.currentBrick.source_code).then(() => {
+            this.copied = true;
+            setTimeout(() => { this.copied = false; }, 2500);
+          });
+        }
+      }
+    }
+  </script>
+</body>
+</html>
+

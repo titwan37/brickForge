@@ -7,15 +7,21 @@ accurate scan-run counters and supporting dry-run planning.
 
 from __future__ import annotations
 
+import os
 import sqlite3
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 from brickforge.ingestion.discovery import get_language_hint, walk_registered_roots
-from brickforge.ingestion.fingerprints import FileFingerprint, generate_fingerprint
+from brickforge.ingestion.fingerprints import (
+    FileFingerprint,
+    compute_file_id,
+    generate_fingerprint,
+    quick_stat_matches,
+)
 from brickforge.ingestion.ignore_rules import IgnoreRules
 from brickforge.storage.database import DatabaseManager
 
@@ -72,7 +78,7 @@ class ScanPlanner:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT id, relative_path, file_hash, byte_size, modified_ns, language
+            SELECT id, relative_path, file_hash, byte_size, modified_ns, language, parse_status
             FROM source_files
             WHERE repository_id = ?;
             """,
@@ -87,6 +93,7 @@ class ScanPlanner:
                 "byte_size": row[3],
                 "modified_ns": row[4],
                 "language": row[5],
+                "parse_status": row[6],
             }
         return stored
 
@@ -98,6 +105,7 @@ class ScanPlanner:
         force_full_scan: bool = False,
         dry_run: bool = False,
         scan_run_id: Optional[str] = None,
+        progress_callback: Optional[Any] = None,
     ) -> ScanPlan:
         """Create a ScanPlan classifying files as added, changed, unchanged, or deleted."""
         run_id = scan_run_id or f"scan_{uuid.uuid4().hex[:16]}"
@@ -110,16 +118,59 @@ class ScanPlanner:
             stored_files = self.get_stored_files(conn, repository_id)
 
             seen_relative_paths = set()
+            discovered_count = 0
 
-            for item in walk_registered_roots([str(root)]):
+            for item in walk_registered_roots([str(root)], ignore_rules=active_ignore):
                 rel_path = item["relative_path"]
 
                 if active_ignore.is_ignored(rel_path):
                     continue
 
+                discovered_count += 1
+                if progress_callback:
+                    progress_callback(discovered_count, rel_path)
+
                 seen_relative_paths.add(rel_path)
                 file_abs_path = root / rel_path
 
+                try:
+                    stat_result = os.stat(file_abs_path)
+                except OSError:
+                    continue
+
+                lang = item.get("language_hint") or get_language_hint(rel_path)
+                current_size = stat_result.st_size
+                current_mtime_ns = getattr(stat_result, "st_mtime_ns", int(stat_result.st_mtime * 1e9))
+
+                if rel_path in stored_files:
+                    stored = stored_files[rel_path]
+                    prev_hash = str(stored["file_hash"])
+
+                    # Re-scan files if previously unsupported but now have an AST parser, or if language was unknown
+                    needs_reparse = (
+                        stored.get("parse_status") == "unsupported"
+                        and lang in ("csharp", "typescript", "typescript-react", "javascript", "cpp", "c", "go", "rust", "java")
+                    ) or (stored.get("language") == "unknown" and lang != "unknown")
+
+                    # Fast-path optimization: if size and mtime_ns match stored state, file is unchanged
+                    if not force_full_scan and not needs_reparse and quick_stat_matches(
+                        current_size=current_size,
+                        recorded_size=stored.get("byte_size"),
+                        current_mtime_ns=current_mtime_ns,
+                        recorded_mtime_ns=stored.get("modified_ns"),
+                    ):
+                        plan.unchanged.append(
+                            PlannedFileAction(
+                                action_type="skip",
+                                relative_path=rel_path,
+                                file_id=str(stored.get("id")) or compute_file_id(repository_id, rel_path),
+                                language=lang,
+                                previous_hash=prev_hash,
+                            )
+                        )
+                        continue
+
+                # File is new or stat changed: compute content hash
                 try:
                     fingerprint = generate_fingerprint(
                         file_path=file_abs_path,
@@ -128,8 +179,6 @@ class ScanPlanner:
                     )
                 except OSError:
                     continue
-
-                lang = item.get("language_hint") or get_language_hint(rel_path)
 
                 if rel_path not in stored_files:
                     # New file
@@ -142,34 +191,40 @@ class ScanPlanner:
                             language=lang,
                         )
                     )
-                else:
-                    stored = stored_files[rel_path]
-                    prev_hash = str(stored["file_hash"])
+                    continue
 
-                    if force_full_scan or fingerprint.file_hash.lower() != prev_hash.lower():
-                        # File modified or re-scan forced
-                        plan.changed.append(
-                            PlannedFileAction(
-                                action_type="update",
-                                relative_path=rel_path,
-                                file_id=fingerprint.file_id,
-                                fingerprint=fingerprint,
-                                language=lang,
-                                previous_hash=prev_hash,
-                            )
+                stored = stored_files[rel_path]
+                prev_hash = str(stored["file_hash"])
+
+                needs_reparse = (
+                    stored.get("parse_status") == "unsupported"
+                    and lang in ("csharp", "typescript", "typescript-react", "javascript", "cpp", "c", "go", "rust", "java")
+                ) or (stored.get("language") == "unknown" and lang != "unknown")
+
+                if force_full_scan or needs_reparse or fingerprint.file_hash.lower() != prev_hash.lower():
+                    # File modified or re-scan forced
+                    plan.changed.append(
+                        PlannedFileAction(
+                            action_type="update",
+                            relative_path=rel_path,
+                            file_id=fingerprint.file_id,
+                            fingerprint=fingerprint,
+                            language=lang,
+                            previous_hash=prev_hash,
                         )
-                    else:
-                        # File unchanged
-                        plan.unchanged.append(
-                            PlannedFileAction(
-                                action_type="skip",
-                                relative_path=rel_path,
-                                file_id=fingerprint.file_id,
-                                fingerprint=fingerprint,
-                                language=lang,
-                                previous_hash=prev_hash,
-                            )
+                    )
+                else:
+                    # File content hash identical
+                    plan.unchanged.append(
+                        PlannedFileAction(
+                            action_type="skip",
+                            relative_path=rel_path,
+                            file_id=fingerprint.file_id,
+                            fingerprint=fingerprint,
+                            language=lang,
+                            previous_hash=prev_hash,
                         )
+                    )
 
             # Classify deleted files (stored in database but no longer on disk)
             for rel_path, stored in stored_files.items():
@@ -217,6 +272,7 @@ class ScanPlanner:
         symbols_indexed: int = 0,
         errors_count: int = 0,
         error_summary: Optional[str] = None,
+        **kwargs: Any,
     ) -> None:
         """Finalize a scan run with final status, timestamp, and symbol counters."""
         now = datetime.now(timezone.utc).isoformat()

@@ -112,6 +112,25 @@ python -m brickforge scan --repo-path /path/to/my-repo --repo-id my-repo
 python -m brickforge search "calculate_total"
 ```
 
+### 3. Launching the Web Catalog Explorer
+
+BrickForge includes a sovereign, zero-build single-page web explorer to navigate the indexed catalog:
+
+```bash
+# Launch via dedicated script (opens your browser automatically at http://127.0.0.1:8000)
+python scripts/serve_catalog.py
+
+# Or launch via the CLI
+python -m brickforge serve --port 8000
+```
+
+**Explorer Capabilities**:
+- **Thematic Sidebar**: Dynamic category breakdown with live badge counts (AI & LLM / Agents, Testing & Benchmarks, Core & Utilities, UI & Frontend, Data & Database, Web & APIs, Docs & Parsers, Audio/DSP, Security).
+- **Full-Text & Signature Search**: Instant debounced FTS5 queries, kind filters (Functions, Classes, Methods), and repository selectors.
+- **Presentation Card Grid**: 3-column responsive layout displaying signature snippets, docstring previews, portability rating badges, and cyclomatic complexity.
+- **Slide-Over Contract Inspector**: Comprehensive drawer with AST signature contract, documentation, dependency list (internal vs external pip packages), and Prism.js syntax-highlighted source code with 1-click export.
+- **Grounded Conversational Chatbot (Ollama Local)**: Floating interactive assistant (`Ask BrickForge AI`) grounded on the 64,414 catalog bricks. Advises developers on composability and reusability for specific themes (e.g., **TTS / Speech**, **AI Agent Prompts**, **Auth / JWT**, **Data Pipelines**), cites exact repository file paths (`Lstart-Lend`), renders Markdown reports with verified code snippets, and links directly to candidate bricks. Runs on local Ollama models (`qwen2.5-coder:7b`, `llama3.2:3b`) with intelligent zero-dependency fallback synthesis when offline.
+
 For detailed CLI and Python API examples, see [docs/quickstart.md](file:///C:/Dev/brickForge/docs/quickstart.md).
 
 ---
@@ -155,9 +174,9 @@ python -m pytest
 
 ---
 
-## Review of `config/repositories.json` & `scripts/sync_repositories.py`
+## 🗂️ Multi-Repository Configuration & Rich Sync
 
-Both files have been reviewed and refined to work seamlessly together.
+BrickForge supports multi-repository registration and incremental indexing from a declarative `config/repositories.json` file, with a rich interactive console UI.
 
 ### 1. Review of `config/repositories.json`
 
@@ -249,6 +268,23 @@ for hit in hits:
     print(f"{hit.symbol_name} ({hit.kind}) in [{hit.repository_id}] {hit.relative_path}")
 ```
 
+
+---
+
+### 5. Web Catalog Explorer & AI Chatbot
+
+Launch the interactive web UI (styled with Tailwind CSS, Alpine.js, Lucide Icons, and Prism syntax highlighting, following the layout of [agensi.io](https://agensi.io)):
+
+```powershell
+python scripts/serve_catalog.py
+```
+Open [http://localhost:8000](http://localhost:8000) in your browser.
+
+#### Highlights & Capabilities
+- **Thematic Taxonomy**: Filter code bricks by domain (AI & LLM / Agents, Data & Database, Web & HTTP API, Testing & Benchmarks, CLI & System Utilities, Cryptography & Security, Audio & DSP / Media, etc.).
+- **Symbol Kinds & Project Level**: Filter by `function`, `class`, `method`, or explore entire projects (`kind=project`) with AI-extracted intent and metrics (source files, classes, methods, functions).
+- **Language Detection & Filtering**: Filter by language badges (`py`, `ts`, `tsx`, `js`, `cs`, `cpp`).
+- **Conversational Ollama Assistant**: Built-in floating chat bubble grounded in your catalog via SQLite FTS5 RAG. Ask how to compose bricks for TTS, Agents, Auth, or AST parsing, with verified code snippets and exact file locations.
 
 ---
 

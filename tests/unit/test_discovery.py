@@ -1,6 +1,9 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from src.brickforge.ingestion.discovery import get_language_hint, walk_registered_roots
+try:
+    from brickforge.ingestion.discovery import get_language_hint, walk_registered_roots
+except ImportError:
+    from src.brickforge.ingestion.discovery import get_language_hint, walk_registered_roots
 
 
 class TestDiscovery(unittest.TestCase):
@@ -8,7 +11,7 @@ class TestDiscovery(unittest.TestCase):
     @patch('os.walk', return_value=[('root', ['subdir'], ['root/subdir/file1.py', 'root/subdir/file2.txt']), ('subdir', [], [])])
     @patch('os.path.getsize', side_effect=[1024, 512])
     @patch('os.path.getmtime', side_effect=[1696275200, 1696275200])
-    @patch('src.brickforge.ingestion.discovery.datetime')
+    @patch('brickforge.ingestion.discovery.datetime')
     def test_walk_registered_roots(self, mock_dt_cls, mock_getmtime, mock_getsize, mock_os_walk, mock_isfile):
         mock_dt = MagicMock()
         mock_dt.isoformat.return_value = '2023-10-01T12:00:00'

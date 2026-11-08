@@ -3,15 +3,43 @@
   "catalog_db": "data/brickforge.db",
   "repositories": [
     {
-      "id": "dev-c",
+      "id": "c-dev",
       "name": "Dev Root",
       "root_path": "C:\\Dev",
       "enabled": true,
       "exclude_globs": [
         "**/node_modules/**",
         "**/.codbot/**",
+        "**/.delta/**",
         "**/.venv/**",
         "**/venv/**",
+        "**/site-packages/**",
+        "**/miniconda3/**",
+        "**/anaconda3/**",
+        "**/.conda/**",
+        "**/__pycache__/**",
+        "**/.git/**",
+        "**/.pytest_cache/**",
+        "**/data/**",
+        "*.db",
+        "*.sqlite"
+      ]
+    },
+    {
+      "id": "c-dev-hub",
+      "name": "Dev Hub Root",
+      "root_path": "C:\\dev-hub",
+      "enabled": true,
+      "exclude_globs": [
+        "**/node_modules/**",
+        "**/.codbot/**",
+        "**/.delta/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/site-packages/**",
+        "**/miniconda3/**",
+        "**/anaconda3/**",
+        "**/.conda/**",
         "**/__pycache__/**",
         "**/.git/**",
         "**/.pytest_cache/**",
@@ -25,21 +53,40 @@
       "name": "Work Code (Google Drive)",
       "root_path": "L:\\My Drive\\Work\\Code",
       "enabled": true,
-      "exclude_globs": ["**/.git/**", "**/node_modules/**", "**/.venv/**"]
+      "exclude_globs": [
+        "**/.git/**",
+        "**/node_modules/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/site-packages/**",
+        "**/Lib/**"
+      ]
     },
     {
       "id": "gdrive-legalstudio",
       "name": "LegalStudio (Google Drive)",
       "root_path": "G:\\My Drive\\LegalStudio",
       "enabled": true,
-      "exclude_globs": ["**/.git/**", "**/node_modules/**", "**/.venv/**"]
+      "exclude_globs": [
+        "**/.git/**",
+        "**/node_modules/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/site-packages/**"
+      ]
     },
     {
       "id": "onedrive-vscode",
       "name": "VS Code Workspace (OneDrive)",
       "root_path": "C:\\Users\\titwa\\OneDrive\\Dokumente\\Documents\\VS Code",
       "enabled": true,
-      "exclude_globs": ["**/.git/**", "**/node_modules/**", "**/.venv/**"]
+      "exclude_globs": [
+        "**/.git/**",
+        "**/node_modules/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/site-packages/**"
+      ]
     },
     {
       "id": "vs-2010",
