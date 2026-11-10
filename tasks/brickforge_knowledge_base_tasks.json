@@ -623,11 +623,11 @@
         "BRICK-KB-012",
         "BRICK-KB-013"
       ],
-      "status": "running",
-      "attempts": 0,
-      "last_worker": null,
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local+WildExecutor",
       "last_error": null,
-      "completed_at": null,
+      "completed_at": "2026-11-10T21:08:34.543726",
       "handoff_warning": null,
       "failure_history": [],
       "complexity": "heavy",
@@ -646,7 +646,7 @@
     {
       "task_id": "BRICK-KB-015",
       "title": "Build project and session selection UI",
-      "description": "**Core Objective**\n- Implement project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator in the UI while maintaining existing catalog and chat streaming behavior.\n- Write an end-to-end test to verify the functionality of the new UI components.\n\n**Target Files & Roles**\n- **src/brickforge/web/templates/index.html**: Modify this file to include the new UI components for project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator.\n- **tests/e2e/test_project_session_ui.py**: Create this file to write an end-to-end test that verifies the functionality of the new UI components.\n\n**Critical Technical Invariants**\n- Ensure that the new UI components do not interfere with the existing catalog and chat streaming behavior.\n- Use appropriate HTML and JavaScript to implement the new UI components.\n- The test file `tests/e2e/test_project_session_ui.py` should import necessary modules from `pytest` and any other required libraries for end-to-end testing.\n- The test should cover all the required features: project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator.\n\n**Verification Pass Criteria**\n- The verification command `python -m pytest -q tests/e2e/test_project_session_ui.py` must pass without any errors.\n- The test should successfully verify the functionality of the new UI components without affecting the existing catalog and chat streaming behavior.\n\n- Previous Failure Root Cause: The verification command expects a test file that does not exist yet and is missing from allowed_paths.\n- Resolution Strategy: Add the missing test file to the allowed paths and ensure the test file is correctly implemented.\n- Actionable Fix Instructions: Create the file 'tests/e2e/test_project_session_ui.py' and write an end-to-end test that verifies the functionality of the new UI components. The test should cover project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator. Ensure the test imports necessary modules from pytest and any other required libraries for end-to-end testing.",
+      "description": "**Core Objective**\n- Implement project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator in the UI while maintaining existing catalog and chat streaming behavior.\n- Write an end-to-end test to verify the functionality of the new UI components.\n\n**Target Files & Roles**\n- **src/brickforge/web/templates/index.html**: Modify this file to include the new UI components for project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator.\n- **tests/e2e/test_project_session_ui.py**: Create this file to write an end-to-end test that verifies the functionality of the new UI components.\n\n**Critical Technical Invariants**\n- Ensure that the new UI components do not interfere with the existing catalog and chat streaming behavior.\n- Use appropriate HTML and JavaScript to implement the new UI components.\n- The test file `tests/e2e/test_project_session_ui.py` should import necessary modules from `pytest` and any other required libraries for end-to-end testing.\n- The test should cover all the required features: project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator.\n\n**Verification Pass Criteria**\n- The verification command `python -m pytest -q tests/e2e/test_project_session_ui.py` must pass without any errors.\n- The test should successfully verify the functionality of the new UI components without affecting the existing catalog and chat streaming behavior.\n\n- Previous Failure Root Cause: The debug trace indicates that the task is blocked because the verification command expects a test file that does not exist yet and is missing from the allowed paths.\n- Resolution Strategy: Add the missing test file to the allowed paths and ensure the verification command is correctly pointing to it.\n- Actionable Fix Instructions: 1. Create the file `tests/e2e/test_project_session_ui.py` with the necessary end-to-end test for the new UI components.\n2. Ensure the test file imports necessary modules from `pytest` and any other required libraries for end-to-end testing.\n3. The test should cover all the required features: project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator.\n4. Run the verification command `python -m pytest -q tests/e2e/test_project_session_ui.py` to ensure it passes without any errors.",
       "task_type": "code_implementation",
       "required_capabilities": [
         "remote_reasoning",
@@ -669,13 +669,34 @@
       "dependency_ids": [
         "BRICK-KB-013"
       ],
-      "status": "pending",
+      "status": "running",
       "attempts": 0,
       "last_worker": null,
-      "last_error": null,
+      "last_error": "MISSING_PATCH: No structured file blocks or PatchSpec JSON detected in model response.",
       "completed_at": null,
-      "handoff_warning": "Self-healed (cycle 2/2): Add the missing test file to the allowed paths and ensure the test file is correctly implemented.",
-      "failure_history": [],
+      "handoff_warning": "Self-healed (cycle 2/2): Add the missing test file to the allowed paths and ensure the verification command is correctly pointing to it.",
+      "failure_history": [
+        {
+          "type": "self_heal",
+          "cycle": 1,
+          "timestamp": "2026-11-10T21:13:11.648009",
+          "previous_error": "PATCH_APPLY_FAILED: PATCH_APPLY_FAILED: SEARCH block #1 ('</div>...') not found in 'src/brickforge/web/templates/index.html'. Ensure exact lines from CURRENT CONTENT are copied.",
+          "root_cause": "The verification command expects a test file that does not exist yet and is missing from allowed_paths.",
+          "resolution_strategy": "Add the missing test file to allowed_paths and ensure the test file is correctly implemented.",
+          "added_allowed_paths": [],
+          "updated_verification_command": null
+        },
+        {
+          "type": "self_heal",
+          "cycle": 2,
+          "timestamp": "2026-11-10T21:18:11.348073",
+          "previous_error": "PATCH_APPLY_FAILED: PATCH_APPLY_FAILED: SEARCH block #1 ('</div>...') not found in 'src/brickforge/web/templates/index.html'. Ensure exact lines from CURRENT CONTENT are copied.",
+          "root_cause": "The debug trace indicates that the task is blocked because the verification command expects a test file that does not exist yet and is missing from the allowed paths.",
+          "resolution_strategy": "Add the missing test file to the allowed paths and ensure the verification command is correctly pointing to it.",
+          "added_allowed_paths": [],
+          "updated_verification_command": null
+        }
+      ],
       "complexity": "heavy",
       "id": "BRICK-KB-015",
       "test_command": "python -m pytest -q tests/e2e/test_project_session_ui.py",
