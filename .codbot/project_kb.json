@@ -1,9 +1,9 @@
 {
   "repo_name": "brickForge",
   "repo_path": "C:\\Dev\\brickForge",
-  "scanned_at": "2026-11-08 18:52:55",
-  "purpose_summary": "> **Sovereign AST Code Intelligence & Composable Component Registry for AI Agents and Engineers.**",
-  "architecture_summary": "**Stack:** AsyncIO / HTTPX, FastAPI, Gradio UI, Pytest, Python, SQLite3 | **Topology:** Automated Pytest & UAT Verification Suite (`tests/*`)",
+  "scanned_at": "2026-11-10 12:52:44",
+  "purpose_summary": "BrickForge: Python-first vertical slice; local-first catalog; SQLite + FTS5 core; optional vector extension; MCP exposure can be implemented as a subsequent integration milestone.",
+  "architecture_summary": "**Stack:** AsyncIO / HTTPX, FastAPI, Gradio UI, Pytest, Python, SQLite3 | **Topology:** Next.js / React Application Interface (`src/*`) \u2192 Automated Pytest & UAT Verification Suite (`tests/*`) | **DAG Tasks**: 45/45 completed (100.0%)",
   "tech_stack": [
     "AsyncIO / HTTPX",
     "FastAPI",
@@ -12,8 +12,8 @@
     "Python",
     "SQLite3"
   ],
-  "total_files": 146,
-  "total_loc": 18296,
+  "total_files": 150,
+  "total_loc": 18307,
   "modules": [
     {
       "path": "mcp/server.py",
@@ -788,7 +788,7 @@
     },
     {
       "path": "src/brickforge/web/app.py",
-      "loc": 976,
+      "loc": 987,
       "classes": [
         "ChatRequest"
       ],
@@ -1828,6 +1828,141 @@
         "review/dev_agent/preflight.py"
       ],
       "prompt_payload": "Harden path validation and subprocess execution guards across `review/dev_agent/` to prevent path traversal, unclosed SQLite handles on Windows, and hanging child processes."
+    }
+  ],
+  "tasks_summary": {
+    "manifest_path": "tasks/tasks.json",
+    "project_name": "BrickForge",
+    "scope": "Python-first vertical slice; local-first catalog; SQLite + FTS5 core; optional vector extension; MCP exposure can be implemented as a subsequent integration milestone.",
+    "total_tasks": 45,
+    "completed_tasks": 45,
+    "running_tasks": 0,
+    "blocked_tasks": 0,
+    "pending_tasks": 0,
+    "completion_pct": 100.0,
+    "tasks": [
+      {
+        "task_id": "BRICKFORGE-MVP-001",
+        "title": "Define project skeleton, configuration and package boundaries",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-002",
+        "title": "Define repository and scan domain models",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-003",
+        "title": "Implement repository registry",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-004",
+        "title": "Implement safe path canonicalization and root containment",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-005",
+        "title": "Implement configurable ignore and inclusion rules",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-006",
+        "title": "Implement source file discovery",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-007",
+        "title": "Implement content hashing and file fingerprinting",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-008",
+        "title": "Implement SQLite connection and migration manager",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-009",
+        "title": "Create core relational schema",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-010",
+        "title": "Implement incremental scan planner",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-011",
+        "title": "Define language adapter interface and Python adapter",
+        "status": "completed"
+      },
+      {
+        "task_id": "BRICKFORGE-MVP-012",
+        "title": "Integrate Tree-sitter runtime and Python grammar",
+        "status": "completed"
+      }
+    ]
+  },
+  "docs_summary": [
+    {
+      "rel_path": "README.md",
+      "title": "Readme",
+      "lines": 213,
+      "abstract": "> **Sovereign AST Code Intelligence & Composable Component Registry for AI Agents and Engineers.**"
+    },
+    {
+      "rel_path": "requirements.txt",
+      "title": "Requirements",
+      "lines": 8,
+      "abstract": "fastapi>=0.100.0"
+    },
+    {
+      "rel_path": "docs/agentic-codRegister-POC.md",
+      "title": "Agentic-Codregister-Poc",
+      "lines": 453,
+      "abstract": "**Executive Pitch (Short Version)**"
+    },
+    {
+      "rel_path": "docs/agentic-pedia.md",
+      "title": "Agentic-Pedia",
+      "lines": 131,
+      "abstract": "Design pack generated"
+    },
+    {
+      "rel_path": "docs/ARCHITECTURE2.md",
+      "title": "Architecture2",
+      "lines": 204,
+      "abstract": "> **Sovereign AST Code Intelligence, Multi-Language Component Registry & Grounded AI Agent Engine**"
+    },
+    {
+      "rel_path": "docs/BrickForge-MasterDoc.md",
+      "title": "Brickforge-Masterdoc",
+      "lines": 756,
+      "abstract": "> **Sovereign AST Code Intelligence & Composable Component Registry for AI Agents and Engineers.**"
+    },
+    {
+      "rel_path": "docs/brickForge_walkthrough.md",
+      "title": "Brickforge Walkthrough",
+      "lines": 495,
+      "abstract": "A single-page web explorer modeled directly after the **`agensi.io`** reference layout is now implemented:"
+    },
+    {
+      "rel_path": "docs/DESIGN_PACK.md",
+      "title": "Design Pack",
+      "lines": 163,
+      "abstract": "> **A local-first, AST-aware registry for discovering, understanding, and reusing software components.**"
+    },
+    {
+      "rel_path": "docs/MCP_SERVER.md",
+      "title": "Mcp Server",
+      "lines": 96,
+      "abstract": "The MCP server exposes the catalog to IDEs, coding agents, and other software. It should remain a thin, permission-aware adapter over the storage/search/extraction services. It should not crawl arbitr"
+    },
+    {
+      "rel_path": "docs/quickstart.md",
+      "title": "Quickstart",
+      "lines": 221,
+      "abstract": "BrickForge is a sovereign AST-aware code intelligence and composable component registry designed for AI agents and engineering teams. It parses and indexes local repositories into a structured, search"
     }
   ]
 }

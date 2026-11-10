@@ -206,12 +206,14 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
         return HTMLResponse(template_path.read_text(encoding="utf-8"))
 
     @app.get("/service-worker.js")
+    @app.get("/brickforge/service-worker.js")
     def service_worker():
         """Serve an empty no-op service worker to silence PWA / browser service-worker lookup 404s."""
         from fastapi.responses import Response
         return Response(content="// BrickForge no-op service worker\n", media_type="application/javascript")
 
     @app.get("/api/stats")
+    @app.get("/brickforge/api/stats")
     def get_stats():
         if not resolved_db.exists():
             return {"error": "Database not found", "total_bricks": 0}
@@ -256,6 +258,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
             }
 
     @app.get("/api/categories")
+    @app.get("/brickforge/api/categories")
     def get_categories():
         if not resolved_db.exists():
             return {"topics": [], "kinds": [], "repositories": [], "languages": [], "projects": []}
@@ -357,6 +360,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
             }
 
     @app.get("/api/initiatives")
+    @app.get("/brickforge/api/initiatives")
     def get_initiatives():
         if not resolved_db.exists():
             return []
@@ -365,6 +369,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
             return get_all_initiatives_with_rollups(conn, projects)
 
     @app.get("/api/initiative/{initiative_id}")
+    @app.get("/brickforge/api/initiative/{initiative_id}")
     def get_initiative_detail(initiative_id: str):
         if not resolved_db.exists():
             raise HTTPException(status_code=404, detail="Database not found")
@@ -377,6 +382,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
             return target
 
     @app.get("/api/bricks")
+    @app.get("/brickforge/api/bricks")
     def search_bricks(
         query: Optional[str] = None,
         topic: Optional[str] = None,
@@ -550,6 +556,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
             }
 
     @app.get("/api/bricks/export")
+    @app.get("/brickforge/api/bricks/export")
     def export_bricks(
         query: Optional[str] = None,
         topic: Optional[str] = None,
@@ -741,6 +748,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
             }
 
     @app.get("/api/brick/{brick_id}")
+    @app.get("/brickforge/api/brick/{brick_id}")
     def get_brick_detail(brick_id: str):
         if not resolved_db.exists():
             raise HTTPException(status_code=404, detail="Database not found")
@@ -935,6 +943,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
     chat_engine = BrickForgeChatEngine(resolved_db)
 
     @app.get("/api/chat/models")
+    @app.get("/brickforge/api/chat/models")
     def get_chat_models():
         models, is_online = chat_engine.get_available_models()
         # On remote production host (e.g. Ionos VPS where lightweight qwen3:1.7b is installed),
@@ -955,6 +964,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
         }
 
     @app.post("/api/chat")
+    @app.post("/brickforge/api/chat")
     def chat_conversation(req: ChatRequest):
         messages = list(req.history or [])
         messages.append({"role": "user", "content": req.message})
@@ -962,6 +972,7 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
         return response
 
     @app.post("/api/chat/stream")
+    @app.post("/brickforge/api/chat/stream")
     def chat_conversation_stream(req: ChatRequest):
         messages = list(req.history or [])
         messages.append({"role": "user", "content": req.message})

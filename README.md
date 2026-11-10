@@ -242,6 +242,17 @@ for brick in results:
 
 ---
 
+## 📚 Technical Documentation & System Specifications
+
+For enterprise audits, architecture reviews, and engineering blueprints, consult the formal design documents:
+
+- **[Technical Architecture Document (TAD)](file:///C:/Dev/brickForge/docs/TAD_BrickForge.md)**: Physical topography, multi-language parser specifications, system BOM, network ingress, and RAG streaming buffer mechanics.
+- **[Software Design Document (SDD)](file:///C:/Dev/brickForge/docs/SDD_BrickForge.md)**: SQLite entity relationships, schema definitions, module architecture, incremental scan algorithms, API endpoints contract, and testing matrix.
+- **[Architectural Deep Dive](file:///C:/Dev/brickForge/docs/ARCHITECTURE2.md)**: In-depth ingestion walkthrough and component diagrams.
+- **[Security Guarantees](file:///C:/Dev/brickForge/docs/security.md)**: Filesystem confinement, path traversal sanitization, and execution isolation policies.
+
+---
+
 ## 🔒 Security Model
 
 BrickForge operates under strict security boundaries:
