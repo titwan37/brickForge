@@ -136,11 +136,11 @@
       "dependency_ids": [
         "BRICK-KB-002"
       ],
-      "status": "pending",
-      "attempts": 0,
-      "last_worker": null,
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local+WildExecutor",
       "last_error": null,
-      "completed_at": null,
+      "completed_at": "2026-11-10T20:46:26.396445",
       "handoff_warning": "Self-healed (cycle 2/2): Add the missing test file to the allowed paths and update the verification command to run the correct test.",
       "failure_history": [],
       "complexity": "heavy",
