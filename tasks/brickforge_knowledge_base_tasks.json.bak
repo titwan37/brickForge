@@ -1,0 +1,738 @@
+{
+  "project": "BrickForge",
+  "backlog": "Implement Project Knowledge Sources, Documentation RAG and Recoverable Sessions",
+  "version": "1.0.0",
+  "lifecycle": [
+    "P1 Project Root Registration",
+    "P2 Code and Documentation Ingestion",
+    "P3 Unified Evidence Retrieval",
+    "P4 Recoverable Knowledge Sessions",
+    "P5 Session-Aware Grounded Chat",
+    "P6 API and Web Studio Integration",
+    "P7 End-to-End Verification"
+  ],
+  "scope": "Implement the BrickForge knowledge layer: selectable code/documentation roots, AST and document indexing, cited retrieval, durable/recoverable sessions, provider abstraction, and session-aware grounded chat. Do not implement CodBot's multi-node council or judge.",
+  "task_count": 16,
+  "status_values": [
+    "pending",
+    "running",
+    "completed",
+    "blocked",
+    "failed"
+  ],
+  "notes": [
+    "Local-only is the default; remote model use requires explicit per-session consent.",
+    "Treat model responses as candidate evidence, not truth; judge against source evidence and the original request.",
+    "Persist raw answers, assessments, merged answer, citations, and provider provenance.",
+    "Use relative POSIX paths and python -m pytest -q for verification.",
+    "Paths and API names are inferred from the supplied master document; inspect the actual checkout before running."
+  ],
+  "tasks": [
+    {
+      "task_id": "BRICK-KB-001",
+      "title": "Define project knowledge source models",
+      "description": "Add typed models for registered project workspaces, source roots, source kinds (code, Markdown, text), include/exclude rules, indexing state, and content fingerprints. Validate canonical paths and duplicate source IDs.\n\n- Previous Failure Root Cause: The verification command expects a test file that does not exist yet.\n- Resolution Strategy: Create the missing test file and ensure it is included in the allowed paths.\n- Actionable Fix Instructions: 1. Create a new file named `test_ingestion_models.py` in the `tests/unit/` directory.\n2. Write a test function that verifies the functionality of the models defined in `src/brickforge/ingestion/models.py`.\n3. Ensure that the test function imports the necessary modules and uses the correct assertions to validate the models.\n4. Run the verification command again to ensure the test file is recognized and executed.\n\n- Previous Failure Root Cause: The verification command expects a test file that does not exist yet, and there are issues with the Pydantic models in the `SourceKind` class.\n- Resolution Strategy: Create the missing test file and ensure it is included in the allowed paths. Update the Pydantic models to use `@field_validator` and add a custom schema generator for `SourceKind`.\n- Actionable Fix Instructions: 1. Create a new file named `test_ingestion_models.py` in the `tests/unit/` directory.\n2. Write a test function that verifies the functionality of the models defined in `src/brickforge/ingestion/models.py`.\n3. Ensure that the test function imports the necessary modules and uses the correct assertions to validate the models.\n4. Update the `SourceKind` class to use `@field_validator` instead of `@validator`.\n5. Add a custom schema generator for `SourceKind` to handle the `str` subclass properly.\n6. Ensure all validators in `SourceRoot` and `ProjectWorkspace` are updated to use `@field_validator`.\n7. Run the verification command again to ensure the test file is recognized and executed.\n\n- Previous Failure Root Cause: Task failed verification with traceback.\n- Resolution Strategy: Resetting task with traceback context injected into instructions.\n- Actionable Fix Instructions: Resolve the following verification error:\n============================= test session starts =============================\nplatform win32 -- Python 3.14.0, pytest-9.2.0, pluggy-1.6.0\nrootdir: C:\\Dev\\brickForge\\.codbot_worktrees\\tourney-BRICK-KB-001-PC2-Nitro\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, Faker-40.18.0, langsmith-0.3.45, asyncio-1.4.0, mock-3.17.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 0 items / 1 error\n\n- Previous Failure Root Cause: Task failed verification with traceback.\n- Resolution Strategy: Resetting task with traceback context injected into instructions.\n- Actionable Fix Instructions: Resolve the following verification error:\n============================= test session starts =============================\nplatform win32 -- Python 3.14.0, pytest-9.2.0, pluggy-1.6.0\nrootdir: C:\\Dev\\brickForge\\.codbot_worktrees\\tourney-BRICK-KB-001-PC2-Nitro\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, Faker-40.18.0, langsmith-0.3.45, asyncio-1.4.0, mock-3.17.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 0 items / 1 error",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/ingestion/models.py",
+        "tests/unit/test_ingestion_models.py"
+      ],
+      "context_paths": [
+        "src/brickforge/ingestion/discovery.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_ingestion_models.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC2-Nitro+PC1-Local [WILD-BRUTE-FORCE]",
+      "last_error": null,
+      "completed_at": "2026-11-10T14:03:31.736925",
+      "handoff_warning": "Self-healed (cycle 2/2): Resetting task with traceback context injected into instructions.",
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-001",
+      "test_command": "python -m pytest -q tests/unit/test_ingestion_models.py",
+      "context_files": [
+        "src/brickforge/ingestion/discovery.py"
+      ],
+      "dependencies": []
+    },
+    {
+      "task_id": "BRICK-KB-002",
+      "title": "Implement safe project folder registration",
+      "description": "Create a registry service for user-selected roots. Reuse safe_path_canonicalization, reject traversal and symlink escapes, persist include/exclude configuration, and support separate documentation roots.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/ingestion/registry.py",
+        "tests/unit/test_project_registry.py"
+      ],
+      "context_paths": [
+        "src/brickforge/ingestion/models.py",
+        "src/brickforge/ingestion/discovery.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_project_registry.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-001"
+      ],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC2-Nitro+PC1-Local [WILD-BRUTE-FORCE]",
+      "last_error": null,
+      "completed_at": "2026-11-10T14:04:20.744102",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICK-KB-002",
+      "test_command": "python -m pytest -q tests/unit/test_project_registry.py",
+      "context_files": [
+        "src/brickforge/ingestion/models.py",
+        "src/brickforge/ingestion/discovery.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-001"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-003",
+      "title": "Discover documentation source files",
+      "description": "**Core Objective**\nExtend discovery and ignore rules to support Markdown, reStructuredText, and plain text files while preserving relative paths, encoding, content fingerprints, and line numbers. Exclude secrets, binaries, generated output, and dependency folders.\n\n**Target Files & Roles**\n- **src/brickforge/ingestion/discovery.py**: Modify to include Markdown, reStructuredText, and plain text files in the discovery process.\n- **src/brickforge/ingestion/ignore_rules.py**: Update to include additional ignore patterns for binaries, generated files, and dependency folders.\n- **tests/unit/test_document_discovery.py**: Create to test the functionality of the document discovery and ignore rules.\n\n**Critical Technical Invariants**\n- **Imports**: Ensure `os`, `fnmatch`, `re`, and `datetime` are imported where necessary.\n- **Signatures**: Maintain the signature of `walk_registered_roots(roots, ignore_rules=None)`.\n- **Ignore Patterns**: Add patterns for `.md`, `.rst`, `.txt`, and binary file extensions to `DEFAULT_IGNORE_PATTERNS`.\n- **Mock Setups**: Use `unittest.mock` for any necessary mocking in tests.\n- **Environment Rules**: Tests should run in a clean environment with no external dependencies affecting the test outcomes.\n\n**Verification Pass Criteria**\n- The `test_document_discovery` function in `tests/unit/test_document_discovery.py` must pass without any assertion errors.\n- The verification command `python -m pytest -q tests/unit/test_document_discovery.py` must execute successfully with no test failures.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/ingestion/discovery.py",
+        "src/brickforge/ingestion/ignore_rules.py",
+        "tests/unit/test_document_discovery.py"
+      ],
+      "context_paths": [
+        "src/brickforge/ingestion/registry.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_document_discovery.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-002"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": "Self-healed (cycle 2/2): Add the missing test file to the allowed paths and update the verification command to run the correct test.",
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-003",
+      "test_command": "python -m pytest -q tests/unit/test_document_discovery.py",
+      "context_files": [
+        "src/brickforge/ingestion/registry.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-002"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-004",
+      "title": "Define document chunk and citation models",
+      "description": "Define document source and chunk records with stable IDs, project ID, path, heading hierarchy, line ranges, content hash, and citation metadata. Ensure citations can resolve to exact source locations.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/storage/document_models.py",
+        "tests/unit/test_document_models.py"
+      ],
+      "context_paths": [
+        "src/brickforge/storage/database.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_document_models.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 2,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-001"
+      ],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC2-Nitro+PC1-Local [TOURNAMENT_WINNER]",
+      "last_error": null,
+      "completed_at": "2026-11-10T15:10:38.652839",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "light",
+      "id": "BRICK-KB-004",
+      "test_command": "python -m pytest -q tests/unit/test_document_models.py",
+      "context_files": [
+        "src/brickforge/storage/database.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-001"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-005",
+      "title": "Persist document chunks and metadata",
+      "description": "Add SQLite migrations and repository operations for document sources/chunks. Use WAL and transactions; handle source updates/deletions atomically and test migration compatibility, rollback, and stable IDs.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/storage/migrations.py",
+        "src/brickforge/storage/document_repository.py",
+        "tests/integration/test_document_repository.py"
+      ],
+      "context_paths": [
+        "src/brickforge/storage/database.py",
+        "src/brickforge/storage/document_models.py"
+      ],
+      "verification_command": "python -m pytest -q tests/integration/test_document_repository.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-004"
+      ],
+      "status": "completed",
+      "attempts": 2,
+      "last_worker": "PC2-Nitro+PC1-Local [WILD-BRUTE-FORCE]",
+      "last_error": null,
+      "completed_at": "2026-11-10T15:21:32.757782",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-005",
+      "test_command": "python -m pytest -q tests/integration/test_document_repository.py",
+      "context_files": [
+        "src/brickforge/storage/database.py",
+        "src/brickforge/storage/document_models.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-004"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-006",
+      "title": "Implement deterministic documentation chunking",
+      "description": "Parse Markdown headings and split long docs into bounded overlapping chunks while preserving heading breadcrumbs, fenced code blocks where practical, and exact source line spans.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/ingestion/document_chunker.py",
+        "tests/unit/test_document_chunker.py"
+      ],
+      "context_paths": [
+        "src/brickforge/storage/document_models.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_document_chunker.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-004"
+      ],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local [WILD-BRUTE-FORCE]",
+      "last_error": null,
+      "completed_at": "2026-11-10T15:24:20.418927",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICK-KB-006",
+      "test_command": "python -m pytest -q tests/unit/test_document_chunker.py",
+      "context_files": [
+        "src/brickforge/storage/document_models.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-004"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-007",
+      "title": "Index documentation with SQLite FTS5",
+      "description": "Create an FTS5 index for document chunks and transactional upsert/delete synchronization. Keep code-symbol search and documentation search filterable and expose a unified retrieval facade.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/search/document_search.py",
+        "src/brickforge/storage/migrations.py",
+        "tests/integration/test_document_search.py"
+      ],
+      "context_paths": [
+        "src/brickforge/storage/document_repository.py",
+        "src/brickforge/search/service.py"
+      ],
+      "verification_command": "python -m pytest -q tests/integration/test_document_search.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-005",
+        "BRICK-KB-006"
+      ],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local [WILD-BRUTE-FORCE]",
+      "last_error": null,
+      "completed_at": "2026-11-10T15:27:37.745803",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-007",
+      "test_command": "python -m pytest -q tests/integration/test_document_search.py",
+      "context_files": [
+        "src/brickforge/storage/document_repository.py",
+        "src/brickforge/search/service.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-005",
+        "BRICK-KB-006"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-008",
+      "title": "Build unified project evidence retrieval",
+      "description": "Search AST bricks and documentation chunks within the selected project/session scope. Return ranked evidence with source type, repository ID, path, line range, excerpt, and stable citation ID. Prevent cross-project leakage.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/search/project_retrieval.py",
+        "tests/unit/test_project_retrieval.py"
+      ],
+      "context_paths": [
+        "src/brickforge/search/service.py",
+        "src/brickforge/search/document_search.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_project_retrieval.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-007"
+      ],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local [WILD-BRUTE-FORCE]",
+      "last_error": null,
+      "completed_at": "2026-11-10T15:30:20.729193",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-008",
+      "test_command": "python -m pytest -q tests/unit/test_project_retrieval.py",
+      "context_files": [
+        "src/brickforge/search/service.py",
+        "src/brickforge/search/document_search.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-007"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-009",
+      "title": "Define recoverable knowledge session schema",
+      "description": "Define session, session-source, snapshot, and event models. Record source selection, index generation/fingerprints, retrieval settings, provider/model choice, and retention state for reliable resume/restore.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/web/session_models.py",
+        "tests/unit/test_session_models.py"
+      ],
+      "context_paths": [
+        "src/brickforge/storage/database.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_session_models.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-001"
+      ],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local [JUDGE_SELECTED: PC3-Kaggle-Brain]",
+      "last_error": null,
+      "completed_at": "2026-11-10T15:32:44.587078",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICK-KB-009",
+      "test_command": "python -m pytest -q tests/unit/test_session_models.py",
+      "context_files": [
+        "src/brickforge/storage/database.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-001"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-010",
+      "title": "Persist and restore knowledge sessions",
+      "description": "Implement create/list/reopen/archive/export/restore operations. Restore prior source selections and knowledge snapshot references without reverting project files; add persistence and lifecycle tests.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/storage/session_repository.py",
+        "src/brickforge/web/session_service.py",
+        "tests/integration/test_session_persistence.py"
+      ],
+      "context_paths": [
+        "src/brickforge/web/session_models.py",
+        "src/brickforge/storage/database.py"
+      ],
+      "verification_command": "python -m pytest -q tests/integration/test_session_persistence.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-009"
+      ],
+      "status": "completed",
+      "attempts": 2,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local [WILD-BRUTE-FORCE]",
+      "last_error": null,
+      "completed_at": "2026-11-10T15:43:03.441579",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-010",
+      "test_command": "python -m pytest -q tests/integration/test_session_persistence.py",
+      "context_files": [
+        "src/brickforge/web/session_models.py",
+        "src/brickforge/storage/database.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-009"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-011",
+      "title": "Persist chat transcripts and replay context",
+      "description": "Persist ordered user/assistant messages, citations, provider/model metadata, and turn status. Support chronological replay and context reconstruction; never persist API keys or raw credentials.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/storage/chat_repository.py",
+        "src/brickforge/web/chat_history.py",
+        "tests/integration/test_chat_history.py"
+      ],
+      "context_paths": [
+        "src/brickforge/web/session_service.py",
+        "src/brickforge/web/chat.py"
+      ],
+      "verification_command": "python -m pytest -q tests/integration/test_chat_history.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-010"
+      ],
+      "status": "completed",
+      "attempts": 2,
+      "last_worker": "PC2-Nitro+PC1-Local [TOURNAMENT_WINNER]",
+      "last_error": null,
+      "completed_at": "2026-11-10T15:50:51.905496",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "medium",
+      "id": "BRICK-KB-011",
+      "test_command": "python -m pytest -q tests/integration/test_chat_history.py",
+      "context_files": [
+        "src/brickforge/web/session_service.py",
+        "src/brickforge/web/chat.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-010"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-012",
+      "title": "Abstract Ollama and OpenAI chat providers",
+      "description": "### Core Objective\n- Abstract the Ollama and OpenAI chat providers behind a unified interface.\n- Ensure the interface supports `/api/chat` for Ollama and `/v1/chat/completions` for OpenAI, including streaming, model discovery, cancellation, timeouts, and normalized errors.\n\n### Target Files & Roles\n- **`src/brickforge/web/providers.py`**: Define the abstract base class for chat providers and concrete implementations for Ollama and OpenAI.\n- **`src/brickforge/web/chat.py`**: Integrate the provider interface into the existing chat engine, ensuring compatibility and functionality.\n- **`tests/unit/test_chat_providers.py`**: Write unit tests to verify the functionality and compliance of the chat providers.\n\n### Critical Technical Invariants\n- **Imports**: Ensure all necessary imports are included, such as `httpx` for HTTP requests and `typing` for type annotations.\n- **Type Signatures**: Define clear type signatures for all methods in the provider interface and implementations.\n- **Mock Setups**: Use `unittest.mock` to simulate HTTP responses for testing purposes.\n- **Environment Rules**: Tests should run locally without external dependencies, using mock data.\n\n### Verification Pass Criteria\n- The verification command `python -m pytest -q tests/unit/test_chat_providers.py` must pass without any errors or failures.\n- All tests in `tests/unit/test_chat_providers.py` must cover the functionality of streaming, model discovery, cancellation, timeouts, and error normalization for both Ollama and OpenAI providers.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/web/providers.py",
+        "src/brickforge/web/chat.py",
+        "tests/unit/test_chat_providers.py"
+      ],
+      "context_paths": [
+        "src/brickforge/web/chat.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_chat_providers.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-009"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": "Self-healed (cycle 2/2): Add the missing test file to the allowed paths and ensure it contains the necessary unit tests for the chat providers.",
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-012",
+      "test_command": "python -m pytest -q tests/unit/test_chat_providers.py",
+      "context_files": [
+        "src/brickforge/web/chat.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-009"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-013",
+      "title": "Expose project and session management APIs",
+      "description": "Add typed FastAPI endpoints to register/list roots, create/resume/archive sessions, retrieve evidence, and read chat history. Enforce local binding and path authorization.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/web/app.py",
+        "src/brickforge/web/session_routes.py",
+        "tests/unit/test_session_api.py"
+      ],
+      "context_paths": [
+        "src/brickforge/web/session_service.py",
+        "src/brickforge/search/project_retrieval.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_session_api.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-008",
+        "BRICK-KB-011"
+      ],
+      "status": "completed",
+      "attempts": 1,
+      "last_worker": "PC3-Kaggle-Brain+PC1-Local [WILD-BRUTE-FORCE]",
+      "last_error": null,
+      "completed_at": "2026-11-10T16:44:35.248364",
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-013",
+      "test_command": "python -m pytest -q tests/unit/test_session_api.py",
+      "context_files": [
+        "src/brickforge/web/session_service.py",
+        "src/brickforge/search/project_retrieval.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-008",
+        "BRICK-KB-011"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-014",
+      "title": "Implement session-aware grounded chat streaming",
+      "description": "Update chat_stream to accept session/turn IDs, retrieve code and documentation evidence, inject bounded citations, persist the completed turn, and emit citations and telemetry as structured SSE events.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/web/chat.py",
+        "tests/unit/test_session_chat_stream.py"
+      ],
+      "context_paths": [
+        "src/brickforge/web/session_service.py",
+        "src/brickforge/search/project_retrieval.py",
+        "src/brickforge/web/providers.py"
+      ],
+      "verification_command": "python -m pytest -q tests/unit/test_session_chat_stream.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-012",
+        "BRICK-KB-013"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-014",
+      "test_command": "python -m pytest -q tests/unit/test_session_chat_stream.py",
+      "context_files": [
+        "src/brickforge/web/session_service.py",
+        "src/brickforge/search/project_retrieval.py",
+        "src/brickforge/web/providers.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-012",
+        "BRICK-KB-013"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-015",
+      "title": "Build project and session selection UI",
+      "description": "**Core Objective**\n- Implement project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator in the UI while maintaining existing catalog and chat streaming behavior.\n- Write an end-to-end test to verify the functionality of the new UI components.\n\n**Target Files & Roles**\n- **src/brickforge/web/templates/index.html**: Modify this file to include the new UI components for project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator.\n- **tests/e2e/test_project_session_ui.py**: Create this file to write an end-to-end test that verifies the functionality of the new UI components.\n\n**Critical Technical Invariants**\n- Ensure that the new UI components do not interfere with the existing catalog and chat streaming behavior.\n- Use appropriate HTML and JavaScript to implement the new UI components.\n- The test file `tests/e2e/test_project_session_ui.py` should import necessary modules from `pytest` and any other required libraries for end-to-end testing.\n- The test should cover all the required features: project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator.\n\n**Verification Pass Criteria**\n- The verification command `python -m pytest -q tests/e2e/test_project_session_ui.py` must pass without any errors.\n- The test should successfully verify the functionality of the new UI components without affecting the existing catalog and chat streaming behavior.\n\n- Previous Failure Root Cause: The verification command expects a test file that does not exist yet and is missing from allowed_paths.\n- Resolution Strategy: Add the missing test file to the allowed paths and ensure the test file is correctly implemented.\n- Actionable Fix Instructions: Create the file 'tests/e2e/test_project_session_ui.py' and write an end-to-end test that verifies the functionality of the new UI components. The test should cover project/folder registration, code/docs toggles, indexing status, create/resume/archive controls, and active-session indicator. Ensure the test imports necessary modules from pytest and any other required libraries for end-to-end testing.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "src/brickforge/web/templates/index.html",
+        "tests/e2e/test_project_session_ui.py"
+      ],
+      "context_paths": [
+        "src/brickforge/web/app.py",
+        "src/brickforge/web/session_routes.py"
+      ],
+      "verification_command": "python -m pytest -q tests/e2e/test_project_session_ui.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 3,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-013"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": "Self-healed (cycle 2/2): Add the missing test file to the allowed paths and ensure the test file is correctly implemented.",
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-015",
+      "test_command": "python -m pytest -q tests/e2e/test_project_session_ui.py",
+      "context_files": [
+        "src/brickforge/web/app.py",
+        "src/brickforge/web/session_routes.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-013"
+      ]
+    },
+    {
+      "task_id": "BRICK-KB-016",
+      "title": "Verify private knowledge lifecycle end to end",
+      "description": "Test folder selection, AST/docs indexing, cited retrieval, session recovery, Ollama chat, OpenAI-compatible provider selection, project isolation, and proof that local-only mode makes no remote calls.",
+      "task_type": "code_implementation",
+      "required_capabilities": [
+        "remote_reasoning",
+        "local_write",
+        "local_test"
+      ],
+      "preferred_executor": "remote_brain_then_local_executor",
+      "allowed_paths": [
+        "tests/e2e/test_private_knowledge_chat.py"
+      ],
+      "context_paths": [
+        "src/brickforge/web/app.py",
+        "src/brickforge/web/chat.py",
+        "src/brickforge/storage/session_repository.py"
+      ],
+      "verification_command": "python -m pytest -q tests/e2e/test_private_knowledge_chat.py",
+      "output_artifact_schema": "PatchSpec",
+      "max_attempts": 4,
+      "failure_policy": "classify_before_retry",
+      "dependency_ids": [
+        "BRICK-KB-014",
+        "BRICK-KB-015"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "last_worker": null,
+      "last_error": null,
+      "completed_at": null,
+      "handoff_warning": null,
+      "failure_history": [],
+      "complexity": "heavy",
+      "id": "BRICK-KB-016",
+      "test_command": "python -m pytest -q tests/e2e/test_private_knowledge_chat.py",
+      "context_files": [
+        "src/brickforge/web/app.py",
+        "src/brickforge/web/chat.py",
+        "src/brickforge/storage/session_repository.py"
+      ],
+      "dependencies": [
+        "BRICK-KB-014",
+        "BRICK-KB-015"
+      ]
+    }
+  ]
+}

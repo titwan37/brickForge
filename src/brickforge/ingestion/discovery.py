@@ -121,6 +121,8 @@ def get_language_hint(filename):
         ".yaml": "yaml",
         ".yml": "yaml",
         ".md": "markdown",
+        ".rst": "restructuredtext",
+        ".txt": "plaintext",
         ".sql": "sql",
         ".sh": "shell",
         ".bash": "shell",

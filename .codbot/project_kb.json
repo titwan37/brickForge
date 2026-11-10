@@ -1,7 +1,7 @@
 {
   "repo_name": "brickForge",
   "repo_path": "C:\\Dev\\brickForge",
-  "scanned_at": "2026-11-10 12:52:44",
+  "scanned_at": "2026-11-10 20:42:21",
   "purpose_summary": "BrickForge: Python-first vertical slice; local-first catalog; SQLite + FTS5 core; optional vector extension; MCP exposure can be implemented as a subsequent integration milestone.",
   "architecture_summary": "**Stack:** AsyncIO / HTTPX, FastAPI, Gradio UI, Pytest, Python, SQLite3 | **Topology:** Next.js / React Application Interface (`src/*`) \u2192 Automated Pytest & UAT Verification Suite (`tests/*`) | **DAG Tasks**: 45/45 completed (100.0%)",
   "tech_stack": [
@@ -12,8 +12,8 @@
     "Python",
     "SQLite3"
   ],
-  "total_files": 150,
-  "total_loc": 18307,
+  "total_files": 177,
+  "total_loc": 19885,
   "modules": [
     {
       "path": "mcp/server.py",
@@ -412,6 +412,17 @@
       "docstring": ""
     },
     {
+      "path": "src/brickforge/ingestion/document_chunker.py",
+      "loc": 71,
+      "classes": [
+        "DocumentChunker"
+      ],
+      "functions": [
+        "chunk_document"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "src/brickforge/ingestion/fingerprints.py",
       "loc": 114,
       "classes": [
@@ -440,6 +451,22 @@
         "is_dir_ignored"
       ],
       "docstring": "Configurable ignore and inclusion rules for file ingestion."
+    },
+    {
+      "path": "src/brickforge/ingestion/models.py",
+      "loc": 47,
+      "classes": [
+        "SourceKind",
+        "SourceRoot",
+        "ProjectWorkspace"
+      ],
+      "functions": [
+        "validate_root_path",
+        "validate_patterns",
+        "validate_name",
+        "validate_source_roots"
+      ],
+      "docstring": ""
     },
     {
       "path": "src/brickforge/ingestion/paths.py",
@@ -484,6 +511,18 @@
         "reconcile_deleted_files"
       ],
       "docstring": "Incremental scan planner for BrickForge."
+    },
+    {
+      "path": "src/brickforge/ingestion/registry.py",
+      "loc": 24,
+      "classes": [
+        "ProjectRegistry"
+      ],
+      "functions": [
+        "validate_project_name",
+        "validate_roots"
+      ],
+      "docstring": ""
     },
     {
       "path": "src/brickforge/models/repository.py",
@@ -620,6 +659,19 @@
       "docstring": ""
     },
     {
+      "path": "src/brickforge/search/document_search.py",
+      "loc": 103,
+      "classes": [
+        "DocumentSearchService"
+      ],
+      "functions": [
+        "search",
+        "upsert_chunk",
+        "delete_chunk"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "src/brickforge/search/fts.py",
       "loc": 198,
       "classes": [
@@ -634,6 +686,18 @@
         "optimize_index"
       ],
       "docstring": "SQLite FTS5 lexical and exact search engine for code bricks."
+    },
+    {
+      "path": "src/brickforge/search/project_retrieval.py",
+      "loc": 63,
+      "classes": [
+        "ProjectEvidence",
+        "ProjectRetrievalService"
+      ],
+      "functions": [
+        "search"
+      ],
+      "docstring": ""
     },
     {
       "path": "src/brickforge/search/service.py",
@@ -669,6 +733,19 @@
       "docstring": "Persistence repository for source files, code bricks, and their dependency edges."
     },
     {
+      "path": "src/brickforge/storage/chat_repository.py",
+      "loc": 41,
+      "classes": [
+        "ChatMessage",
+        "ChatRepository"
+      ],
+      "functions": [
+        "add_message",
+        "get_messages"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "src/brickforge/storage/database.py",
       "loc": 171,
       "classes": [
@@ -687,11 +764,65 @@
       "docstring": "SQLite connection and migration manager for BrickForge."
     },
     {
+      "path": "src/brickforge/storage/document_models.py",
+      "loc": 38,
+      "classes": [
+        "SourceKind",
+        "Citation",
+        "DocumentSource",
+        "DocumentChunk"
+      ],
+      "functions": [
+        "ensure_citations"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "src/brickforge/storage/document_repository.py",
+      "loc": 78,
+      "classes": [
+        "DocumentRepository"
+      ],
+      "functions": [
+        "add_document_source",
+        "add_document_chunk",
+        "get_document_source",
+        "get_document_chunk"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "src/brickforge/storage/migrations.py",
+      "loc": 36,
+      "classes": [
+        "Migration"
+      ],
+      "functions": [],
+      "docstring": ""
+    },
+    {
       "path": "src/brickforge/storage/repositories.py",
       "loc": 8,
       "classes": [],
       "functions": [],
       "docstring": "Storage repository entry point and interfaces for BrickForge."
+    },
+    {
+      "path": "src/brickforge/storage/session_repository.py",
+      "loc": 249,
+      "classes": [
+        "SessionRepository"
+      ],
+      "functions": [
+        "connection",
+        "create_session",
+        "list_sessions",
+        "reopen_session",
+        "archive_session",
+        "export_session",
+        "restore_session"
+      ],
+      "docstring": ""
     },
     {
       "path": "src/brickforge/storage/__init__.py",
@@ -788,7 +919,7 @@
     },
     {
       "path": "src/brickforge/web/app.py",
-      "loc": 987,
+      "loc": 988,
       "classes": [
         "ChatRequest"
       ],
@@ -827,6 +958,18 @@
       "docstring": "Knowledgeable Conversational Chat Engine grounded on BrickForge Code Catalog."
     },
     {
+      "path": "src/brickforge/web/chat_history.py",
+      "loc": 15,
+      "classes": [
+        "ChatHistoryService"
+      ],
+      "functions": [
+        "add_message",
+        "get_chat_history"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "src/brickforge/web/initiatives.py",
       "loc": 357,
       "classes": [],
@@ -854,6 +997,58 @@
         "extract_heavy_source_telemetry"
       ],
       "docstring": "Project-level aggregation and AI intent synthesis for BrickForge Catalog."
+    },
+    {
+      "path": "src/brickforge/web/session_models.py",
+      "loc": 66,
+      "classes": [
+        "SourceKind",
+        "ProviderKind",
+        "RetentionState",
+        "SessionSource",
+        "Snapshot",
+        "Event",
+        "Session"
+      ],
+      "functions": [
+        "validate_fingerprint",
+        "validate_retrieval_settings"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "src/brickforge/web/session_routes.py",
+      "loc": 76,
+      "classes": [],
+      "functions": [
+        "get_session_service",
+        "get_project_retrieval_service",
+        "create_session",
+        "list_sessions",
+        "reopen_session",
+        "archive_session",
+        "export_session",
+        "restore_session",
+        "retrieve_evidence",
+        "read_chat_history"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "src/brickforge/web/session_service.py",
+      "loc": 26,
+      "classes": [
+        "SessionService"
+      ],
+      "functions": [
+        "create_session",
+        "list_sessions",
+        "reopen_session",
+        "archive_session",
+        "export_session",
+        "restore_session"
+      ],
+      "docstring": ""
     },
     {
       "path": "src/brickforge/web/__init__.py",
@@ -906,6 +1101,17 @@
       "docstring": "Integration tests for bundle unit-test harness execution."
     },
     {
+      "path": "tests/integration/test_chat_history.py",
+      "loc": 23,
+      "classes": [],
+      "functions": [
+        "chat_repo",
+        "chat_service",
+        "test_add_and_get_message"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "tests/integration/test_core_schema.py",
       "loc": 241,
       "classes": [
@@ -937,6 +1143,34 @@
         "test_vector_extension_graceful_failure"
       ],
       "docstring": "Integration tests for SQLite connection and migration manager."
+    },
+    {
+      "path": "tests/integration/test_document_repository.py",
+      "loc": 102,
+      "classes": [
+        "TestDocumentRepository"
+      ],
+      "functions": [
+        "setUp",
+        "test_add_document_source",
+        "test_add_document_chunk",
+        "test_get_document_source",
+        "test_get_document_chunk"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "tests/integration/test_document_search.py",
+      "loc": 51,
+      "classes": [
+        "TestDocumentSearchService"
+      ],
+      "functions": [
+        "test_search",
+        "test_upsert_chunk",
+        "test_delete_chunk"
+      ],
+      "docstring": ""
     },
     {
       "path": "tests/integration/test_extraction_bundle.py",
@@ -985,6 +1219,20 @@
         "test_validate_multi_file_bundle"
       ],
       "docstring": "Integration tests for Python syntax and compileall validation."
+    },
+    {
+      "path": "tests/integration/test_session_persistence.py",
+      "loc": 94,
+      "classes": [],
+      "functions": [
+        "test_create_session",
+        "test_list_sessions",
+        "test_reopen_session",
+        "test_archive_session",
+        "test_export_session",
+        "test_restore_session"
+      ],
+      "docstring": ""
     },
     {
       "path": "tests/performance/check_file_langs.py",
@@ -1323,6 +1571,33 @@
       "docstring": ""
     },
     {
+      "path": "tests/unit/test_document_chunker.py",
+      "loc": 46,
+      "classes": [
+        "TestDocumentChunker"
+      ],
+      "functions": [
+        "setUp",
+        "test_chunk_document",
+        "test_large_chunk_splitting",
+        "test_no_headings"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "tests/unit/test_document_models.py",
+      "loc": 32,
+      "classes": [
+        "TestDocumentSource",
+        "TestDocumentChunk"
+      ],
+      "functions": [
+        "test_document_source_model",
+        "test_document_chunk_model"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "tests/unit/test_extraction_manifest.py",
       "loc": 96,
       "classes": [],
@@ -1405,6 +1680,17 @@
       "docstring": "Unit tests for repository-specific import normalization and rewriting."
     },
     {
+      "path": "tests/unit/test_ingestion_models.py",
+      "loc": 48,
+      "classes": [],
+      "functions": [
+        "test_source_kind_enum",
+        "test_source_root_model",
+        "test_project_workspace_model"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "tests/unit/test_models.py",
       "loc": 128,
       "classes": [],
@@ -1442,6 +1728,26 @@
       "functions": [
         "test_safe_path_canonicalization",
         "test_safe_path_canonicalization_unsafe_root"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "tests/unit/test_project_registry.py",
+      "loc": 22,
+      "classes": [
+        "TestProjectRegistry"
+      ],
+      "functions": [
+        "test_project_registry_creation"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "tests/unit/test_project_retrieval.py",
+      "loc": 56,
+      "classes": [],
+      "functions": [
+        "test_search"
       ],
       "docstring": ""
     },
@@ -1554,6 +1860,45 @@
       "docstring": "Unit tests for filtered catalog search service."
     },
     {
+      "path": "tests/unit/test_session_api.py",
+      "loc": 127,
+      "classes": [
+        "MockSessionService",
+        "MockProjectRetrievalService",
+        "MockCatalogSearchService",
+        "MockDocumentSearchService",
+        "ProjectEvidence",
+        "CatalogQuery"
+      ],
+      "functions": [
+        "test_create_session",
+        "test_list_sessions",
+        "test_reopen_session",
+        "test_archive_session",
+        "test_export_session",
+        "test_restore_session",
+        "test_retrieve_evidence",
+        "test_read_chat_history",
+        "create_session",
+        "list_sessions"
+      ],
+      "docstring": ""
+    },
+    {
+      "path": "tests/unit/test_session_models.py",
+      "loc": 43,
+      "classes": [
+        "TestSessionModels"
+      ],
+      "functions": [
+        "test_session_source_creation",
+        "test_snapshot_creation",
+        "test_event_creation",
+        "test_session_creation"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "tests/unit/test_symbol_index.py",
       "loc": 129,
       "classes": [],
@@ -1646,8 +1991,12 @@
     "CatalogQuery",
     "CatalogSearchHit",
     "CatalogSearchService",
+    "ChatHistoryService",
+    "ChatMessage",
+    "ChatRepository",
     "ChatRequest",
     "CheckResult",
+    "Citation",
     "CompositionConstraints",
     "CompositionContext",
     "CompositionContextBuilder",
@@ -1665,6 +2014,12 @@
     "DependencySummary",
     "DiagnosticCollector",
     "DiagnosticReport",
+    "DocumentChunk",
+    "DocumentChunker",
+    "DocumentRepository",
+    "DocumentSearchService",
+    "DocumentSource",
+    "Event",
     "Exclusion",
     "ExtractedDependency",
     "ExtractedSymbol",
@@ -1688,17 +2043,27 @@
     "IsolatedValidationRunner",
     "ManifestBrickItem",
     "ManifestGenerator",
+    "Migration",
+    "MockCatalogSearchService",
     "MockCompositionProvider",
     "MockCrossLanguageAdapter",
+    "MockDocumentSearchService",
+    "MockProjectRetrievalService",
+    "MockSessionService",
     "MultiLanguageSymbolExtractor",
     "PackageLicenseInfo",
     "PackageRequirement",
     "ParseDiagnostic",
     "ParsedFileResult",
     "PlannedFileAction",
+    "ProjectEvidence",
+    "ProjectRegistry",
+    "ProjectRetrievalService",
+    "ProjectWorkspace",
     "ProposalApprovalWorkflow",
     "ProposalArtifact",
     "ProposalResult",
+    "ProviderKind",
     "ProviderMetadata",
     "PythonAdapter",
     "PythonBundleValidator",
@@ -1712,77 +2077,57 @@
     "Repository",
     "RepositoryRegistry",
     "RepositorySymbolIndex",
+    "RetentionState",
     "RewriteResult",
     "ScanError",
     "ScanPlan",
     "ScanPlanner",
     "ScanRun",
     "ScanStatus",
+    "Session",
+    "SessionRepository",
+    "SessionService",
+    "SessionSource",
+    "Snapshot",
     "SourceBundler",
     "SourceFileMetadata",
+    "SourceKind",
     "SourceLocation",
     "SourceOriginInfo",
+    "SourceRoot",
     "SymbolLocation",
     "TargetEnvironment",
     "TestBrickForgeConfig",
     "TestCoreSchema",
     "TestDatabaseManager",
     "TestDiscovery",
+    "TestDocumentChunk",
+    "TestDocumentChunker",
+    "TestDocumentRepository",
+    "TestDocumentSearchService",
+    "TestDocumentSource",
     "TestFingerprints",
     "TestGetConfig",
     "TestIgnoreRules",
     "TestImportAnalysis",
+    "TestProjectRegistry",
     "TestPythonAdapter",
     "TestPythonClassExtraction",
     "TestPythonFunctionExtraction",
     "TestRepositoryRegistry",
     "TestSafePathCanonicalization",
     "TestScanPlanner",
+    "TestSessionModels",
     "TestTreeSitterRuntime",
     "TraversalResult",
     "TreeSitterRuntime",
     "ValidationCheckEntry",
     "ValidationReport",
     "_AstDependencyVisitor",
-    "accept",
-    "adapt",
-    "adapter",
-    "add_error",
-    "add_info",
-    "add_ranked_rows",
-    "add_rows",
-    "add_warning",
-    "apply_migrations",
-    "are_exact_duplicates",
-    "are_semantic_duplicates",
-    "as_dict",
-    "as_text",
-    "benchmark_env",
-    "build_context",
-    "build_system_prompt",
-    "bundle_brick",
-    "bundle_fixture",
-    "can_extract",
-    "can_handle",
-    "chat",
-    "chat_conversation",
-    "chat_conversation_stream",
-    "chat_fixture",
-    "chat_stream",
-    "check_requirements",
-    "check_version_satisfaction",
-    "classify_project_initiative",
-    "collect_error_nodes",
-    "collect_project_context",
-    "compute_brick_id",
-    "compute_bytes_hash",
-    "compute_content_hash",
-    "compute_file_id",
-    "compute_semantic_hash",
-    "connection"
+    "accept"
   ],
   "weaknesses": [
-    "**Test Coverage Gap**: 23 module(s) lack dedicated unit test suites (e.g. `mcp/server.py, scripts/search_repository.py, scripts/serve_catalog.py`).",
+    "**Test Coverage Gap**: 27 module(s) lack dedicated unit test suites (e.g. `mcp/server.py, scripts/search_repository.py, scripts/serve_catalog.py`).",
     "**Silent Exception Swallowing**: Broad `except Exception:` blocks found in `scripts/serve_catalog.py, scripts/summarize_projects.py, scripts/sync_repositories.py`.",
     "**High Module Complexity**: `src/brickforge/web/projects.py` has `1192` lines of code, increasing maintenance & context overhead."
   ],
