@@ -1,7 +1,7 @@
 {
   "repo_name": "brickForge",
   "repo_path": "C:\\Dev\\brickForge",
-  "scanned_at": "2026-11-10 20:42:21",
+  "scanned_at": "2026-11-10 21:04:49",
   "purpose_summary": "BrickForge: Python-first vertical slice; local-first catalog; SQLite + FTS5 core; optional vector extension; MCP exposure can be implemented as a subsequent integration milestone.",
   "architecture_summary": "**Stack:** AsyncIO / HTTPX, FastAPI, Gradio UI, Pytest, Python, SQLite3 | **Topology:** Next.js / React Application Interface (`src/*`) \u2192 Automated Pytest & UAT Verification Suite (`tests/*`) | **DAG Tasks**: 45/45 completed (100.0%)",
   "tech_stack": [
@@ -12,8 +12,8 @@
     "Python",
     "SQLite3"
   ],
-  "total_files": 177,
-  "total_loc": 19885,
+  "total_files": 179,
+  "total_loc": 20143,
   "modules": [
     {
       "path": "mcp/server.py",
@@ -403,7 +403,7 @@
     },
     {
       "path": "src/brickforge/ingestion/discovery.py",
-      "loc": 130,
+      "loc": 132,
       "classes": [],
       "functions": [
         "walk_registered_roots",
@@ -441,7 +441,7 @@
     },
     {
       "path": "src/brickforge/ingestion/ignore_rules.py",
-      "loc": 181,
+      "loc": 270,
       "classes": [
         "IgnoreRules"
       ],
@@ -997,6 +997,28 @@
         "extract_heavy_source_telemetry"
       ],
       "docstring": "Project-level aggregation and AI intent synthesis for BrickForge Catalog."
+    },
+    {
+      "path": "src/brickforge/web/providers.py",
+      "loc": 132,
+      "classes": [
+        "ChatProvider",
+        "OllamaProvider",
+        "OpenAIProvider"
+      ],
+      "functions": [
+        "chat",
+        "chat_stream",
+        "get_available_models",
+        "cancel_request",
+        "set_timeout",
+        "chat",
+        "chat_stream",
+        "get_available_models",
+        "cancel_request",
+        "set_timeout"
+      ],
+      "docstring": ""
     },
     {
       "path": "src/brickforge/web/session_models.py",
@@ -1585,6 +1607,15 @@
       "docstring": ""
     },
     {
+      "path": "tests/unit/test_document_discovery.py",
+      "loc": 35,
+      "classes": [],
+      "functions": [
+        "test_document_discovery"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "tests/unit/test_document_models.py",
       "loc": 32,
       "classes": [
@@ -1993,6 +2024,7 @@
     "CatalogSearchService",
     "ChatHistoryService",
     "ChatMessage",
+    "ChatProvider",
     "ChatRepository",
     "ChatRequest",
     "CheckResult",
@@ -2051,6 +2083,8 @@
     "MockProjectRetrievalService",
     "MockSessionService",
     "MultiLanguageSymbolExtractor",
+    "OllamaProvider",
+    "OpenAIProvider",
     "PackageLicenseInfo",
     "PackageRequirement",
     "ParseDiagnostic",
@@ -2121,13 +2155,10 @@
     "TestTreeSitterRuntime",
     "TraversalResult",
     "TreeSitterRuntime",
-    "ValidationCheckEntry",
-    "ValidationReport",
-    "_AstDependencyVisitor",
-    "accept"
+    "ValidationCheckEntry"
   ],
   "weaknesses": [
-    "**Test Coverage Gap**: 27 module(s) lack dedicated unit test suites (e.g. `mcp/server.py, scripts/search_repository.py, scripts/serve_catalog.py`).",
+    "**Test Coverage Gap**: 28 module(s) lack dedicated unit test suites (e.g. `mcp/server.py, scripts/search_repository.py, scripts/serve_catalog.py`).",
     "**Silent Exception Swallowing**: Broad `except Exception:` blocks found in `scripts/serve_catalog.py, scripts/summarize_projects.py, scripts/sync_repositories.py`.",
     "**High Module Complexity**: `src/brickforge/web/projects.py` has `1192` lines of code, increasing maintenance & context overhead."
   ],

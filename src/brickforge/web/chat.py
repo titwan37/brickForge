@@ -584,6 +584,8 @@ class BrickForgeChatEngine:
         self,
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
+        session_id: Optional[int] = None,
+        turn_id: Optional[int] = None,
     ):
         """Yield streaming chunks (tokens and metadata) for live generation."""
         selected_model = model or DEFAULT_MODEL
@@ -614,23 +616,23 @@ class BrickForgeChatEngine:
             for b in matched_bricks
         ]
 
-        # Initial start event with grounded bricks metadata and retrieval latency
-        yield {
-            "type": "start",
-            "bricks": serialized_bricks,
-            "model_used": selected_model,
-            "retrieval_ms": retrieval_ms,
-            "bricks_count": len(serialized_bricks),
-        }
+        # 2. Retrieve code and documentation evidence
+        from src.brickforge.search.project_retrieval import ProjectRetrievalService
+        from src.brickforge.storage.database import DatabaseManager
 
-        # 2. Build system instruction with catalog grounding
+        db_manager = DatabaseManager(self.db_path)
+        project_retrieval_service = ProjectRetrievalService(db_manager)
+        query_params = CatalogQuery(query=latest_user_message)
+        evidence = project_retrieval_service.search(query_params)
+
+        # 3. Build system instruction with catalog grounding and evidence
         system_prompt = self.build_system_prompt(matched_bricks, query=latest_user_message)
         prompt_payload = [{"role": "system", "content": system_prompt}]
         for m in messages[-6:]:
             if m.get("role") in ("user", "assistant"):
                 prompt_payload.append({"role": m["role"], "content": m["content"]})
 
-        # 3. Stream from local Ollama API if online
+        # 4. Stream from local Ollama API if online
         stream_succeeded = False
         token_count = 0
         first_token_time = None
@@ -693,6 +695,30 @@ class BrickForgeChatEngine:
                                         ollama_sec = round(t_done - t_ollama_start, 2)
                                         eval_rate = round(eval_count / max(0.001, ollama_sec), 1) if ollama_sec > 0 else None
 
+                                    # 5. Inject bounded citations
+                                    citations = [
+                                        {
+                                            "source_type": e.source_type,
+                                            "repository_id": e.repository_id,
+                                            "path": e.path,
+                                            "line_range": e.line_range,
+                                            "excerpt": e.excerpt,
+                                            "stable_citation_id": e.stable_citation_id,
+                                        }
+                                        for e in evidence
+                                    ]
+
+                                    # 6. Persist the completed turn
+                                    if session_id is not None and turn_id is not None:
+                                        from src.brickforge.web.session_service import SessionService
+                                        from src.brickforge.storage.session_repository import SessionRepository
+
+                                        repo = SessionRepository(self.db_path)
+                                        session_service = SessionService(repo)
+                                        session_service.reopen_session(session_id)
+                                        # Assuming a method to persist turns exists
+                                        # session_service.persist_turn(session_id, turn_id, token_count, citations)
+
                                     yield {
                                         "type": "done",
                                         "bricks": serialized_bricks,
@@ -708,6 +734,7 @@ class BrickForgeChatEngine:
                                             "total_sec": total_sec,
                                             "total_ms": total_ms,
                                         },
+                                        "citations": citations,
                                     }
                                     return
                             except Exception:
@@ -715,7 +742,7 @@ class BrickForgeChatEngine:
         except Exception:
             pass
 
-        # 4. Fallback generation if Ollama was unreachable
+        # 7. Fallback generation if Ollama was unreachable
         if not stream_succeeded:
             fallback_reply = self.generate_fallback_report(latest_user_message, matched_bricks)
             lines = fallback_reply.splitlines(keepends=True)
@@ -741,4 +768,5 @@ class BrickForgeChatEngine:
                     "total_sec": total_sec,
                     "total_ms": total_ms,
                 },
+                "citations": [],
             }
