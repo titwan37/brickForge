@@ -14,8 +14,8 @@ import httpx
 from brickforge.web.initiatives import INITIATIVES_REGISTRY
 
 DEFAULT_OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
-DEFAULT_MODEL = "qwen2.5-coder:7b"
 SERVER_DEFAULT_MODEL = "qwen3:1.7b"
+DEFAULT_MODEL = "qwen2.5-coder:7b"
 FALLBACK_MODELS = [
     "qwen2.5-coder:7b",
     "llama3.2:3b",
@@ -622,6 +622,8 @@ class BrickForgeChatEngine:
 
         db_manager = DatabaseManager(self.db_path)
         project_retrieval_service = ProjectRetrievalService(db_manager)
+
+        # pyrefly: ignore[unknown-name]
         query_params = CatalogQuery(query=latest_user_message)
         evidence = project_retrieval_service.search(query_params)
 

@@ -1,7 +1,7 @@
 {
   "repo_name": "brickForge",
   "repo_path": "C:\\Dev\\brickForge",
-  "scanned_at": "2026-11-10 21:04:49",
+  "scanned_at": "2026-11-11 16:55:21",
   "purpose_summary": "BrickForge: Python-first vertical slice; local-first catalog; SQLite + FTS5 core; optional vector extension; MCP exposure can be implemented as a subsequent integration milestone.",
   "architecture_summary": "**Stack:** AsyncIO / HTTPX, FastAPI, Gradio UI, Pytest, Python, SQLite3 | **Topology:** Next.js / React Application Interface (`src/*`) \u2192 Automated Pytest & UAT Verification Suite (`tests/*`) | **DAG Tasks**: 45/45 completed (100.0%)",
   "tech_stack": [
@@ -12,8 +12,8 @@
     "Python",
     "SQLite3"
   ],
-  "total_files": 179,
-  "total_loc": 20143,
+  "total_files": 182,
+  "total_loc": 20255,
   "modules": [
     {
       "path": "mcp/server.py",
@@ -939,7 +939,7 @@
     },
     {
       "path": "src/brickforge/web/chat.py",
-      "loc": 744,
+      "loc": 774,
       "classes": [
         "BrickForgeChatEngine"
       ],
@@ -1088,6 +1088,17 @@
         "test_incremental_scan_lifecycle"
       ],
       "docstring": "End-to-end tests for incremental re-indexing, modification updates, and deletion reconciliation."
+    },
+    {
+      "path": "tests/e2e/test_private_knowledge_chat.py",
+      "loc": 17,
+      "classes": [
+        "TestPrivateKnowledgeChat"
+      ],
+      "functions": [
+        "test_chat_with_local_model"
+      ],
+      "docstring": ""
     },
     {
       "path": "tests/e2e/test_python_vertical_slice.py",
@@ -1916,6 +1927,18 @@
       "docstring": ""
     },
     {
+      "path": "tests/unit/test_session_chat_stream.py",
+      "loc": 65,
+      "classes": [
+        "TestSessionChatStream"
+      ],
+      "functions": [
+        "test_chat_stream_with_session_and_turn",
+        "test_chat_stream_fallback"
+      ],
+      "docstring": ""
+    },
+    {
       "path": "tests/unit/test_session_models.py",
       "loc": 43,
       "classes": [
@@ -2144,6 +2167,7 @@
     "TestGetConfig",
     "TestIgnoreRules",
     "TestImportAnalysis",
+    "TestPrivateKnowledgeChat",
     "TestProjectRegistry",
     "TestPythonAdapter",
     "TestPythonClassExtraction",
@@ -2151,11 +2175,10 @@
     "TestRepositoryRegistry",
     "TestSafePathCanonicalization",
     "TestScanPlanner",
+    "TestSessionChatStream",
     "TestSessionModels",
     "TestTreeSitterRuntime",
-    "TraversalResult",
-    "TreeSitterRuntime",
-    "ValidationCheckEntry"
+    "TraversalResult"
   ],
   "weaknesses": [
     "**Test Coverage Gap**: 28 module(s) lack dedicated unit test suites (e.g. `mcp/server.py, scripts/search_repository.py, scripts/serve_catalog.py`).",
