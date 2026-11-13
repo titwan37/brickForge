@@ -1157,11 +1157,11 @@
   <!-- =================================================== -->
   <main 
     x-show="currentView === 'chat'" 
-    class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4 min-h-0 lg:h-[calc(100vh-4.25rem)]"
+    class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-3 min-h-0 h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-hidden"
     x-cloak
   >
-    <!-- Top Action / Breadcrumbs Header for Tab View -->
-    <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <!-- Top Action / Breadcrumbs Header for Tab View (Sticky / Rigid Toolbar) -->
+    <div id="chatHeader" class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 shrink-0">
           <i data-lucide="bot" class="w-5 h-5"></i>
@@ -1545,7 +1545,7 @@
         </div>
 
         <!-- Chat Input Form in Tab View (Pinned to Bottom of Vertical Height) -->
-        <div class="p-4 bg-white border-t border-slate-200 shrink-0 space-y-2 mt-auto">
+        <div id="chatInputArea" class="p-4 bg-white border-t border-slate-200 shrink-0 space-y-2 mt-auto">
           <div class="relative flex items-center">
             <textarea 
               id="tabChatInputArea"
