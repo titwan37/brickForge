@@ -983,6 +983,5 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
 
         return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-    app.include_router(router, prefix="/brickforge/api", tags=["brickforge"])
     return app
 
