@@ -2833,6 +2833,12 @@
         },
 
         async fetchBricks(page = 1) {
+          // When a search query is typed, automatically exit the macro initiatives view
+          // so search results (projects/bricks) are immediately visible.
+          if (this.searchQuery && this.searchQuery.trim() && this.catalogMode === 'initiatives') {
+            this.catalogMode = this.activeKind === 'project' ? 'projects' : 'bricks';
+          }
+
           this.isLoading = true;
           try {
             const params = new URLSearchParams({
@@ -2895,21 +2901,35 @@
 
         selectTopic(topicName) {
           this.activeTopic = topicName;
+          if (this.catalogMode === 'initiatives') {
+            this.catalogMode = this.activeKind === 'project' ? 'projects' : 'bricks';
+          }
           this.fetchBricks(1);
         },
 
         selectKind(kindName) {
           this.activeKind = kindName;
+          if (kindName === 'project') {
+            this.catalogMode = 'projects';
+          } else if (this.catalogMode === 'initiatives') {
+            this.catalogMode = 'bricks';
+          }
           this.fetchBricks(1);
         },
 
         selectLanguage(langCode) {
           this.activeLanguage = langCode;
+          if (this.catalogMode === 'initiatives') {
+            this.catalogMode = this.activeKind === 'project' ? 'projects' : 'bricks';
+          }
           this.fetchBricks(1);
         },
 
         selectRepo(repoId) {
           this.activeRepo = repoId;
+          if (this.catalogMode === 'initiatives') {
+            this.catalogMode = this.activeKind === 'project' ? 'projects' : 'bricks';
+          }
           this.fetchBricks(1);
         },
 
@@ -2937,6 +2957,7 @@
           this.activeLanguage = 'all';
           this.activeInitiative = 'all';
           this.sortOrder = 'portability_desc';
+          this.catalogMode = 'initiatives';
           this.fetchBricks(1);
         },
 
