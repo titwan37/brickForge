@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import patch
 
-from src.brickforge.ingestion.document_chunker import DocumentChunker
-from src.brickforge.storage.document_models import DocumentSource, Citation
+from brickforge.ingestion.document_chunker import DocumentChunker
+from brickforge.storage.document_models import DocumentSource, Citation
 
 class TestDocumentChunker(TestCase):
 

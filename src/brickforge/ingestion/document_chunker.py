@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from pydantic import BaseModel, Field
 
-from src.brickforge.storage.document_models import DocumentChunk, DocumentSource
+from brickforge.storage.document_models import DocumentChunk, DocumentSource
 
 class DocumentChunker(BaseModel):
     max_chunk_size: int = Field(default=1000, description="Maximum size of a chunk in characters")

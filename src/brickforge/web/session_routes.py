@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel
 from typing import List, Optional
 
-from src.brickforge.web.session_service import SessionService
-from src.brickforge.web.session_models import Session, RetentionState, SessionCreate, SessionExport
-from src.brickforge.storage.session_repository import SessionRepository
-from src.brickforge.search.project_retrieval import ProjectRetrievalService
-from src.brickforge.storage.database import DatabaseManager
+from brickforge.web.session_service import SessionService
+from brickforge.web.session_models import Session, RetentionState, SessionCreate, SessionExport
+from brickforge.storage.session_repository import SessionRepository
+from brickforge.search.project_retrieval import ProjectRetrievalService
+from brickforge.storage.database import DatabaseManager
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 

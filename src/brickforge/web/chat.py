@@ -616,16 +616,28 @@ class BrickForgeChatEngine:
             for b in matched_bricks
         ]
 
-        # 2. Retrieve code and documentation evidence
-        from src.brickforge.search.project_retrieval import ProjectRetrievalService
-        from src.brickforge.storage.database import DatabaseManager
+        # Initial start event with grounded bricks metadata and retrieval latency
+        yield {
+            "type": "start",
+            "bricks": serialized_bricks,
+            "model_used": selected_model,
+            "retrieval_ms": retrieval_ms,
+            "bricks_count": len(serialized_bricks),
+        }
 
-        db_manager = DatabaseManager(self.db_path)
-        project_retrieval_service = ProjectRetrievalService(db_manager)
+        # 2. Retrieve code and documentation evidence if available
+        evidence = []
+        try:
+            from brickforge.search.project_retrieval import ProjectRetrievalService
+            from brickforge.storage.database import DatabaseManager
+            from brickforge.search.service import CatalogQuery
 
-        # pyrefly: ignore[unknown-name]
-        query_params = CatalogQuery(query=latest_user_message)
-        evidence = project_retrieval_service.search(query_params)
+            db_manager = DatabaseManager(self.db_path)
+            project_retrieval_service = ProjectRetrievalService(db_manager)
+            query_params = CatalogQuery(query=latest_user_message)
+            evidence = project_retrieval_service.search(query_params)
+        except Exception:
+            evidence = []
 
         # 3. Build system instruction with catalog grounding and evidence
         system_prompt = self.build_system_prompt(matched_bricks, query=latest_user_message)
@@ -712,8 +724,8 @@ class BrickForgeChatEngine:
 
                                     # 6. Persist the completed turn
                                     if session_id is not None and turn_id is not None:
-                                        from src.brickforge.web.session_service import SessionService
-                                        from src.brickforge.storage.session_repository import SessionRepository
+                                        from brickforge.web.session_service import SessionService
+                                        from brickforge.storage.session_repository import SessionRepository
 
                                         repo = SessionRepository(self.db_path)
                                         session_service = SessionService(repo)

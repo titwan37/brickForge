@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from src.brickforge.storage.document_models import Citation, DocumentSource, DocumentChunk
+from brickforge.storage.document_models import Citation, DocumentSource, DocumentChunk
 
 class TestDocumentSource(unittest.TestCase):
     def test_document_source_model(self):

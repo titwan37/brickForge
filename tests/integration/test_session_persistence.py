@@ -2,9 +2,9 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import datetime
 
-from src.brickforge.storage.session_repository import SessionRepository
-from src.brickforge.web.session_service import SessionService
-from src.brickforge.web.session_models import Session, SessionSource, Snapshot, Event, RetentionState, SourceKind, ProviderKind
+from brickforge.storage.session_repository import SessionRepository
+from brickforge.web.session_service import SessionService
+from brickforge.web.session_models import Session, SessionSource, Snapshot, Event, RetentionState, SourceKind, ProviderKind
 
 def test_create_session():
     repo = SessionRepository(db_path=Path("data/test_brickforge.db"))

@@ -1,8 +1,8 @@
 from unittest.mock import patch
 
-from src.brickforge.storage.database import DatabaseManager
-from src.brickforge.search.document_search import DocumentSearchService
-from src.brickforge.storage.document_models import DocumentChunk
+from brickforge.storage.database import DatabaseManager
+from brickforge.search.document_search import DocumentSearchService
+from brickforge.storage.document_models import DocumentChunk
 
 class TestDocumentSearchService:
     @patch('src.brickforge.storage.database.DatabaseManager.create_connection')

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from src.brickforge.storage.chat_repository import ChatRepository
-from src.brickforge.web.chat_history import ChatHistoryService
+from brickforge.storage.chat_repository import ChatRepository
+from brickforge.web.chat_history import ChatHistoryService
 
 @pytest.fixture
 def chat_repo():

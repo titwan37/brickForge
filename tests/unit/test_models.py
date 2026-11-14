@@ -11,8 +11,8 @@ try:
         ScanError,
     )
 except ImportError:
-    from src.brickforge.models.repository import Repository
-    from src.brickforge.models.scan import (
+    from brickforge.models.repository import Repository
+    from brickforge.models.scan import (
         ScanRun,
         ScanStatus,
         SourceFileMetadata,

@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-from src.brickforge.web.session_models import Session, SessionSource, Snapshot, Event, RetentionState
+from brickforge.web.session_models import Session, SessionSource, Snapshot, Event, RetentionState
 
 class SessionRepository:
     def __init__(self, db_path: Path = Path("data/brickforge.db")):

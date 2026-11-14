@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from src.brickforge.web.chat import BrickForgeChatEngine
-from src.brickforge.search.project_retrieval import ProjectRetrievalService
-from src.brickforge.storage.database import DatabaseManager
-from src.brickforge.web.session_service import SessionService
-from src.brickforge.storage.session_repository import SessionRepository
+from brickforge.web.chat import BrickForgeChatEngine
+from brickforge.search.project_retrieval import ProjectRetrievalService
+from brickforge.storage.database import DatabaseManager
+from brickforge.web.session_service import SessionService
+from brickforge.storage.session_repository import SessionRepository
 
 class TestSessionChatStream(unittest.TestCase):
     @patch.object(BrickForgeChatEngine, 'get_db_connection', return_value=MagicMock())

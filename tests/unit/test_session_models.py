@@ -1,5 +1,5 @@
 import unittest
-from src.brickforge.web.session_models import Session, SessionSource, Snapshot, Event, SourceKind, ProviderKind, RetentionState
+from brickforge.web.session_models import Session, SessionSource, Snapshot, Event, SourceKind, ProviderKind, RetentionState
 
 class TestSessionModels(unittest.TestCase):
 

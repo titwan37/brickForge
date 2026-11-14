@@ -1,6 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field, validator
-from src.brickforge.ingestion.models import SourceRoot
+from brickforge.ingestion.models import SourceRoot
 
 class ProjectRegistry(BaseModel):
     id: str

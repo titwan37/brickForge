@@ -3,8 +3,8 @@ from __future__ import annotations
 import sqlite3
 from typing import List, Optional
 
-from src.brickforge.storage.database import DatabaseManager
-from src.brickforge.storage.document_models import DocumentChunk
+from brickforge.storage.database import DatabaseManager
+from brickforge.storage.document_models import DocumentChunk
 
 class DocumentSearchService:
     def __init__(self, db_manager: DatabaseManager):

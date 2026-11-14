@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Dict
 
-from src.brickforge.storage.chat_repository import ChatRepository
+from brickforge.storage.chat_repository import ChatRepository
 
 class ChatHistoryService:
     def __init__(self, repo: ChatRepository):

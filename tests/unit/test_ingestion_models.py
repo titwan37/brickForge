@@ -1,5 +1,5 @@
 import pytest
-from src.brickforge.ingestion.models import SourceKind, SourceRoot, ProjectWorkspace
+from brickforge.ingestion.models import SourceKind, SourceRoot, ProjectWorkspace
 
 def test_source_kind_enum():
     assert SourceKind.CODE == "code"

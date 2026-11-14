@@ -1,7 +1,7 @@
 from unittest.mock import patch, MagicMock
-from src.brickforge.search.project_retrieval import ProjectRetrievalService, ProjectEvidence
-from src.brickforge.search.service import CatalogSearchHit, CatalogQuery
-from src.brickforge.search.document_search import DocumentChunk
+from brickforge.search.project_retrieval import ProjectRetrievalService, ProjectEvidence
+from brickforge.search.service import CatalogSearchHit, CatalogQuery
+from brickforge.search.document_search import DocumentChunk
 
 def test_search():
     mock_db = MagicMock()

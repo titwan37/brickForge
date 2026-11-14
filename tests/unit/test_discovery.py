@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 try:
     from brickforge.ingestion.discovery import get_language_hint, walk_registered_roots
 except ImportError:
-    from src.brickforge.ingestion.discovery import get_language_hint, walk_registered_roots
+    from brickforge.ingestion.discovery import get_language_hint, walk_registered_roots
 
 
 class TestDiscovery(unittest.TestCase):

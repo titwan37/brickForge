@@ -4,13 +4,13 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 from pydantic import BaseModel
 from typing import List, Optional, Dict
-from src.brickforge.web.app import create_app
-from src.brickforge.web.session_service import SessionService
-from src.brickforge.web.session_models import Session, RetentionState, SessionCreate, SessionExport
-from src.brickforge.search.project_retrieval import ProjectRetrievalService
-from src.brickforge.search.document_search import DocumentSearchService
-from src.brickforge.search.service import CatalogSearchHit, CatalogQuery, CatalogSearchService
-from src.brickforge.storage.database import DatabaseManager
+from brickforge.web.app import create_app
+from brickforge.web.session_service import SessionService
+from brickforge.web.session_models import Session, RetentionState, SessionCreate, SessionExport
+from brickforge.search.project_retrieval import ProjectRetrievalService
+from brickforge.search.document_search import DocumentSearchService
+from brickforge.search.service import CatalogSearchHit, CatalogQuery, CatalogSearchService
+from brickforge.storage.database import DatabaseManager
 
 class MockSessionService(SessionService):
     def __init__(self):

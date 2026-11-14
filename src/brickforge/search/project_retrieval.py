@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 
 from brickforge.search.fts import sanitize_fts_query
 from brickforge.storage.database import DatabaseManager
-from src.brickforge.search.document_search import DocumentSearchService
-from src.brickforge.search.service import CatalogSearchHit, CatalogQuery, CatalogSearchService
+from brickforge.search.document_search import DocumentSearchService
+from brickforge.search.service import CatalogSearchHit, CatalogQuery, CatalogSearchService
 
 
 @dataclass

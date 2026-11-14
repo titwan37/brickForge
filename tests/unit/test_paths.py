@@ -5,7 +5,7 @@ try:
     from brickforge.ingestion.paths import safe_path_canonicalization
     _PATCH_TARGET = 'brickforge.ingestion.paths.Path.resolve'
 except ImportError:
-    from src.brickforge.ingestion.paths import safe_path_canonicalization
+    from brickforge.ingestion.paths import safe_path_canonicalization
     _PATCH_TARGET = 'src.brickforge.ingestion.paths.Path.resolve'
 
 class TestSafePathCanonicalization(unittest.TestCase):

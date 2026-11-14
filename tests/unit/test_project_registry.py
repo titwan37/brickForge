@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from src.brickforge.ingestion.registry import ProjectRegistry, SourceRoot
+from brickforge.ingestion.registry import ProjectRegistry, SourceRoot
 
 class TestProjectRegistry(unittest.TestCase):
     @patch.object(ProjectRegistry, '__init__', return_value=None)

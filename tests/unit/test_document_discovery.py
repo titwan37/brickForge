@@ -1,7 +1,7 @@
 import os
 from unittest.mock import patch, MagicMock
-from src.brickforge.ingestion.discovery import walk_registered_roots
-from src.brickforge.ingestion.ignore_rules import IgnoreRules
+from brickforge.ingestion.discovery import walk_registered_roots
+from brickforge.ingestion.ignore_rules import IgnoreRules
 
 def test_document_discovery():
     # Create a mock directory structure

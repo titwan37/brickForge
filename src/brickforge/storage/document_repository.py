@@ -4,8 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, model_validator
 
-from src.brickforge.storage.database import DatabaseManager
-from src.brickforge.storage.document_models import DocumentSource, DocumentChunk
+from brickforge.storage.database import DatabaseManager
+from brickforge.storage.document_models import DocumentSource, DocumentChunk
 
 class DocumentRepository:
     def __init__(self, db_manager: DatabaseManager):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from src.brickforge.storage.session_repository import SessionRepository
-from src.brickforge.web.session_models import Session, RetentionState
+from brickforge.storage.session_repository import SessionRepository
+from brickforge.web.session_models import Session, RetentionState
 
 class SessionService:
     def __init__(self, repo: SessionRepository):

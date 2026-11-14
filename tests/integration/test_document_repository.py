@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import patch
 
-from src.brickforge.storage.database import DatabaseManager
-from src.brickforge.storage.document_repository import DocumentRepository
-from src.brickforge.storage.document_models import DocumentSource, DocumentChunk
+from brickforge.storage.database import DatabaseManager
+from brickforge.storage.document_repository import DocumentRepository
+from brickforge.storage.document_models import DocumentSource, DocumentChunk
 
 class TestDocumentRepository(unittest.TestCase):
     @patch.object(DatabaseManager, '__init__', return_value=None)
