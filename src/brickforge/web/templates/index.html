@@ -96,7 +96,8 @@
       background-color: #0b0f19 !important;
       color: #f1f5f9 !important;
     }
-    html.dark header {
+    html.dark header,
+    html.dark #chatHeader {
       background-color: rgba(15, 23, 42, 0.95) !important;
       border-color: #1e293b !important;
     }
@@ -159,10 +160,10 @@
     .prose-chat blockquote { border-left: 3px solid #3b82f6; padding-left: 0.6rem; margin-top: 0.4rem; margin-bottom: 0.4rem; color: #475569; font-style: italic; }
   </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-800 font-sans antialiased min-h-screen flex flex-col" x-data="brickExplorer()" x-init="initData()">
+<body class="bg-[#f8fafc] text-slate-800 font-sans antialiased min-h-screen flex flex-col" :class="currentView === 'chat' ? 'lg:h-screen lg:overflow-hidden' : ''" x-data="brickExplorer()" x-init="initData()">
 
   <!-- Top Navigation Bar -->
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200">
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shrink-0">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
       
       <!-- Left: Logo & Navigation Links -->
@@ -350,7 +351,7 @@
       <!-- ============================================== -->
       <!-- LEFT SIDEBAR: THEMATIC CLASSIFICATION & FILTERS -->
       <!-- ============================================== -->
-      <aside class="w-full lg:w-64 shrink-0 space-y-4">
+      <aside class="w-full lg:w-64 shrink-0 space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
         
         <!-- Sidebar Controls Header: Quick Toggle All -->
         <div class="flex items-center justify-between px-1 text-slate-500">
@@ -1155,114 +1156,110 @@
   <!-- =================================================== -->
   <!-- EXPANDED FULL-PAGE AI ARCHITECT STUDIO TAB PANEL    -->
   <!-- =================================================== -->
-  <main 
-    x-show="currentView === 'chat'" 
-    class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-3 min-h-0 h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-hidden"
-    x-cloak
-  >
-    <!-- Top Action / Breadcrumbs Header for Tab View (Sticky / Rigid Toolbar) -->
-    <div id="chatHeader" class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 shrink-0">
-          <i data-lucide="bot" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-base font-bold text-slate-900">Private Code Ledger</h1>
-            <span 
-              class="w-2.5 h-2.5 rounded-full" 
-              :class="isOllamaOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'"
-              :title="isOllamaOnline ? 'Ollama Online' : 'Local Catalog Engine Active'"
-            ></span>
-            <span 
-              class="text-[10px] font-mono px-2 py-0.5 rounded-full border"
-              :class="isOllamaOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
-              x-text="isOllamaOnline ? 'Ollama Online' : 'Local RAG Active'"
-            ></span>
+  <div x-show="currentView === 'chat'" class="flex-1 flex flex-col w-full min-h-0 overflow-hidden" x-cloak>
+
+    <!-- Second Toolbar at the Top (Sticky below Main Navbar h-16) -->
+    <div id="chatHeader" class="sticky top-16 z-20 w-full bg-white/95 backdrop-blur border-b border-slate-200 shadow-xs shrink-0">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 shrink-0">
+            <i data-lucide="bot" class="w-5 h-5"></i>
           </div>
-          <p class="text-xs text-slate-500">
-            Grounding across <strong class="text-slate-800" x-text="Number(stats.total_bricks || 0).toLocaleString()"></strong> code bricks and <strong class="text-slate-800" x-text="stats.total_projects || 0"></strong> projects.
-          </p>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-base font-bold text-slate-900">Private Code Ledger</h1>
+              <span 
+                class="w-2.5 h-2.5 rounded-full" 
+                :class="isOllamaOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'"
+                :title="isOllamaOnline ? 'Ollama Online' : 'Local Catalog Engine Active'"
+              ></span>
+              <span 
+                class="text-[10px] font-mono px-2 py-0.5 rounded-full border"
+                :class="isOllamaOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+                x-text="isOllamaOnline ? 'Ollama Online' : 'Local RAG Active'"
+              ></span>
+            </div>
+            <p class="text-xs text-slate-500">
+              Grounding across <strong class="text-slate-800" x-text="Number(stats.total_bricks || 0).toLocaleString()"></strong> code bricks and <strong class="text-slate-800" x-text="stats.total_projects || 0"></strong> projects.
+            </p>
+          </div>
         </div>
-      </div>
 
-      <!-- Header Studio Controls -->
-      <div class="flex items-center gap-2 flex-wrap">
-        <!-- Model Selector in Tab View -->
-        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
-          <i data-lucide="cpu" class="w-3.5 h-3.5 text-slate-400"></i>
-          <select 
-            x-model="selectedModel" 
-            class="bg-transparent text-slate-700 font-mono text-xs font-semibold outline-none cursor-pointer"
+        <!-- Header Studio Controls -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Model Selector in Tab View -->
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
+            <i data-lucide="cpu" class="w-3.5 h-3.5 text-slate-400"></i>
+            <select 
+              x-model="selectedModel" 
+              class="bg-transparent text-slate-700 font-mono text-xs font-semibold outline-none cursor-pointer"
+            >
+              <template x-for="m in chatModels" :key="m">
+                <option :value="m" x-text="m"></option>
+              </template>
+            </select>
+          </div>
+
+          <!-- Dock to Floating Widget Button -->
+          <button 
+            @click="collapseChatToFloating()" 
+            class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-sm"
+            title="Dock into small floating widget at the bottom right"
           >
-            <template x-for="m in chatModels" :key="m">
-              <option :value="m" x-text="m"></option>
-            </template>
-          </select>
+            <i data-lucide="minimize-2" class="w-3.5 h-3.5 text-slate-500"></i>
+            <span class="hidden sm:inline">To Bubble</span>
+          </button>
+
+          <!-- Switch Back to Catalog Button -->
+          <button 
+            @click="switchView('catalog')" 
+            class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm"
+            title="Browse Code Bricks Catalog"
+          >
+            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+            <span>Return</span>
+          </button>
+
+          <!-- Copy Whole Chat History Button -->
+          <button 
+            @click="copyWholeChat($event)" 
+            :disabled="chatHistory.length === 0"
+            class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Copy entire chat history as Markdown to clipboard"
+          >
+            <i data-lucide="copy" class="w-3.5 h-3.5 text-slate-500"></i>
+            <span class="hidden sm:inline">CopyAll</span>
+          </button>
+
+          <!-- Export Whole Chat History to Disk Button -->
+          <button 
+            @click="exportWholeChat()" 
+            :disabled="chatHistory.length === 0"
+            class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Download entire conversation history as Markdown (.md) file to disk"
+          >
+            <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
+            <span class="hidden sm:inline">ChatHistory.md</span>
+          </button>
+
+          <!-- Clear Chat Button -->
+          <button 
+            @click="clearChat()" 
+            class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-slate-200 transition"
+            title="Clear Conversation"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
         </div>
-
-        <!-- Dock to Floating Widget Button -->
-        <button 
-          @click="collapseChatToFloating()" 
-          class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-sm"
-          title="Dock into small floating widget at the bottom right"
-        >
-          <i data-lucide="minimize-2" class="w-3.5 h-3.5 text-slate-500"></i>
-          <span class="hidden sm:inline">To Bubble</span>
-        </button>
-
-        <!-- Switch Back to Catalog Button -->
-        <button 
-          @click="switchView('catalog')" 
-          class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm"
-          title="Browse Code Bricks Catalog"
-        >
-          <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-          <span>Return</span>
-        </button>
-        
-      </div>
-        <div class="flex items-center gap-3"> 
-
-        <!-- Copy Whole Chat History Button -->
-        <button 
-          @click="copyWholeChat($event)" 
-          :disabled="chatHistory.length === 0"
-          class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-          title="Copy entire chat history as Markdown to clipboard"
-        >
-          <i data-lucide="copy" class="w-3.5 h-3.5 text-slate-500"></i>
-          <span class="hidden sm:inline">CopyAll</span>
-        </button>
-
-        <!-- Export Whole Chat History to Disk Button -->
-        <button 
-          @click="exportWholeChat()" 
-          :disabled="chatHistory.length === 0"
-          class="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-          title="Download entire conversation history as Markdown (.md) file to disk"
-        >
-          <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
-          <span class="hidden sm:inline">ChatHistory.md</span>
-        </button>
-
-        <!-- Clear Chat Button -->
-        <button 
-          @click="clearChat()" 
-          class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-slate-200 transition"
-          title="Clear Conversation"
-        >
-          <i data-lucide="trash-2" class="w-4 h-4"></i>
-        </button>
-
       </div>
     </div>
 
     <!-- Main Studio Body: 2 Columns -->
-    <div class="flex flex-col lg:flex-row gap-6 items-stretch flex-1 min-h-0 overflow-hidden">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col min-h-0 overflow-hidden">
+      <div class="flex flex-col lg:flex-row gap-6 items-stretch flex-1 min-h-0 overflow-hidden">
       
-      <!-- Left Studio Sidebar: Grounding Info & Starters -->
-      <aside class="w-full lg:w-72 shrink-0 space-y-4 overflow-y-auto pr-1">
+        <!-- Left Studio Sidebar: Grounding Info & Starters (Fixed / Does not scroll up and down) -->
+        <aside class="w-full lg:w-72 shrink-0 space-y-4 overflow-hidden">
         
         <!-- Grounded Knowledge Base Summary Card -->
         <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 space-y-3">
@@ -1576,9 +1573,11 @@
 
       </section>
 
-    </div>
+      </div>
 
-  </main>
+    </main>
+
+  </div>
 
   <!-- ============================================== -->
   <!-- SLIDE-OVER CONTRACT INSPECTION DRAWER -->
@@ -1836,7 +1835,7 @@
   </div>
 
   <!-- Footer -->
-  <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+  <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500 shrink-0">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-2">
         <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
@@ -2203,7 +2202,7 @@
     <div class="p-3 bg-white border-t border-slate-200 shrink-0 space-y-1.5">
       <div class="relative flex items-center">
         <textarea 
-          id="chatInputArea"
+          id="floatingChatInputArea"
           x-model="chatInput" 
           @keydown.ctrl.enter.prevent="sendChatMessage()"
           @keydown.meta.enter.prevent="sendChatMessage()"
@@ -2797,7 +2796,7 @@
         },
 
         focusChatInput() {
-          const area = document.getElementById('chatInputArea');
+          const area = document.getElementById('floatingChatInputArea') || document.getElementById('tabChatInputArea');
           if (area) area.focus();
         },
 
