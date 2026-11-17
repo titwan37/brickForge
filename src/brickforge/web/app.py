@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
+import asyncio
+from collections import deque
 import datetime
 import json
+import os
 from pathlib import Path
+import queue
 import sqlite3
+import subprocess
+import sys
+import threading
+import time
 from typing import Any, Dict, List, Optional, Union, Tuple
 
 from fastapi import FastAPI, HTTPException, Query
@@ -25,8 +33,36 @@ from brickforge.web.initiatives import (
     classify_project_initiative,
     ensure_initiatives_schema,
 )
+from brickforge.web.telemetry import (
+    register_telemetry_middleware,
+    get_metrics_response,
+    VECTORS_INDEXED_GAUGE,
+)
 
 DEFAULT_DB_PATH = Path("data/brickforge.db")
+
+
+class VectorAppendRequest(BaseModel):
+    doc_id: str
+    content: str
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class VectorBatchAppendRequest(BaseModel):
+    items: List[Dict[str, Any]]
+
+
+# Global scan status and ring buffer for live log streaming to UI
+_scan_lock = threading.Lock()
+_scan_state: Dict[str, Any] = {
+    "is_running": False,
+    "current_repo": None,
+    "started_at": None,
+    "exit_code": None,
+    "lines_processed": 0,
+}
+_scan_logs: deque[str] = deque(maxlen=2000)
+_scan_listeners: List[queue.Queue] = []
 
 
 class ChatRequest(BaseModel):
@@ -191,6 +227,25 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    register_telemetry_middleware(app)
+
+    @app.get("/metrics")
+    @app.get("/brickforge/metrics")
+    def prometheus_metrics():
+        if VECTORS_INDEXED_GAUGE is not None and "vector_index" in locals():
+            VECTORS_INDEXED_GAUGE.set(vector_index.index.ntotal)
+        return get_metrics_response()
+
+    @app.get("/health")
+    @app.get("/brickforge/health")
+    def health_check():
+        return {
+            "status": "healthy",
+            "service": "brickforge-catalog",
+            "database_exists": resolved_db.exists(),
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        }
 
     template_path = Path(__file__).parent / "templates" / "index.html"
 
@@ -940,18 +995,27 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
 
             return contract
 
-    chat_engine = BrickForgeChatEngine(resolved_db)
+    chat_engine = BrickForgeChatEngine(
+        resolved_db,
+        ollama_endpoint=os.getenv("NITRO_OLLAMA_URL", "http://NITRO-AN51755:11434"),
+        fallback_endpoint=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+    )
 
     @app.get("/api/chat/models")
     @app.get("/brickforge/api/chat/models")
     def get_chat_models():
         models, is_online = chat_engine.get_available_models()
-        # On remote production host (e.g. Ionos VPS where lightweight qwen3:1.7b is installed),
-        # prioritize qwen3:1.7b as default; on local development machines, prefer qwen2.5-coder:7b
-        # or the first available model.
+        # Model default priority:
+        # 1. On Ionos VPS: "qwen3:1.7b"
+        # 2. NITRO GPU / Local workstation with LFM: "lfm3:latest" (172+ tok/s)
+        # 3. Standard Coder: "qwen2.5-coder:7b"
         preferred_default = DEFAULT_MODEL
-        if "qwen3:1.7b" in models:
+        if "qwen3:1.7b" in models and os.getenv("IS_IONOS_SERVER", "0") == "1":
             preferred_default = "qwen3:1.7b"
+        elif "lfm3:latest" in models:
+            preferred_default = "lfm3:latest"
+        elif "qwen2.5-coder:7b" in models:
+            preferred_default = "qwen2.5-coder:7b"
         elif DEFAULT_MODEL in models:
             preferred_default = DEFAULT_MODEL
         elif models:
@@ -961,6 +1025,8 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
             "models": models,
             "online": is_online,
             "default": preferred_default,
+            "active_endpoint": chat_engine._active_endpoint or chat_engine.endpoint,
+            "node": "nitro-cuda" if "NITRO" in (chat_engine._active_endpoint or chat_engine.endpoint) else "local-cpu",
         }
 
     @app.post("/api/chat")
@@ -982,6 +1048,215 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
                 yield f"data: {json.dumps(chunk)}\n\n"
 
         return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+    # -------------------------------------------------------------------------
+    # Scan Control & Live Terminal Console Streaming
+    # -------------------------------------------------------------------------
+
+    @app.get("/api/scan/status")
+    @app.get("/brickforge/api/scan/status")
+    def get_scan_status():
+        with _scan_lock:
+            return dict(_scan_state)
+
+    @app.get("/api/scan/repositories")
+    @app.get("/brickforge/api/scan/repositories")
+    def get_scan_repositories():
+        with get_db_connection(resolved_db) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, name, root_path, enabled FROM repositories ORDER BY name ASC")
+            repos = [
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "root_path": r["root_path"],
+                    "enabled": bool(r["enabled"]),
+                    "exists": os.path.exists(r["root_path"]),
+                }
+                for r in cursor.fetchall()
+            ]
+            return {"repositories": repos}
+
+    @app.post("/api/scan/start")
+    @app.post("/brickforge/api/scan/start")
+    def start_scan(repo_id: Optional[str] = Query(None, alias="repo"), force: bool = Query(False)):
+        global _scan_state
+        with _scan_lock:
+            if _scan_state["is_running"]:
+                raise HTTPException(status_code=409, detail="A catalog scan is already running.")
+
+            _scan_state["is_running"] = True
+            _scan_state["current_repo"] = repo_id or "all"
+            _scan_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            _scan_state["exit_code"] = None
+            _scan_state["lines_processed"] = 0
+            _scan_logs.clear()
+
+        def _broadcast(line: str):
+            _scan_logs.append(line)
+            dead = []
+            for q in _scan_listeners:
+                try:
+                    q.put_nowait(line)
+                except Exception:
+                    dead.append(q)
+            for d in dead:
+                if d in _scan_listeners:
+                    _scan_listeners.remove(d)
+
+        def _worker():
+            global _scan_state
+            project_root = Path(__file__).resolve().parent.parent.parent.parent
+            script_path = project_root / "scripts" / "sync_repositories.py"
+            cmd = [sys.executable, str(script_path)]
+            if repo_id:
+                cmd.extend(["--repo", repo_id])
+            if force:
+                cmd.append("--force")
+
+            _broadcast(f"🚀 Starting BrickForge Ingestion Pipeline: {' '.join(cmd)}\n")
+            try:
+                proc = subprocess.Popen(
+                    cmd,
+                    cwd=str(project_root),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                for line in proc.stdout:
+                    _broadcast(line)
+                    with _scan_lock:
+                        _scan_state["lines_processed"] += 1
+                proc.wait()
+                exit_code = proc.returncode
+                _broadcast(f"\n🏁 Scan process exited with code {exit_code}.\n")
+            except Exception as e:
+                exit_code = -1
+                _broadcast(f"\n❌ Error executing scan process: {e}\n")
+
+            with _scan_lock:
+                _scan_state["is_running"] = False
+                _scan_state["exit_code"] = exit_code
+
+        thread = threading.Thread(target=_worker, daemon=True)
+        thread.start()
+        return {"status": "started", "repo": repo_id or "all", "force": force}
+
+    @app.get("/api/scan/stream")
+    @app.get("/brickforge/api/scan/stream")
+    def stream_scan_logs():
+        client_q: queue.Queue = queue.Queue(maxsize=1000)
+        # Seed with existing backlog of logs
+        for log in list(_scan_logs):
+            client_q.put_nowait(log)
+        _scan_listeners.append(client_q)
+
+        def event_stream():
+            try:
+                while True:
+                    try:
+                        line = client_q.get(timeout=2.0)
+                        yield f"data: {json.dumps({'line': line, 'running': _scan_state['is_running']})}\n\n"
+                    except queue.Empty:
+                        # Heartbeat ping
+                        yield f"data: {json.dumps({'heartbeat': True, 'running': _scan_state['is_running']})}\n\n"
+            except GeneratorExit:
+                pass
+            finally:
+                if client_q in _scan_listeners:
+                    _scan_listeners.remove(client_q)
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+    # -------------------------------------------------------------------------
+    # FAISS Vector Search & Hybrid RAG Endpoints (Phase D Knowledge-Base Service)
+    # -------------------------------------------------------------------------
+
+    from brickforge.search.vector_index import BrickForgeVectorIndex
+    vector_index = BrickForgeVectorIndex()
+
+    @app.post("/api/vectors/update")
+    @app.post("/brickforge/api/vectors/update")
+    def append_single_vector(req: VectorAppendRequest):
+        """Append a new text or code snippet online into the FAISS index."""
+        success = vector_index.append_document(
+            doc_id=req.doc_id,
+            text=req.content,
+            metadata=req.metadata,
+            save_after=True,
+        )
+        if not success:
+            raise HTTPException(status_code=502, detail="Failed to generate embedding vector via Ollama.")
+        return {
+            "status": "appended",
+            "doc_id": req.doc_id,
+            "total_vectors": vector_index.index.ntotal,
+        }
+
+    @app.post("/api/vectors/batch")
+    @app.post("/brickforge/api/vectors/batch")
+    def append_batch_vectors(req: VectorBatchAppendRequest):
+        """Append multiple vectors in bulk into the FAISS index."""
+        count = vector_index.batch_append_vectors(req.items, save_after=True)
+        return {
+            "status": "appended",
+            "vectors_added": count,
+            "total_vectors": vector_index.index.ntotal,
+        }
+
+    @app.get("/api/vectors/search")
+    @app.get("/brickforge/api/vectors/search")
+    @app.get("/api/vectors/")
+    @app.get("/brickforge/api/vectors/")
+    def search_vectors(
+        q: Optional[str] = Query(None, description="Query term to search dense vectors for"),
+        query_terms: Optional[str] = Query(None, description="Alias for query terms"),
+        limit: int = Query(5, ge=1, le=50),
+        n_hits: Optional[int] = Query(None, ge=1, le=50),
+    ):
+        query_text = (q or query_terms or "").strip()
+        hits_count = n_hits or limit
+        if not query_text:
+            return {
+                "query": "",
+                "total_vectors": vector_index.index.ntotal,
+                "results": [],
+                "documents": [],
+                "similarities": [],
+            }
+
+        results = vector_index.search_similar(query_text, top_k=hits_count)
+        return {
+            "query": query_text,
+            "total_vectors": vector_index.index.ntotal,
+            "n_hits": hits_count,
+            "results": results,
+            "documents": [r.get("brick_id") for r in results],
+            "similarities": [r.get("similarity_score", 0.0) for r in results],
+        }
+
+    @app.get("/api/vectors/hybrid")
+    @app.get("/brickforge/api/vectors/hybrid")
+    def search_hybrid(
+        q: str = Query(..., description="Query term for hybrid BM25 + FAISS search"),
+        limit: int = Query(5, ge=1, le=50),
+        dense_weight: float = Query(0.5, ge=0.0, le=1.0),
+    ):
+        results = vector_index.hybrid_search(
+            db_path=resolved_db,
+            query=q,
+            limit=limit,
+            dense_weight=dense_weight,
+        )
+        return {
+            "query": q,
+            "dense_weight": dense_weight,
+            "total_vectors": vector_index.index.ntotal,
+            "results": results,
+        }
 
     return app
 

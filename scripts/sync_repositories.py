@@ -40,6 +40,7 @@ from brickforge.ingestion.pipeline import IngestionPipeline
 from brickforge.ingestion.planner import ScanPlanner
 from brickforge.storage.brick_repository import BrickRepository
 from brickforge.storage.database import DatabaseManager
+from brickforge.search.vector_index import BrickForgeVectorIndex
 
 # Enable record=True so the complete formatted text can be exported to execution log files
 console = Console(record=True)
@@ -158,6 +159,7 @@ def sync_config(
     target_repo_id: Optional[str] = None,
     force_full_scan: bool = False,
     log_file_path: Optional[str] = None,
+    sync_vectors: bool = True,
 ) -> None:
     config_file = find_config_file(config_path)
     log_path = resolve_log_path(log_file_path)
@@ -442,6 +444,59 @@ def sync_config(
     console.print(f"[bold green]Catalog is ready for search & agent queries![/bold green] (Database: [dim]{db_path}[/dim])")
     console.print(f"[bold cyan]📄 Execution log saved to:[/bold cyan] [dim]{log_path}[/dim]\n")
 
+    # Phase F: Auto-update FAISS dense vector index for newly indexed symbols if requested
+    if sync_vectors and total_symbols > 0:
+        console.print("[bold cyan]🔄 Running Phase F Vector Synchronization (Incremental FAISS Update)...[/bold cyan]")
+        try:
+            vec_index = BrickForgeVectorIndex()
+            with db_mgr.connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT 
+                        b.id AS brick_id,
+                        b.symbol_name,
+                        b.kind,
+                        b.language,
+                        b.signature,
+                        b.docstring,
+                        s.relative_path,
+                        r.name AS repository_name,
+                        b.portability_score
+                    FROM code_bricks b
+                    JOIN source_files s ON b.file_id = s.row_id
+                    JOIN repositories r ON s.repository_id = r.id
+                    WHERE b.signature IS NOT NULL AND LENGTH(b.signature) > 5
+                    ORDER BY b.row_id DESC
+                    LIMIT 200;
+                """)
+                recent_bricks = cursor.fetchall()
+
+            indexed_ids = set(b.get("brick_id") for b in vec_index.id_to_brick)
+            appended_count = 0
+            for r in recent_bricks:
+                bid = r[0]
+                if bid not in indexed_ids:
+                    text_blob = f"{r[1]} ({r[2]} - {r[3]})\nPath: {r[6]}\nSignature: {r[4]}\nDoc: {r[5] or ''}"
+                    if vec_index.append_document(doc_id=bid, text=text_blob, metadata={
+                        "symbol_name": r[1],
+                        "kind": r[2],
+                        "language": r[3],
+                        "signature": r[4],
+                        "relative_path": r[6],
+                        "repository_name": r[7],
+                        "portability_score": r[8],
+                    }, save_after=False):
+                        appended_count += 1
+                        indexed_ids.add(bid)
+
+            if appended_count > 0:
+                vec_index.save()
+                console.print(f"   [bold green]✔ Vector sync complete:[/bold green] Appended [bold cyan]{appended_count}[/bold cyan] new vector embeddings to FAISS.\n")
+            else:
+                console.print("   [dim green]✔ FAISS vector index is up to date.[/dim green]\n")
+        except Exception as ve:
+            console.print(f"   [dim yellow]⚠ Vector sync skipped/deferred: {ve}[/dim yellow]\n")
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -472,6 +527,11 @@ def main() -> int:
         help="Force a full re-scan of files even if unchanged",
     )
     parser.add_argument(
+        "--no-vectors",
+        action="store_true",
+        help="Skip automatic incremental vector updates to FAISS",
+    )
+    parser.add_argument(
         "--log-file",
         "-l",
         type=str,
@@ -489,6 +549,7 @@ def main() -> int:
             target_repo_id=args.repo,
             force_full_scan=args.force,
             log_file_path=args.log_file,
+            sync_vectors=not args.no_vectors,
         )
         return 0
     except KeyboardInterrupt:

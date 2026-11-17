@@ -17,13 +17,14 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_OLLAMA_MODEL = "jetelain/Qwen3.5-9B:latest"
+DEFAULT_OLLAMA_MODEL = "lfm3:latest"
 FALLBACK_OLLAMA_MODELS = [
-    "jetelain/Qwen3.5-9B:latest",
-    "qwen2.5-coder:7b",
+    "lfm3:latest",
     "llama3.2:3b",
+    "qwen2.5-coder:7b",
     "qwen2.5:7b",
     "mistral-7b:latest",
+    "jetelain/Qwen3.5-9B:latest",
 ]
 
 # Circuit breaker state so we don't wait 4.5s x N projects when Ollama is offline/stalled

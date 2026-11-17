@@ -1,7 +1,7 @@
 {
   "repo_name": "brickForge",
   "repo_path": "C:\\Dev\\brickForge",
-  "scanned_at": "2026-11-13 10:32:57",
+  "scanned_at": "2026-11-14 02:56:04",
   "purpose_summary": "BrickForge: Python-first vertical slice; local-first catalog; SQLite + FTS5 core; optional vector extension; MCP exposure can be implemented as a subsequent integration milestone.",
   "architecture_summary": "**Stack:** AsyncIO / HTTPX, FastAPI, Gradio UI, Pytest, Python, SQLite3 | **Topology:** Next.js / React Application Interface (`src/*`) \u2192 Automated Pytest & UAT Verification Suite (`tests/*`) | **DAG Tasks**: 45/45 completed (100.0%)",
   "tech_stack": [
@@ -13,7 +13,7 @@
     "SQLite3"
   ],
   "total_files": 182,
-  "total_loc": 20255,
+  "total_loc": 20266,
   "modules": [
     {
       "path": "mcp/server.py",
@@ -919,7 +919,7 @@
     },
     {
       "path": "src/brickforge/web/app.py",
-      "loc": 988,
+      "loc": 987,
       "classes": [
         "ChatRequest"
       ],
@@ -939,7 +939,7 @@
     },
     {
       "path": "src/brickforge/web/chat.py",
-      "loc": 774,
+      "loc": 786,
       "classes": [
         "BrickForgeChatEngine"
       ],

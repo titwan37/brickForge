@@ -13,13 +13,17 @@ import httpx
 
 from brickforge.web.initiatives import INITIATIVES_REGISTRY
 
-DEFAULT_OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
+import os
+
+DEFAULT_OLLAMA_ENDPOINT = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+DEFAULT_NITRO_ENDPOINT = os.getenv("NITRO_OLLAMA_URL", "http://NITRO-AN51755:11434")
 SERVER_DEFAULT_MODEL = "qwen3:1.7b"
-DEFAULT_MODEL = "qwen2.5-coder:7b"
+DEFAULT_MODEL = "lfm3:latest"
 FALLBACK_MODELS = [
+    "lfm3:latest",
     "qwen2.5-coder:7b",
-    "llama3.2:3b",
     "qwen3:1.7b",
+    "llama3.2:3b",
     "openclaw-brain:latest",
     "qwen2.5:7b",
     "mistral-7b:latest",
@@ -120,27 +124,43 @@ def is_test_path(path: str, symbol: str = "") -> bool:
 class BrickForgeChatEngine:
     """Conversational assistant grounded in the sovereign BrickForge SQLite catalog."""
 
-    def __init__(self, db_path: Path | str, ollama_endpoint: str = DEFAULT_OLLAMA_ENDPOINT):
+    def __init__(
+        self,
+        db_path: Path | str,
+        ollama_endpoint: str = DEFAULT_NITRO_ENDPOINT,
+        fallback_endpoint: Optional[str] = DEFAULT_OLLAMA_ENDPOINT,
+    ):
         self.db_path = Path(db_path)
         self.endpoint = ollama_endpoint.rstrip("/")
+        self.fallback_endpoint = fallback_endpoint.rstrip("/") if fallback_endpoint else None
+        self._active_endpoint: Optional[str] = None
 
     def get_db_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self.db_path))
         conn.row_factory = sqlite3.Row
         return conn
 
+    def get_endpoints(self) -> List[str]:
+        """Return candidate endpoints in priority order (e.g. Nitro GPU node first, then local host)."""
+        eps = [self.endpoint]
+        if self.fallback_endpoint and self.fallback_endpoint not in eps:
+            eps.append(self.fallback_endpoint)
+        return eps
+
     def get_available_models(self) -> Tuple[List[str], bool]:
-        """Fetch models from live Ollama instance, or return fallbacks if offline."""
-        try:
-            with httpx.Client(timeout=httpx.Timeout(2.0, connect=1.0)) as client:
-                res = client.get(f"{self.endpoint}/api/tags")
-                if res.status_code == 200:
-                    data = res.json()
-                    models = [m["name"] for m in data.get("models", []) if "name" in m]
-                    if models:
-                        return models, True
-        except Exception:
-            pass
+        """Fetch models from live Ollama instance (Nitro node or local fallback)."""
+        for ep in self.get_endpoints():
+            try:
+                with httpx.Client(timeout=httpx.Timeout(2.0, connect=1.0)) as client:
+                    res = client.get(f"{ep}/api/tags")
+                    if res.status_code == 200:
+                        data = res.json()
+                        models = [m["name"] for m in data.get("models", []) if "name" in m]
+                        if models:
+                            self._active_endpoint = ep
+                            return models, True
+            except Exception:
+                continue
         return FALLBACK_MODELS, False
 
     def search_catalog_for_query(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
@@ -487,64 +507,69 @@ class BrickForgeChatEngine:
             if m.get("role") in ("user", "assistant"):
                 prompt_payload.append({"role": m["role"], "content": m["content"]})
 
-        # 3. Call local Ollama API
-        try:
-            with httpx.Client(timeout=httpx.Timeout(45.0, connect=2.0)) as client:
-                ollama_req = {
-                    "model": selected_model,
-                    "messages": prompt_payload,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.2,
-                        "num_predict": 1024,
-                    },
-                }
-                res = client.post(f"{self.endpoint}/api/chat", json=ollama_req)
-                if res.status_code == 200:
-                    reply_data = res.json()
-                    content = reply_data.get("message", {}).get("content", "")
-                    if content:
-                        t_end = time.perf_counter()
-                        total_sec = round(t_end - t_start, 2)
-                        total_ms = round((t_end - t_start) * 1000, 1)
-                        eval_duration_ns = reply_data.get("eval_duration")
-                        eval_count = reply_data.get("eval_count", len(content.split()))
-                        if eval_duration_ns:
-                            ollama_sec = round(eval_duration_ns / 1e9, 2)
-                            eval_rate = round(eval_count / max(0.001, eval_duration_ns / 1e9), 1)
-                        else:
-                            ollama_sec = round(max(0.01, total_sec - (retrieval_ms / 1000)), 2)
-                            eval_rate = round(eval_count / max(0.001, ollama_sec), 1) if ollama_sec > 0 else None
+        # 3. Call Ollama API (trying Nitro node first, then fallback)
+        for ep in self.get_endpoints():
+            try:
+                with httpx.Client(timeout=httpx.Timeout(45.0, connect=1.5)) as client:
+                    ollama_req = {
+                        "model": selected_model,
+                        "messages": prompt_payload,
+                        "stream": False,
+                        "think": False,
+                        "options": {
+                            "temperature": 0.2,
+                            "num_predict": 2048,
+                        },
+                    }
+                    res = client.post(f"{ep}/api/chat", json=ollama_req)
+                    if res.status_code == 200:
+                        reply_data = res.json()
+                        content = reply_data.get("message", {}).get("content", "")
+                        if content:
+                            self._active_endpoint = ep
+                            t_end = time.perf_counter()
+                            total_sec = round(t_end - t_start, 2)
+                            total_ms = round((t_end - t_start) * 1000, 1)
+                            eval_duration_ns = reply_data.get("eval_duration")
+                            eval_count = reply_data.get("eval_count", len(content.split()))
+                            if eval_duration_ns:
+                                ollama_sec = round(eval_duration_ns / 1e9, 2)
+                                eval_rate = round(eval_count / max(0.001, eval_duration_ns / 1e9), 1)
+                            else:
+                                ollama_sec = round(max(0.01, total_sec - (retrieval_ms / 1000)), 2)
+                                eval_rate = round(eval_count / max(0.001, ollama_sec), 1) if ollama_sec > 0 else None
 
-                        return {
-                            "reply": content,
-                            "bricks": [
-                                {
-                                    "symbol_name": b["symbol_name"],
-                                    "kind": b["kind"],
-                                    "repository_name": b["repository_name"],
-                                    "relative_path": b["relative_path"],
-                                    "start_line": b["start_line"],
-                                    "end_line": b["end_line"],
-                                    "portability_score": b["portability_score"],
-                                    "brick_id": b["brick_id"],
-                                }
-                                for b in matched_bricks
-                            ],
-                            "model_used": selected_model,
-                            "online": True,
-                            "perf": {
-                                "retrieval_ms": retrieval_ms,
-                                "bricks_count": len(matched_bricks),
-                                "eval_count": eval_count,
-                                "ollama_sec": ollama_sec,
-                                "eval_rate": eval_rate,
-                                "total_sec": total_sec,
-                                "total_ms": total_ms,
-                            },
-                        }
-        except Exception:
-            pass
+                            return {
+                                "reply": content,
+                                "bricks": [
+                                    {
+                                        "symbol_name": b["symbol_name"],
+                                        "kind": b["kind"],
+                                        "repository_name": b["repository_name"],
+                                        "relative_path": b["relative_path"],
+                                        "start_line": b["start_line"],
+                                        "end_line": b["end_line"],
+                                        "portability_score": b["portability_score"],
+                                        "brick_id": b["brick_id"],
+                                    }
+                                    for b in matched_bricks
+                                ],
+                                "model_used": selected_model,
+                                "online": True,
+                                "node": "nitro-cuda" if "NITRO" in ep else "local-cpu",
+                                "endpoint": ep,
+                                "perf": {
+                                    "retrieval_ms": retrieval_ms,
+                                    "bricks_count": len(matched_bricks),
+                                    "eval_count": eval_count,
+                                    "ollama_sec": ollama_sec,
+                                    "eval_rate": eval_rate,
+                                    "total_sec": total_sec,
+                                    "total_ms": total_ms,
+                                },
+                            }
+            except Exception:
+                continue
 
         # 4. Fallback generation if Ollama was unreachable
         fallback_reply = self.generate_fallback_report(latest_user_message, matched_bricks)
@@ -646,115 +671,118 @@ class BrickForgeChatEngine:
             if m.get("role") in ("user", "assistant"):
                 prompt_payload.append({"role": m["role"], "content": m["content"]})
 
-        # 4. Stream from local Ollama API if online
+        # 4. Stream from Ollama API (Nitro node first, then fallback) if online
         stream_succeeded = False
         token_count = 0
         first_token_time = None
         t_ollama_start = time.perf_counter()
 
-        try:
-            with httpx.Client(timeout=httpx.Timeout(90.0, connect=2.0)) as client:
-                ollama_req = {
-                    "model": selected_model,
-                    "messages": prompt_payload,
-                    "stream": True,
-                    "options": {
-                        "temperature": 0.2,
-                        "num_predict": 1024,
-                    },
-                }
-                with client.stream("POST", f"{self.endpoint}/api/chat", json=ollama_req) as response:
-                    if response.status_code == 200:
-                        stream_succeeded = True
-                        token_buffer: List[str] = []
-                        last_flush_time = time.perf_counter()
-                        FLUSH_INTERVAL = 0.080  # 80ms micro-batch for natural paragraph streaming
-                        BUFFER_THRESHOLD = 64   # ~64 characters per batch
+        for ep in self.get_endpoints():
+            try:
+                with httpx.Client(timeout=httpx.Timeout(90.0, connect=1.5)) as client:
+                    ollama_req = {
+                        "model": selected_model,
+                        "messages": prompt_payload,
+                        "stream": True,
+                        "think": False,
+                        "options": {
+                            "temperature": 0.2,
+                            "num_predict": 2048,
+                        },
+                    }
+                    with client.stream("POST", f"{ep}/api/chat", json=ollama_req) as response:
+                        if response.status_code == 200:
+                            stream_succeeded = True
+                            self._active_endpoint = ep
+                            token_buffer: List[str] = []
+                            last_flush_time = time.perf_counter()
+                            FLUSH_INTERVAL = 0.080  # 80ms micro-batch for natural paragraph streaming
+                            BUFFER_THRESHOLD = 64   # ~64 characters per batch
 
-                        for line in response.iter_lines():
-                            if not line:
-                                continue
-                            try:
-                                chunk = json.loads(line)
-                                token = chunk.get("message", {}).get("content", "")
-                                if token:
-                                    if first_token_time is None:
-                                        first_token_time = time.perf_counter()
-                                    token_count += 1
-                                    token_buffer.append(token)
-                                    now = time.perf_counter()
-                                    buffered_len = sum(len(t) for t in token_buffer)
-                                    # Flush if buffer reaches threshold, interval elapsed, or ends with newline
-                                    if buffered_len >= BUFFER_THRESHOLD or (now - last_flush_time) >= FLUSH_INTERVAL or "\n" in token:
-                                        yield {"type": "token", "content": "".join(token_buffer)}
-                                        token_buffer = []
-                                        last_flush_time = now
+                            for line in response.iter_lines():
+                                if not line:
+                                    continue
+                                try:
+                                    chunk = json.loads(line)
+                                    token = chunk.get("message", {}).get("content", "")
+                                    if token:
+                                        if first_token_time is None:
+                                            first_token_time = time.perf_counter()
+                                        token_count += 1
+                                        token_buffer.append(token)
+                                        now = time.perf_counter()
+                                        buffered_len = sum(len(t) for t in token_buffer)
+                                        # Flush if buffer reaches threshold, interval elapsed, or ends with newline
+                                        if buffered_len >= BUFFER_THRESHOLD or (now - last_flush_time) >= FLUSH_INTERVAL or "\n" in token:
+                                            yield {"type": "token", "content": "".join(token_buffer)}
+                                            token_buffer = []
+                                            last_flush_time = now
 
-                                if chunk.get("done"):
-                                    if token_buffer:
-                                        yield {"type": "token", "content": "".join(token_buffer)}
-                                        token_buffer = []
+                                    if chunk.get("done"):
+                                        if token_buffer:
+                                            yield {"type": "token", "content": "".join(token_buffer)}
+                                            token_buffer = []
 
-                                    t_done = time.perf_counter()
-                                    total_sec = round(t_done - t_start, 2)
-                                    total_ms = round((t_done - t_start) * 1000, 1)
-                                    ttft_ms = round((first_token_time - t_ollama_start) * 1000, 1) if first_token_time else None
+                                        t_done = time.perf_counter()
+                                        total_sec = round(t_done - t_start, 2)
+                                        total_ms = round((t_done - t_start) * 1000, 1)
+                                        ttft_ms = round((first_token_time - t_ollama_start) * 1000, 1) if first_token_time else None
 
-                                    eval_count = chunk.get("eval_count", token_count)
-                                    eval_duration_ns = chunk.get("eval_duration")
-                                    if eval_duration_ns:
-                                        ollama_sec = round(eval_duration_ns / 1e9, 2)
-                                        eval_rate = round(eval_count / max(0.001, eval_duration_ns / 1e9), 1)
-                                    else:
-                                        ollama_sec = round(t_done - t_ollama_start, 2)
-                                        eval_rate = round(eval_count / max(0.001, ollama_sec), 1) if ollama_sec > 0 else None
+                                        eval_count = chunk.get("eval_count", token_count)
+                                        eval_duration_ns = chunk.get("eval_duration")
+                                        if eval_duration_ns:
+                                            ollama_sec = round(eval_duration_ns / 1e9, 2)
+                                            eval_rate = round(eval_count / max(0.001, eval_duration_ns / 1e9), 1)
+                                        else:
+                                            ollama_sec = round(t_done - t_ollama_start, 2)
+                                            eval_rate = round(eval_count / max(0.001, ollama_sec), 1) if ollama_sec > 0 else None
 
-                                    # 5. Inject bounded citations
-                                    citations = [
-                                        {
-                                            "source_type": e.source_type,
-                                            "repository_id": e.repository_id,
-                                            "path": e.path,
-                                            "line_range": e.line_range,
-                                            "excerpt": e.excerpt,
-                                            "stable_citation_id": e.stable_citation_id,
+                                        # 5. Inject bounded citations
+                                        citations = [
+                                            {
+                                                "source_type": e.source_type,
+                                                "repository_id": e.repository_id,
+                                                "path": e.path,
+                                                "line_range": e.line_range,
+                                                "excerpt": e.excerpt,
+                                                "stable_citation_id": e.stable_citation_id,
+                                            }
+                                            for e in evidence
+                                        ]
+
+                                        # 6. Persist the completed turn
+                                        if session_id is not None and turn_id is not None:
+                                            from brickforge.web.session_service import SessionService
+                                            from brickforge.storage.session_repository import SessionRepository
+
+                                            repo = SessionRepository(self.db_path)
+                                            session_service = SessionService(repo)
+                                            session_service.reopen_session(session_id)
+
+                                        yield {
+                                            "type": "done",
+                                            "bricks": serialized_bricks,
+                                            "model_used": selected_model,
+                                            "online": True,
+                                            "node": "nitro-cuda" if "NITRO" in ep else "local-cpu",
+                                            "endpoint": ep,
+                                            "perf": {
+                                                "retrieval_ms": retrieval_ms,
+                                                "bricks_count": len(serialized_bricks),
+                                                "ttft_ms": ttft_ms,
+                                                "eval_count": eval_count,
+                                                "ollama_sec": ollama_sec,
+                                                "eval_rate": eval_rate,
+                                                "total_sec": total_sec,
+                                                "total_ms": total_ms,
+                                            },
+                                            "citations": citations,
                                         }
-                                        for e in evidence
-                                    ]
-
-                                    # 6. Persist the completed turn
-                                    if session_id is not None and turn_id is not None:
-                                        from brickforge.web.session_service import SessionService
-                                        from brickforge.storage.session_repository import SessionRepository
-
-                                        repo = SessionRepository(self.db_path)
-                                        session_service = SessionService(repo)
-                                        session_service.reopen_session(session_id)
-                                        # Assuming a method to persist turns exists
-                                        # session_service.persist_turn(session_id, turn_id, token_count, citations)
-
-                                    yield {
-                                        "type": "done",
-                                        "bricks": serialized_bricks,
-                                        "model_used": selected_model,
-                                        "online": True,
-                                        "perf": {
-                                            "retrieval_ms": retrieval_ms,
-                                            "bricks_count": len(serialized_bricks),
-                                            "ttft_ms": ttft_ms,
-                                            "eval_count": eval_count,
-                                            "ollama_sec": ollama_sec,
-                                            "eval_rate": eval_rate,
-                                            "total_sec": total_sec,
-                                            "total_ms": total_ms,
-                                        },
-                                        "citations": citations,
-                                    }
-                                    return
-                            except Exception:
-                                continue
-        except Exception:
-            pass
+                                        return
+                                except Exception:
+                                    continue
+            except Exception:
+                continue
 
         # 7. Fallback generation if Ollama was unreachable
         if not stream_succeeded:

@@ -45,6 +45,9 @@
         "**/.pytest_cache/**",
         "**/data/**",
         "*.db",
+        "*.min.js",
+        "*.iife.js",
+        "*.bundle.js",
         "*.sqlite"
       ]
     },

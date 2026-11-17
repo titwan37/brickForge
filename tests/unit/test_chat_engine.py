@@ -146,8 +146,10 @@ def test_generate_fallback_report(chat_fixture):
 
 
 @pytest.mark.unit
-def test_chat_execution(chat_fixture):
+def test_chat_execution(chat_fixture, monkeypatch):
     engine, _, _ = chat_fixture
+    # Mock get_endpoints to return an unreachable fake port to trigger fallback report instantly without network delay
+    monkeypatch.setattr(engine, "get_endpoints", lambda: ["http://127.0.0.1:9"])
     messages = [{"role": "user", "content": "How do I implement TTS speech synthesis?"}]
     # Calling chat with Ollama offline should gracefully return grounded report
     result = engine.chat(messages, model="qwen2.5-coder:7b")
@@ -162,8 +164,13 @@ def test_chat_execution(chat_fixture):
 
 
 @pytest.mark.unit
-def test_chat_api_endpoints(chat_fixture):
-    _, app, _ = chat_fixture
+def test_chat_api_endpoints(chat_fixture, monkeypatch):
+    engine, app, _ = chat_fixture
+    monkeypatch.setattr(engine, "get_endpoints", lambda: ["http://127.0.0.1:9"])
+    # Also patch the chat_engine instance inside app closure or mock get_endpoints globally
+    from brickforge.web import chat
+    monkeypatch.setattr(chat.BrickForgeChatEngine, "get_endpoints", lambda self: ["http://127.0.0.1:9"])
+
     route_map = {r.path: r.endpoint for r in app.routes if hasattr(r, "endpoint")}
 
     # 1. GET /api/chat/models
@@ -180,7 +187,6 @@ def test_chat_api_endpoints(chat_fixture):
 
     # 3. Stream verification
     messages = [{"role": "user", "content": "How do I implement TTS speech synthesis?"}]
-    engine, _, _ = chat_fixture
     chunks = list(engine.chat_stream(messages, model=DEFAULT_MODEL))
     assert len(chunks) >= 3
     assert chunks[0]["type"] == "start"
