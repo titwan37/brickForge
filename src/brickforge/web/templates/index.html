@@ -1621,7 +1621,7 @@
         x-transition:leave="transform transition ease-in-out duration-300 sm:duration-400"
         x-transition:leave-start="translate-x-0"
         x-transition:leave-end="translate-x-full"
-        class="w-screen max-w-2xl bg-white shadow-2xl flex flex-col"
+        class="w-screen max-w-4xl bg-white shadow-2xl flex flex-col"
       >
         
         <!-- Drawer Header -->
@@ -1633,7 +1633,8 @@
                 :class="{
                   'bg-amber-400/20 text-amber-300 border border-amber-400/30': currentBrick.kind === 'function',
                   'bg-purple-400/20 text-purple-300 border border-purple-400/30': currentBrick.kind === 'class',
-                  'bg-cyan-400/20 text-cyan-300 border border-cyan-400/30': currentBrick.kind === 'method'
+                  'bg-cyan-400/20 text-cyan-300 border border-cyan-400/30': currentBrick.kind === 'method',
+                  'bg-indigo-400/20 text-indigo-300 border border-indigo-400/30': currentBrick.kind === 'project'
                 }"
                 x-text="currentBrick.kind"
               ></span>
@@ -1651,101 +1652,287 @@
           </button>
         </div>
 
+        <!-- Project Inspector Sub-Navigation Tabs (Only shown when inspecting a project) -->
+        <div x-show="currentBrick.kind === 'project'" class="px-6 bg-slate-800/90 border-b border-slate-700 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-1 py-1">
+            <button 
+              type="button"
+              @click="inspectorTab = 'overview'"
+              :class="inspectorTab === 'overview' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-300 hover:text-white'"
+              class="px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <span>Overview & Dossier</span>
+            </button>
+            <button 
+              type="button"
+              @click="inspectorTab = 'functions'; if (!projectFunctionsData) fetchProjectFunctions();"
+              :class="inspectorTab === 'functions' ? 'bg-slate-900 text-white shadow-xs font-bold' : 'text-slate-300 hover:text-white'"
+              class="px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 cursor-pointer relative"
+            >
+              <i data-lucide="list-tree" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Functions & Methods</span>
+              <span 
+                x-show="projectFunctionsData" 
+                class="ml-1 text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800/60"
+                x-text="projectFunctionsData ? projectFunctionsData.total_functions : ''"
+              ></span>
+            </button>
+          </div>
+
+          <div x-show="inspectorTab === 'functions' && projectFunctionsData" class="flex items-center gap-1.5">
+            <button 
+              type="button"
+              @click="exportProjectFunctions('markdown')"
+              class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition flex items-center gap-1.5 cursor-pointer"
+              title="Download structured functional architecture Markdown for coding agents"
+            >
+              <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Export Architecture (.md)</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Drawer Body (Scrollable) -->
         <div class="flex-1 overflow-y-auto p-6 space-y-6">
           
-          <!-- Key Metrics Badges Bar -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Portability</div>
-              <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5 flex items-center justify-center gap-1">
-                <i data-lucide="star" class="w-4 h-4 text-amber-500 fill-amber-500"></i>
-                <span x-text="currentBrick.portability_score"></span>
+          <!-- TAB 1: OVERVIEW & AST METRICS -->
+          <div x-show="currentBrick.kind !== 'project' || inspectorTab === 'overview'" class="space-y-6">
+            <!-- Key Metrics Badges Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Portability</div>
+                <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5 flex items-center justify-center gap-1">
+                  <i data-lucide="star" class="w-4 h-4 text-amber-500 fill-amber-500"></i>
+                  <span x-text="currentBrick.portability_score"></span>
+                </div>
+              </div>
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Complexity</div>
+                <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5" x-text="currentBrick.cyclomatic_complexity || 1"></div>
+              </div>
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider" x-text="currentBrick.kind === 'project' ? 'Source Files' : 'Span (Lines)'"></div>
+                <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5" x-text="currentBrick.kind === 'project' ? currentBrick.file_count : ((currentBrick.end_line - currentBrick.start_line + 1) || 'N/A')"></div>
+              </div>
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider" x-text="currentBrick.kind === 'project' ? 'Code Bricks' : 'Async'"></div>
+                <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5" x-text="currentBrick.kind === 'project' ? currentBrick.brick_count : (currentBrick.is_async ? 'Yes' : 'No')"></div>
               </div>
             </div>
-            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Complexity</div>
-              <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5" x-text="currentBrick.cyclomatic_complexity || 1"></div>
-            </div>
-            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Span (Lines)</div>
-              <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5" x-text="(currentBrick.end_line - currentBrick.start_line + 1) || 'N/A'"></div>
-            </div>
-            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Async</div>
-              <div class="text-lg font-extrabold text-slate-800 font-mono mt-0.5" x-text="currentBrick.is_async ? 'Yes' : 'No'"></div>
-            </div>
-          </div>
 
-          <!-- Section: Structural AST Signature -->
-          <div>
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-2">
-              <i data-lucide="code" class="w-4 h-4 text-blue-500"></i>
-              Structural Signature Contract
-            </h4>
-            <div class="bg-slate-900 text-blue-300 p-3.5 rounded-xl font-mono text-xs overflow-x-auto border border-slate-800 shadow-inner">
-              <code x-text="currentBrick.signature"></code>
-            </div>
-          </div>
-
-          <!-- Section: Docstring Documentation -->
-          <div x-show="currentBrick.docstring">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-2">
-              <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i>
-              Documentation & Behavior
-            </h4>
-            <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-4 text-xs text-slate-700 leading-relaxed whitespace-pre-line font-sans" x-text="currentBrick.docstring"></div>
-          </div>
-
-          <!-- Section: Dependencies & Imports -->
-          <div>
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
-              <span class="flex items-center gap-2">
-                <i data-lucide="git-merge" class="w-4 h-4 text-blue-500"></i>
-                Required Dependencies
-              </span>
-              <span class="text-[11px] font-mono text-slate-400" x-text="(currentBrick.dependencies ? currentBrick.dependencies.length : 0) + ' imports'"></span>
-            </h4>
-            <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
-              <div x-show="!currentBrick.dependencies || currentBrick.dependencies.length === 0" class="p-4 text-slate-400 text-center italic">
-                Zero external package dependencies (pure self-contained code brick)
+            <!-- Section: Structural AST Signature -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-2">
+                <i data-lucide="code" class="w-4 h-4 text-blue-500"></i>
+                <span x-text="currentBrick.kind === 'project' ? 'Project Signature & Structure' : 'Structural Signature Contract'"></span>
+              </h4>
+              <div class="bg-slate-900 text-blue-300 p-3.5 rounded-xl font-mono text-xs overflow-x-auto border border-slate-800 shadow-inner">
+                <code x-text="currentBrick.signature"></code>
               </div>
-              <div x-show="currentBrick.dependencies && currentBrick.dependencies.length > 0" class="divide-y divide-slate-100">
-                <template x-for="dep in currentBrick.dependencies" :key="dep.target_symbol">
-                  <div class="p-2.5 flex items-center justify-between hover:bg-slate-50 font-mono">
-                    <span class="font-semibold text-slate-800" x-text="dep.target_symbol"></span>
-                    <div class="flex items-center gap-2">
-                      <span class="text-[10px] text-slate-400" x-text="dep.type"></span>
-                      <span 
-                        class="text-[10px] px-1.5 py-0.5 rounded"
-                        :class="dep.is_external ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600'"
-                        x-text="dep.is_external ? (dep.package_name || 'external') : 'local'"
-                      ></span>
+            </div>
+
+            <!-- Section: Docstring Documentation -->
+            <div x-show="currentBrick.docstring">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i>
+                <span x-text="currentBrick.kind === 'project' ? 'AI Project Intent & Executive Summary' : 'Documentation & Behavior'"></span>
+              </h4>
+              <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-4 text-xs text-slate-700 leading-relaxed whitespace-pre-line font-sans" x-text="currentBrick.docstring"></div>
+            </div>
+
+            <!-- Section: Dependencies & Imports / Contained Bricks -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="git-merge" class="w-4 h-4 text-blue-500"></i>
+                  <span x-text="currentBrick.kind === 'project' ? 'Key Highlighted Code Bricks' : 'Required Dependencies'"></span>
+                </span>
+                <span class="text-[11px] font-mono text-slate-400" x-text="(currentBrick.dependencies ? currentBrick.dependencies.length : 0) + ' items'"></span>
+              </h4>
+              <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
+                <div x-show="!currentBrick.dependencies || currentBrick.dependencies.length === 0" class="p-4 text-slate-400 text-center italic">
+                  Zero external package dependencies (pure self-contained code brick)
+                </div>
+                <div x-show="currentBrick.dependencies && currentBrick.dependencies.length > 0" class="divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                  <template x-for="dep in currentBrick.dependencies" :key="dep.target_symbol">
+                    <div class="p-2.5 flex items-center justify-between hover:bg-slate-50 font-mono">
+                      <span class="font-semibold text-slate-800" x-text="dep.target_symbol"></span>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-400" x-text="dep.type"></span>
+                        <span 
+                          class="text-[10px] px-1.5 py-0.5 rounded"
+                          :class="dep.is_external ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600'"
+                          x-text="dep.is_external ? (dep.package_name || 'external') : (dep.package_name || 'local')"
+                        ></span>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section: Complete Source Code or Dossier Manifest -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                  <i data-lucide="terminal" class="w-4 h-4 text-blue-500"></i>
+                  <span x-text="currentBrick.kind === 'project' ? 'Project Dossier Manifest' : 'Source Implementation'"></span>
+                </h4>
+                <button 
+                  @click="copySourceCode()" 
+                  class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5"
+                >
+                  <i :data-lucide="copied ? 'check' : 'copy'" class="w-3.5 h-3.5"></i>
+                  <span x-text="copied ? 'Copied!' : 'Copy Code'"></span>
+                </button>
+              </div>
+              <div class="relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+                <pre class="p-4 text-xs font-mono text-slate-200 overflow-x-auto max-h-96 leading-relaxed"><code class="language-python" x-text="currentBrick.source_code"></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: FUNCTIONS & METHODS TABLEVIEW (BY THEMA & FOLDER CLUSTERING) -->
+          <div x-show="currentBrick.kind === 'project' && inspectorTab === 'functions'" class="space-y-4">
+            
+            <!-- Controls Bar: Live Search & Thema Filter -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row gap-2.5 items-center justify-between">
+              <!-- Live Search Filter -->
+              <div class="relative w-full sm:w-72">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                <input 
+                  type="text" 
+                  x-model="functionSearchQuery" 
+                  placeholder="Filter functions or intended purpose..."
+                  class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <!-- Thema Dropdown Filter -->
+              <div class="flex items-center gap-2 w-full sm:w-auto">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Thema:</span>
+                <select 
+                  x-model="selectedThemeFilter"
+                  class="bg-white border border-slate-200 text-xs text-slate-700 rounded-lg px-2.5 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-blue-500 w-full sm:w-auto font-medium"
+                >
+                  <option value="all">All Themas (Aggregated Purpose)</option>
+                  <template x-for="theme in getAvailableThemes()" :key="theme">
+                    <option :value="theme" x-text="theme"></option>
+                  </template>
+                </select>
+              </div>
+            </div>
+
+            <!-- Loading Spinner State -->
+            <div x-show="projectFunctionsLoading" class="py-16 text-center text-slate-400 space-y-3">
+              <div class="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p class="text-xs font-mono">Aggregating functions catalog & synthesizing intended purposes...</p>
+            </div>
+
+            <!-- Chapters List Accordion / Grouping -->
+            <div x-show="!projectFunctionsLoading && projectFunctionsData" class="space-y-4">
+              <div x-show="getFilteredChapters().length === 0" class="p-8 text-center text-slate-400 text-xs italic bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                No functions found matching the selected search query or thema filter.
+              </div>
+
+              <template x-for="chapter in getFilteredChapters()" :key="chapter.chapter_id">
+                <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs">
+                  
+                  <!-- Chapter Header / Accordion Toggle -->
+                  <div 
+                    @click="toggleChapter(chapter.chapter_id)"
+                    class="p-3 bg-slate-50 hover:bg-slate-100/80 border-b border-slate-200 flex items-center justify-between cursor-pointer transition select-none"
+                  >
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <i :data-lucide="collapsedChapters[chapter.chapter_id] ? 'chevron-right' : 'chevron-down'" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-xs font-bold text-slate-800 font-mono truncate" x-text="chapter.folder"></span>
+                        <span class="text-slate-300">•</span>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 shrink-0" x-text="chapter.theme"></span>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                      <span class="text-[11px] font-mono text-slate-500 font-semibold" x-text="chapter.functions_count + ' callable(s)'"></span>
                     </div>
                   </div>
-                </template>
-              </div>
-            </div>
-          </div>
 
-          <!-- Section: Complete Source Code -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <i data-lucide="terminal" class="w-4 h-4 text-blue-500"></i>
-                Source Implementation
-              </h4>
-              <button 
-                @click="copySourceCode()" 
-                class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5"
-              >
-                <i :data-lucide="copied ? 'check' : 'copy'" class="w-3.5 h-3.5"></i>
-                <span x-text="copied ? 'Copied!' : 'Copy Source'"></span>
-              </button>
+                  <!-- Chapter Table View (Alphabetical Order A->Z) -->
+                  <div x-show="!collapsedChapters[chapter.chapter_id]" class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr class="bg-slate-100/60 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                          <th class="py-2.5 px-3 w-1/4">Function / Method (A→Z)</th>
+                          <th class="py-2.5 px-2 w-16 text-center">Kind</th>
+                          <th class="py-2.5 px-3">Intended Purpose</th>
+                          <th class="py-2.5 px-3 w-32 text-right">Location</th>
+                          <th class="py-2.5 px-2 w-10 text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 font-sans">
+                        <template x-for="fn in chapter.functions" :key="fn.brick_id">
+                          <tr class="hover:bg-blue-50/40 transition group">
+                            
+                            <!-- Function Name & Language Code -->
+                            <td class="py-2.5 px-3 font-mono">
+                              <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-slate-900 group-hover:text-blue-600 transition" x-text="fn.symbol_name"></span>
+                                <span 
+                                  class="text-[9px] uppercase px-1 py-0.2 rounded font-mono font-bold shrink-0"
+                                  :class="{
+                                    'bg-amber-50 text-amber-700 border border-amber-200': fn.language_code === 'py',
+                                    'bg-purple-50 text-purple-700 border border-purple-200': fn.language_code === 'cs',
+                                    'bg-blue-50 text-blue-700 border border-blue-200': fn.language_code === 'ts',
+                                    'bg-cyan-50 text-cyan-700 border border-cyan-200': fn.language_code === 'tsx',
+                                    'bg-yellow-50 text-yellow-700 border border-yellow-200': fn.language_code === 'js'
+                                  }"
+                                  x-text="fn.language_code || 'code'"
+                                ></span>
+                              </div>
+                            </td>
+
+                            <!-- Kind Badge (Function vs Method) -->
+                            <td class="py-2.5 px-2 text-center font-mono">
+                              <span 
+                                class="text-[9px] uppercase px-1.5 py-0.5 rounded font-semibold"
+                                :class="fn.kind === 'method' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : 'bg-amber-50 text-amber-700 border border-amber-200'"
+                                x-text="fn.kind"
+                              ></span>
+                            </td>
+
+                            <!-- Intended Purpose Synthesized -->
+                            <td class="py-2.5 px-3 text-slate-700 leading-snug">
+                              <span x-text="fn.purpose"></span>
+                            </td>
+
+                            <!-- Relative File & Line Range -->
+                            <td class="py-2.5 px-3 text-right font-mono text-[11px] text-slate-400">
+                              <span class="truncate block max-w-[160px] ml-auto" :title="fn.relative_path" x-text="fn.relative_path.split('/').pop() + ':L' + fn.start_line"></span>
+                            </td>
+
+                            <!-- One-Click Brick Detail Modal Opener -->
+                            <td class="py-2.5 px-2 text-center">
+                              <button 
+                                type="button"
+                                @click="openBrickModal(fn.brick_id)"
+                                class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-100 transition cursor-pointer"
+                                title="Inspect AST Brick"
+                              >
+                                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                              </button>
+                            </td>
+
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+
+                </div>
+              </template>
             </div>
-            <div class="relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
-              <pre class="p-4 text-xs font-mono text-slate-200 overflow-x-auto max-h-96 leading-relaxed"><code class="language-python" x-text="currentBrick.source_code"></code></pre>
-            </div>
+
           </div>
 
         </div>
@@ -2382,6 +2569,14 @@
         copied: false,
         aiSearchEnabled: false,
         showCompletionToast: false,
+
+        // Project Inspector Functions Table State
+        inspectorTab: 'overview', // 'overview' | 'functions'
+        projectFunctionsLoading: false,
+        projectFunctionsData: null,
+        functionSearchQuery: '',
+        selectedThemeFilter: 'all',
+        collapsedChapters: {},
 
         // Collapsible Filters State
         filterCollapsed: {
@@ -3256,6 +3451,17 @@
               this.currentBrick = await res.json();
               this.isDetailOpen = true;
               this.copied = false;
+              this.inspectorTab = 'overview';
+              this.projectFunctionsData = null;
+              this.functionSearchQuery = '';
+              this.selectedThemeFilter = 'all';
+              this.collapsedChapters = {};
+
+              // If it's a project dossier, pre-fetch or prepare functions tab
+              if (this.currentBrick.kind === 'project') {
+                this.fetchProjectFunctions();
+              }
+
               this.$nextTick(() => { 
                 lucide.createIcons(); 
                 if (window.Prism) {
@@ -3266,6 +3472,68 @@
           } catch (err) {
             console.error('Error loading brick details:', err);
           }
+        },
+
+        async fetchProjectFunctions() {
+          if (!this.currentBrick || this.currentBrick.kind !== 'project') return;
+          this.projectFunctionsLoading = true;
+          try {
+            const projName = encodeURIComponent(this.currentBrick.symbol_name);
+            const repoParam = this.currentBrick.repository_id ? `?repo=${encodeURIComponent(this.currentBrick.repository_id)}` : '';
+            const res = await fetch(`${API_BASE}/api/project/${projName}/functions${repoParam}`);
+            if (res.ok) {
+              this.projectFunctionsData = await res.json();
+            }
+          } catch (err) {
+            console.error('Error fetching project functions:', err);
+          } finally {
+            this.projectFunctionsLoading = false;
+            this.$nextTick(() => { lucide.createIcons(); });
+          }
+        },
+
+        exportProjectFunctions(format = 'markdown') {
+          if (!this.currentBrick || this.currentBrick.kind !== 'project') return;
+          const projName = encodeURIComponent(this.currentBrick.symbol_name);
+          const repoParam = this.currentBrick.repository_id ? `&repo=${encodeURIComponent(this.currentBrick.repository_id)}` : '';
+          window.open(`${API_BASE}/api/project/${projName}/functions/export?format=${format}${repoParam}`, '_blank');
+        },
+
+        toggleChapter(chapterId) {
+          this.collapsedChapters[chapterId] = !this.collapsedChapters[chapterId];
+        },
+
+        getFilteredChapters() {
+          if (!this.projectFunctionsData || !this.projectFunctionsData.chapters) return [];
+          const query = (this.functionSearchQuery || '').trim().toLowerCase();
+          const theme = this.selectedThemeFilter;
+
+          return this.projectFunctionsData.chapters
+            .filter(chap => {
+              if (theme !== 'all' && chap.theme !== theme) return false;
+              return true;
+            })
+            .map(chap => {
+              if (!query) return chap;
+              const matchingFns = chap.functions.filter(fn => 
+                fn.symbol_name.toLowerCase().includes(query) ||
+                (fn.purpose && fn.purpose.toLowerCase().includes(query)) ||
+                (fn.signature && fn.signature.toLowerCase().includes(query)) ||
+                (fn.relative_path && fn.relative_path.toLowerCase().includes(query))
+              );
+              return {
+                ...chap,
+                functions: matchingFns,
+                functions_count: matchingFns.length,
+              };
+            })
+            .filter(chap => chap.functions_count > 0);
+        },
+
+        getAvailableThemes() {
+          if (!this.projectFunctionsData || !this.projectFunctionsData.chapters) return [];
+          const themes = new Set(this.projectFunctionsData.chapters.map(c => c.theme));
+          return Array.from(themes).sort();
         },
 
         toggleAiSearch() {

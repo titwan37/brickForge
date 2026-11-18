@@ -4,26 +4,23 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
-import datetime
-import json
-import os
+import time, datetime
+import io, os, json, sys
 from pathlib import Path
-import queue
-import sqlite3
+import queue, sqlite3
 import subprocess
-import sys
 import threading
-import time
 from typing import Any, Dict, List, Optional, Union, Tuple
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 
 from brickforge.web.chat import BrickForgeChatEngine, DEFAULT_MODEL
 from brickforge.web.projects import (
     get_all_projects,
+    get_project_functions_catalog,
     normalize_language_badge,
     detect_file_language,
 )
@@ -994,6 +991,71 @@ def create_app(db_path: Optional[Union[str, Path]] = None) -> FastAPI:
             }
 
             return contract
+
+    @app.get("/api/project/{project_name}/functions")
+    @app.get("/brickforge/api/project/{project_name}/functions")
+    def get_project_functions(
+        project_name: str,
+        repo: Optional[str] = None,
+        max_chapter_size: int = 30,
+    ):
+        if not resolved_db.exists():
+            raise HTTPException(status_code=404, detail="Database not found")
+
+        with get_db_connection(resolved_db) as conn:
+            data = get_project_functions_catalog(
+                conn,
+                project_name=project_name,
+                repository_id=repo,
+                max_chapter_size=max_chapter_size,
+            )
+            return data
+
+    @app.get("/api/project/{project_name}/functions/export")
+    @app.get("/brickforge/api/project/{project_name}/functions/export")
+    def export_project_functions(
+        project_name: str,
+        repo: Optional[str] = None,
+        format: str = "markdown",
+    ):
+        if not resolved_db.exists():
+            raise HTTPException(status_code=404, detail="Database not found")
+
+        with get_db_connection(resolved_db) as conn:
+            data = get_project_functions_catalog(conn, project_name=project_name, repository_id=repo)
+
+        if format.lower() == "json":
+            return JSONResponse(content=data)
+
+        # Markdown format optimized for coding agents & fast project comprehension
+        md_lines = [
+            f"# 🧭 Project Functional Architecture: {data['project_name']}",
+            f"**Repository**: `{data['repository_id'] or 'all'}` | **Total Functions & Methods**: {data['total_functions']} | **Functional Chapters**: {data['chapters_count']}\n",
+            "> This functional catalog documents all callable standalone functions and class methods clustered by folder hierarchy and thematic purpose.",
+            "> It is designed for software architects and coding agents to rapidly assimilate project capabilities.\n",
+            "---",
+        ]
+
+        for idx, chap in enumerate(data["chapters"], 1):
+            md_lines.append(f"\n## {idx}. {chap['chapter_title']} ({chap['functions_count']} callables)")
+            md_lines.append(f"**Location**: `{chap['folder']}` | **Thematic Domain**: `{chap['theme']}`\n")
+            md_lines.append("| Function / Method | Kind | Lang | Intended Purpose | File & Location |")
+            md_lines.append("| :--- | :---: | :---: | :--- | :--- |")
+            for fn in chap["functions"]:
+                clean_purpose = (fn["purpose"] or "").replace("|", "\\|")
+                clean_name = f"`{fn['symbol_name']}`"
+                kind_badge = fn["kind"]
+                lang_badge = fn.get("language_code", "code")
+                loc = f"`{fn['relative_path']}:{fn['start_line']}-{fn['end_line']}`"
+                md_lines.append(f"| {clean_name} | {kind_badge} | {lang_badge} | {clean_purpose} | {loc} |")
+
+        content = "\n".join(md_lines)
+        filename = f"{project_name}_functional_architecture.md"
+        return StreamingResponse(
+            io.StringIO(content),
+            media_type="text/markdown",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
 
     chat_engine = BrickForgeChatEngine(
         resolved_db,

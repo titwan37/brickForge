@@ -1191,3 +1191,195 @@ def get_all_projects(
     total_elapsed = round((time.perf_counter() - t_all) * 1000, 1)
     _log_perf(f"=== Completed get_all_projects(): {len(projects)} projects ready in {total_elapsed}ms ===")
     return projects
+
+
+THEME_KEYWORDS = {
+    "Testing & Benchmark": {"test", "tests", "testing", "mock", "fixture", "assert", "benchmark", "bench", "suite", "runner", "spy", "stub", "pytest"},
+    "API & Endpoints": {"api", "route", "router", "routes", "endpoint", "request", "response", "handler", "webhook", "http", "rest", "payload", "client", "controller"},
+    "UI & Event Handling": {"ui", "view", "component", "components", "modal", "drawer", "button", "render", "draw", "display", "show", "hide", "toast", "click", "event", "listener", "bind", "dispatch", "toggle", "preview", "frontend"},
+    "Database & Storage": {"db", "database", "sql", "sqlite", "query", "repository", "table", "model", "models", "schema", "storage", "session", "crud", "persist", "cache"},
+    "Authentication & Security": {"auth", "token", "jwt", "user", "users", "login", "logout", "password", "permission", "role", "credential", "oauth", "hash", "cipher", "crypt", "verify", "protect", "compliance", "bokashi"},
+    "Media, Audio & Synthesis": {"audio", "sound", "voice", "speech", "tts", "stt", "speaker", "music", "sample", "wave", "stream", "transcribe", "synthesize", "video", "image", "picture", "frame", "visual"},
+    "Parsing & AST Analysis": {"parse", "parser", "ast", "token", "tokens", "lexer", "grammar", "syntax", "symbol", "tree", "extract", "walk", "visitor", "regex"},
+    "Workflow & Orchestration": {"task", "job", "pipeline", "workflow", "orchestrator", "worker", "queue", "agent", "step", "plan", "schedule", "cron", "batch", "sync", "runner"},
+}
+
+
+def classify_function_theme(name: str, relative_path: str, docstring: Optional[str] = "") -> str:
+    """Classifies a function or method into an aggregated thematic purpose."""
+    text = f"{name} {relative_path} {docstring or ''}".lower()
+    tokens = set(re.findall(r"[a-z0-9_]{2,}", text))
+    best_theme = "Core Logic & Processing"
+    best_score = 0
+    for theme, kw_set in THEME_KEYWORDS.items():
+        score = len(tokens.intersection(kw_set))
+        if score > best_score:
+            best_score = score
+            best_theme = theme
+    return best_theme
+
+
+def synthesize_intended_purpose(name: str, signature: Optional[str] = "", docstring: Optional[str] = "") -> str:
+    """Synthesizes the intended purpose from docstring or decomposed verb-noun identifier semantics."""
+    if docstring and len(docstring.strip()) > 3:
+        clean = docstring.strip().splitlines()[0].strip()
+        clean = re.sub(r"^[#\-\*\"\'\`\s]+", "", clean)
+        clean = re.sub(r"[\"\'\`]+$", "", clean)
+        if len(clean) >= 5:
+            return clean[:140]
+
+    clean_name = name.strip("_")
+    spaced = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", clean_name)
+    spaced = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", spaced)
+    raw_tokens = [t.lower() for t in re.split(r"[_\-\s\.]+", spaced) if t]
+
+    action_verbs = {
+        "get": "Retrieves", "fetch": "Fetches", "load": "Loads", "read": "Reads",
+        "set": "Sets", "save": "Saves", "store": "Stores", "write": "Writes",
+        "update": "Updates", "modify": "Modifies", "patch": "Patches",
+        "delete": "Deletes", "remove": "Removes", "drop": "Drops", "clear": "Clears",
+        "create": "Creates", "build": "Builds", "make": "Makes", "generate": "Generates",
+        "init": "Initializes", "setup": "Sets up", "start": "Starts", "stop": "Stops",
+        "handle": "Handles", "process": "Processes", "parse": "Parses", "transform": "Transforms",
+        "validate": "Validates", "check": "Checks", "verify": "Verifies", "is": "Checks if", "has": "Checks whether",
+        "render": "Renders", "show": "Displays", "display": "Displays", "draw": "Draws",
+        "bind": "Binds", "listen": "Listens to", "on": "Event listener for",
+        "apply": "Applies", "execute": "Executes", "run": "Runs", "sync": "Synchronizes",
+        "find": "Finds", "search": "Searches", "query": "Queries", "filter": "Filters",
+        "convert": "Converts", "format": "Formats", "serialize": "Serializes", "deserialize": "Deserializes",
+    }
+
+    if raw_tokens and raw_tokens[0] in action_verbs:
+        verb = action_verbs[raw_tokens[0]]
+        noun = " ".join(raw_tokens[1:]) if len(raw_tokens) > 1 else "target entity"
+        return f"{verb} {noun}"
+    return f"Executes {name}() logic"
+
+
+def get_project_functions_catalog(
+    conn: sqlite3.Connection,
+    project_name: str,
+    repository_id: Optional[str] = None,
+    max_chapter_size: int = 30,
+) -> Dict[str, Any]:
+    """
+    Retrieves all standalone functions and class methods for a project,
+    clustered by pre-existing folder location and aggregated purpose (thema),
+    sorted alphabetically A->Z, with synthesized intended purposes.
+    """
+    cursor = conn.cursor()
+    sql = """
+    SELECT 
+        b.id AS brick_id,
+        b.symbol_name,
+        b.qualified_name,
+        b.kind,
+        b.language,
+        b.signature,
+        b.docstring,
+        b.start_line,
+        b.end_line,
+        b.portability_score,
+        b.cyclomatic_complexity,
+        s.relative_path
+    FROM code_bricks b
+    JOIN source_files s ON b.file_id = s.row_id
+    WHERE (s.relative_path LIKE ? OR s.relative_path LIKE ?)
+      AND b.kind IN ('function', 'method')
+      AND s.relative_path NOT LIKE '%node_modules%'
+      AND s.relative_path NOT LIKE '%.delta%'
+      AND s.relative_path NOT LIKE '%.git%'
+      AND s.relative_path NOT LIKE '%.venv%'
+    """
+    params: List[Any] = [f"{project_name}/%", f"{project_name}\\%"]
+    if repository_id:
+        sql += " AND s.repository_id = ?"
+        params.append(repository_id)
+
+    sql += " ORDER BY s.relative_path ASC, b.symbol_name ASC;"
+    cursor.execute(sql, params)
+    raw_bricks = cursor.fetchall()
+
+    def get_rel_folder(full_rel_path: str, p_name: str) -> str:
+        norm = full_rel_path.replace("\\", "/")
+        if norm.startswith(p_name + "/"):
+            norm = norm[len(p_name) + 1:]
+        folder = os.path.dirname(norm)
+        return folder if folder else "(root)"
+
+    # Cluster by (folder, theme)
+    folder_theme_map: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+    for row in raw_bricks:
+        rel_path = row["relative_path"].replace("\\", "/")
+        name = row["symbol_name"]
+        doc = row["docstring"]
+        sig = row["signature"]
+        theme = classify_function_theme(name, rel_path, doc)
+        folder = get_rel_folder(rel_path, project_name)
+        purpose = synthesize_intended_purpose(name, sig, doc)
+
+        item = {
+            "brick_id": row["brick_id"],
+            "symbol_name": name,
+            "qualified_name": row["qualified_name"],
+            "kind": row["kind"],
+            "language": row["language"],
+            "language_code": normalize_language_badge(row["language"], rel_path),
+            "signature": sig,
+            "docstring": doc,
+            "purpose": purpose,
+            "start_line": row["start_line"],
+            "end_line": row["end_line"],
+            "portability_score": row["portability_score"],
+            "complexity": row["cyclomatic_complexity"] or 1,
+            "relative_path": rel_path,
+            "folder": folder,
+            "theme": theme,
+        }
+        key = (folder, theme)
+        folder_theme_map.setdefault(key, []).append(item)
+
+    # Subdivide chapters if they exceed max_chapter_size
+    chapters: List[Dict[str, Any]] = []
+    total_functions_count = 0
+
+    for (folder, theme), items in sorted(folder_theme_map.items(), key=lambda x: (x[0][0], x[0][1])):
+        items_sorted = sorted(items, key=lambda it: it["symbol_name"].lower())
+        total_functions_count += len(items_sorted)
+
+        if len(items_sorted) <= max_chapter_size:
+            chapter_id = f"{folder}::{theme}".replace(" ", "_").replace("/", "_").replace(".", "_")
+            chapters.append({
+                "chapter_id": chapter_id,
+                "folder": folder,
+                "theme": theme,
+                "chapter_title": f"{folder} • {theme}",
+                "functions_count": len(items_sorted),
+                "functions": items_sorted,
+            })
+        else:
+            # Subdivide by filename to maintain manageable chapter sizes
+            file_groups: Dict[str, List[Dict[str, Any]]] = {}
+            for it in items_sorted:
+                fname = os.path.basename(it["relative_path"])
+                file_groups.setdefault(fname, []).append(it)
+
+            for fname, f_items in sorted(file_groups.items()):
+                f_sorted = sorted(f_items, key=lambda it: it["symbol_name"].lower())
+                chapter_id = f"{folder}_{fname}::{theme}".replace(" ", "_").replace("/", "_").replace(".", "_")
+                chapters.append({
+                    "chapter_id": chapter_id,
+                    "folder": f"{folder}/{fname}",
+                    "theme": theme,
+                    "chapter_title": f"{folder}/{fname} • {theme}",
+                    "functions_count": len(f_sorted),
+                    "functions": f_sorted,
+                })
+
+    return {
+        "project_name": project_name,
+        "repository_id": repository_id,
+        "total_functions": total_functions_count,
+        "chapters_count": len(chapters),
+        "chapters": chapters,
+    }
